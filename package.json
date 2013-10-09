@@ -1,0 +1,18 @@
+{
+	"name"           : "whatsapi",
+	"main"           : "whatsapi",
+	"description"    : "WhatsApp messenger interface",
+	"version"        : "0.1.0",
+	"keywords"       : ["WhatsApp", "WhatsApi"],
+	"author"         : "Vitaly Muminov <2312591@gmail.com>",
+	"readmeFilename" : "README.md",
+	"repository"     : {
+		"type" : "git",
+		"url"  : "git://github.com/hidespb/node-whatsapi.git"
+	},
+	"license"      : "MIT",
+	"dependencies" : {
+		"mime" : ">= 1.2.11",
+		"imagemagick" : ">= 0.1.3"
+	}
+}
