@@ -35,6 +35,17 @@ Socket.prototype.send = function(data) {
 	this.socket.write(data);
 };
 
+Socket.prototype.disconnect = function() {
+	if(!this.socket) {
+		return;
+	}
+
+	this.socket.removeAllListeners();
+	this.socket.destroy();
+
+	this.socket = null;
+};
+
 Socket.prototype.onReceive = function(callback, thisarg) {
 	this.callbacks.receive = callback.bind(thisarg);
 };

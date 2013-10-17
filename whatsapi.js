@@ -43,6 +43,7 @@ WhatsApi.prototype.defaultConfig = {
 	ccode          : '',
 	host           : 'c.whatsapp.net',
 	server         : 's.whatsapp.net',
+	gserver        : 'g.us',
 	port           : 5222,
 	device_type    : 'Android',
 	app_version    : '2.11.69',
@@ -94,6 +95,10 @@ WhatsApi.prototype.init = function() {
 WhatsApi.prototype.connect = function() {
 	this.loggedIn = false;
 	this.transport.connect(this.config.host, this.config.port, this.onTransportConnect, this);
+};
+
+WhatsApi.prototype.disconnect = function() {
+	this.transport.disconnect();
 };
 
 WhatsApi.prototype.login = function() {
@@ -157,6 +162,33 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type) {
 
 		this.sendNode(this.createRequestMediaUploadNode(hash, type, stat.size, path, to));
 	}.bind(this));
+};
+
+WhatsApi.prototype.requestGroupList = function(type) {
+	type = type || 'participating';
+
+	var listNode = new protocol.Node('list', {xmlns : 'w:g', type : type});
+
+	var attributes = {
+		id   : this.nextMessageId('getgroups'),
+		type : 'get',
+		to   : this.config.gserver
+	};
+
+	this.sendNode(new protocol.Node('iq', attributes, [listNode]));
+};
+
+WhatsApi.prototype.requestLastSeen = function(who) {
+	var queryNode = new protocol.Node('query', {xmlns : 'jabber:iq:last'});
+
+	var attributes = {
+		to   : this.createJID(who),
+		type : 'get',
+		id   : this.nextMessageId('lastseen'),
+		from : this.createJID(this.config.msisdn)
+	};
+
+	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
 };
 
 WhatsApi.prototype.sendMessageNode = function(to, node) {
@@ -236,6 +268,30 @@ WhatsApi.prototype.processNode = function(node) {
 			this.sendMessageNode(to, node);
 		}.bind(this));
 		return;
+	}
+
+	if(node.isGroupList()) {
+		var groupIds = node.children().map(function(child) {
+			return child.attribute('id');
+		});
+
+		this.emit('group.list', groupIds);
+		return;
+	}
+
+	if(node.isGroupAdd()) {
+		this.emit('group.new', node.attribute('from').split('@')[0]);
+		return;
+	}
+
+	if(node.isLastSeen()) {
+		var tstamp = Date.now() - (+node.child('query').attribute('seconds')) * 1000;
+		this.emit('lastseen.found', node.attribute('from').split('@')[0], new Date(tstamp));
+		return;
+	}
+
+	if(node.isNotFound()) {
+		this.emit('lastseen.notfound', node.attribute('from').split('@')[0]);
 	}
 
 	if(node.isMessage()) {
@@ -648,7 +704,13 @@ WhatsApi.prototype.nextMessageId = function(prefix) {
 };
 
 WhatsApi.prototype.createJID = function(msisdn) {
-	return msisdn + '@' + this.config.server;
+	if(msisdn.indexOf('@') !== -1) {
+		return msisdn;
+	}
+
+	var affix = msisdn.indexOf('-') === -1 ? this.config.server : this.config.gserver;
+
+	return msisdn + '@' + affix;
 };
 
 WhatsApi.prototype.onTransportConnect = function() {

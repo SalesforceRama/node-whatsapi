@@ -153,6 +153,24 @@ Node.prototype.isMediaReady = function() {
 		   this.child(0) && ['media', 'duplicate'].indexOf(this.child(0).tag()) !== -1;
 };
 
+Node.prototype.isGroupList = function() {
+	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group');
+};
+
+Node.prototype.isGroupAdd = function() {
+	return this.tag() === 'message' && this.attribute('type') === 'subject' && this.child('body') &&
+		   this.child('body').attribute('event') === 'add';
+};
+
+Node.prototype.isLastSeen = function() {
+	return this.child('query') && this.child('query').attribute('xmlns') === 'jabber:iq:last';
+};
+
+Node.prototype.isNotFound = function() {
+	return this.tag() === 'iq' && this.child('error') &&
+		   this.child('error').attribute('code') === '404';
+};
+
 Node.prototype.toXml = function(prefix) {
 	prefix = prefix || '';
 
