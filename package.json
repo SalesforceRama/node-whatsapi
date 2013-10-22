@@ -2,7 +2,7 @@
   "name": "whatsapi",
   "main": "whatsapi",
   "description": "WhatsApp messenger interface",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "keywords": [
     "WhatsApp",
     "WhatsApi"
@@ -25,6 +25,6 @@
   "bugs": {
     "url": "https://github.com/hidespb/node-whatsapi/issues"
   },
-  "_id": "whatsapi@0.1.0",
-  "_from": "whatsapi@>= 0.1.0"
+  "_id": "whatsapi@0.1.2",
+  "_from": "whatsapi@>=0.1.0"
 }

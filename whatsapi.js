@@ -42,6 +42,7 @@ WhatsApi.prototype.defaultConfig = {
 	username       : '',
 	password       : '',
 	ccode          : '',
+	reconnect      : true,
 	host           : 'c.whatsapp.net',
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
@@ -729,8 +730,12 @@ WhatsApi.prototype.onTransportError = function(e) {
 };
 
 WhatsApi.prototype.onTransportEnd = function() {
-	this.emit('reconnect');
-	this.connect();
+	if(this.config.reconnect) {
+		this.emit('reconnect');
+		this.connect();
+	} else {
+		this.emit('end');
+	}
 };
 
 WhatsApi.prototype.onTransportData = function(data) {
