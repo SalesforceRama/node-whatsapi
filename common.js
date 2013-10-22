@@ -1,3 +1,7 @@
+var url   = require('url');
+var http  = require('http');
+var https = require('https');
+
 function tstamp() {
 	return Math.floor(Date.now() / 1000);
 }
@@ -41,6 +45,25 @@ function extend(dest) {
 	return target;
 }
 
+function fetch(target, callback) {
+	var protocol = url.parse(target).protocol === 'https:' ? https : http;
+
+	protocol.get(target, function(res) {
+		var buffers = [];
+
+		res.on('data', function(buf) {
+			buffers.push(buf);
+		});
+
+		res.on('end', function() {
+			callback(false, Buffer.concat(buffers));
+		});
+	}).on('error', function(e) {
+		callback(e);
+	});
+}
+
 exports.tstamp  = tstamp;
 exports.objSize = objSize;
 exports.extend  = extend;
+exports.fetch   = fetch;

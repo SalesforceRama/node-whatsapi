@@ -171,6 +171,10 @@ Node.prototype.isNotFound = function() {
 		   this.child('error').attribute('code') === '404';
 };
 
+Node.prototype.isFailure = function() {
+	return this.tag() === 'failure';
+};
+
 Node.prototype.toXml = function(prefix) {
 	prefix = prefix || '';
 

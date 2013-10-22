@@ -1,19 +1,20 @@
-var util       = require('util');
-var events     = require('events');
-var fs         = require('fs');
-var crypto     = require('crypto');
-var url        = require('url');
-var tls        = require('tls');
-var http       = require('http');
-var https      = require('https');
-var imagick    = require('imagemagick');
-var mime       = require('mime');
-var common     = require('./common');
-var dictionary = require('./dictionary');
-var protocol   = require('./protocol');
-var transports = require('./transport');
-var encryption = require('./encryption');
-var processors = require('./processors');
+var util        = require('util');
+var events      = require('events');
+var fs          = require('fs');
+var crypto      = require('crypto');
+var url         = require('url');
+var tls         = require('tls');
+var http        = require('http');
+var https       = require('https');
+var querystring = require('querystring');
+var imagick     = require('imagemagick');
+var mime        = require('mime');
+var common      = require('./common');
+var dictionary  = require('./dictionary');
+var protocol    = require('./protocol');
+var transports  = require('./transport');
+var encryption  = require('./encryption');
+var processors  = require('./processors');
 
 var MediaType = {
 	IMAGE : 'image',
@@ -48,7 +49,7 @@ WhatsApi.prototype.defaultConfig = {
 	device_type    : 'Android',
 	app_version    : '2.11.69',
 	ua             : 'WhatsApp/2.11.69 Android/4.3 Device/GalaxyS3',
-	challenge_file : __dirname + '/challenge.dat'
+	challenge_file : __dirname + '/challenge'
 };
 
 WhatsApi.prototype.mediaMimeTypes = {};
@@ -292,6 +293,12 @@ WhatsApi.prototype.processNode = function(node) {
 
 	if(node.isNotFound()) {
 		this.emit('lastseen.notfound', node.attribute('from').split('@')[0]);
+		return;
+	}
+
+	if(node.isFailure()) {
+		this.emit('error', node.toXml());
+		return;
 	}
 
 	if(node.isMessage()) {
@@ -758,6 +765,421 @@ WhatsApiDebug.prototype.sendNode = function(node) {
 	return WhatsApiDebug.super_.prototype.sendNode.apply(this, arguments);
 };
 
+function WhatsApiContactsSync(config) {
+	this.config = common.extend({}, this.defaultConfig, config);
+
+	events.EventEmitter.call(this);
+}
+
+util.inherits(WhatsApiContactsSync, events.EventEmitter);
+
+WhatsApiContactsSync.prototype.defaultConfig = {
+	msisdn   : '',
+	password : '',
+	server   : 's.whatsapp.net'
+};
+
+WhatsApiContactsSync.prototype.requestSync = function(msisdnList) {
+	if(!util.isArray(msisdnList)) {
+		this.emit('contacts.error', 'Contacts list should be an array');
+		return;
+	}
+
+	var options = {
+		hostname : 'sro.whatsapp.net',
+		path     : '/v2/sync/a',
+		method   : 'POST',
+		headers  : this.createHeaders()
+	};
+
+	this.request(options, function(err, jsonbody, headers) {
+		try {
+			if(err) {
+				throw err;
+			}
+
+			try {
+				var body = JSON.parse(jsonbody);
+			} catch(e) {
+				throw 'Received non-json respose: ' + jsonbody;
+			}
+
+			if(body.message !== 'next token') {
+				throw 'Received invalid json respose: ' + jsonbody;
+			}
+
+			var authHeader = headers['www-authenticate'];
+
+			if(!authHeader) {
+				throw 'No auth header found';
+			}
+
+			var authParams = {};
+
+			authHeader.replace(/(?:\s|,)([^=]+)="([^"]+)"/g, function(_u, a, b) {
+				authParams[a] = b;
+			});
+
+			if(!authParams.nonce) {
+				throw 'Nonce not found in ' + authHeader;
+			}
+
+			var authOptions = options;
+
+			var escape = querystring.escape;
+
+			querystring.escape = function(value) {
+				return value.toString().match(/^\+/) ? escape.apply(querystring, arguments) : value;
+			};
+
+			var postString = querystring.stringify({
+				ut    : 'wa',
+				t     : 'c',
+				'u[]' : msisdnList.map(function(msisdn) {
+					return msisdn.toString().replace(/^(\d)/, '+$1')
+				})
+			});
+
+			querystring.escape = escape;
+
+			authOptions.path    = '/v2/sync/q';
+			authOptions.headers = this.createHeaders(authParams.nonce, postString.length);
+
+			this.request(authOptions, postString, function(err, jsonbody) {
+				try {
+					var response = JSON.parse(jsonbody);
+				} catch(e) {
+					this.emit('error', 'Received non-json respose: ' + jsonbody);
+				}
+
+				var contacts = response.c.map(function(item) {
+					return {
+						msisdn   : item.n,
+						status   : item.s,
+						whatsapp : item.w
+					};
+				});
+
+				this.emit('sync', contacts);
+			}.bind(this));
+		} catch(e) {
+			this.emit('error', e);
+		}
+	}.bind(this));
+};
+
+WhatsApiContactsSync.prototype.createHeaders = function(nonce, contentLen) {
+	contentLen = contentLen || 0;
+
+	return {
+		'User-Agent'      : this.config.ua,
+		'Accept'          : 'text/json',
+		'Content-Type'    : 'application/x-www-form-urlencoded',
+		'Authorization'   : this.createAuth(nonce),
+		'Accept-Encoding' : 'identity',
+		'Content-Length'  : contentLen.toString()
+	};
+};
+
+WhatsApiContactsSync.prototype.createAuth = function(nonce) {
+	var credentials = Buffer.concat([
+		new Buffer(this.config.msisdn),
+		new Buffer(':' + this.config.server + ':'),
+		new Buffer(this.config.password, 'base64')
+	]);
+
+	var salt = crypto.randomBytes(5).toString('hex');
+
+	var md5 = function(buf) {
+		var hash = crypto.createHash('md5');
+		hash.update(buf);
+		return hash.digest();
+	};
+
+	nonce = nonce || '0';
+
+	var credentialsHash = md5(credentials);
+
+	var saltedCredentialsHash = md5(Buffer.concat([
+		credentialsHash,
+		new Buffer(':' + nonce + ':' + salt)
+	]));
+
+	var digestHash = md5('AUTHENTICATE:WAWA/s.whatsapp.net');
+
+	var responseHash = md5(
+		saltedCredentialsHash.toString('hex') +
+		':' + nonce + ':00000001:' + salt + ':auth:' +
+		digestHash.toString('hex')
+	);
+
+	var authParams = {
+		username     : this.config.msisdn,
+		realm        : this.config.server,
+		nonce        : nonce,
+		cnonce       : salt,
+		nc           : '00000001',
+		qop          : 'auth',
+		'digest-uri' : 'WAWA/s.whatsapp.net',
+		response     : responseHash.toString('hex'),
+		charset      : 'utf-8'
+	};
+
+	var authArray = [];
+
+	for(var param in authParams) {
+		if(authParams.hasOwnProperty(param)) {
+			authArray.push(util.format('%s="%s"', param, authParams[param]));
+		}
+	}
+
+	return 'X-WAWA:' + authArray.join(',');
+};
+
+WhatsApiContactsSync.prototype.request = function(options, post, callback) {
+	var req = https.request(options, function(res) {
+		var buffers = [];
+
+		res.on('data', function(buf) {
+			buffers.push(buf);
+		});
+
+		res.on('end', function() {
+			callback(false, Buffer.concat(buffers).toString(), res.headers);
+		});
+	});
+
+	if(post instanceof Function) {
+		callback = post;
+	} else {
+		req.write(post);
+	}
+
+	req.on('error', function(e) {
+		callback(e);
+	});
+
+	req.end();
+};
+
+function WhatsApiRegistration(config) {
+	this.config = common.extend({}, this.defaultConfig, config);
+
+	events.EventEmitter.call(this);
+}
+
+util.inherits(WhatsApiRegistration, events.EventEmitter);
+
+WhatsApiRegistration.prototype.defaultConfig = {
+	msisdn     : '',
+	device_id  : '',
+	ccode      : '',
+	language   : 'ru',
+	country    : 'RU',
+	magic_file : __dirname + '/magic'
+};
+
+WhatsApiRegistration.prototype.checkCredentials = function() {
+	this.request('exist', {c : 'cookie'}, function(response, source) {
+		if(response.status !== 'fail') {
+			this.emit('error', 'Invalid response status: ' + source);
+			return;
+		}
+
+		switch(response.reason) {
+			case 'blocked':
+				this.emit('credentials.blocked', this.config.msisdn);
+				break;
+			case 'incorrect':
+				this.emit('credentials.notfound', this.config.msisdn);
+				break;
+			case 'bad_param':
+				this.emit('error', 'bad params: ' + source);
+				break;
+			case 'format_wrong':
+				this.emit('error', 'msisdn cannot be used');
+				break;
+			case 'missing_param':
+				this.emit('error', 'missing param: ' + source);
+				break;
+			default:
+				this.emit('error', 'Credentials check fail with unexpected reason: ' + source);
+		}
+	}.bind(this));
+};
+
+WhatsApiRegistration.prototype.requestCode = function() {
+	var match = this.config.msisdn.match(/^998(\d+)$/);
+
+	if(!match) {
+		this.emit('error', 'Invalid msisdn provided');
+	}
+
+	var token = this.generateToken('Uzbekistan', match[1]);
+
+	var params = {
+		to     : this.config.msisdn,
+		lg     : this.config.language,
+		lc     : this.config.country,
+		method : 'sms',
+		mcc    : this.config.ccode,
+		mnc    : '001',
+		token  : token
+	};
+
+	this.request('code', params, function(response, source) {
+		if(response.status === 'sent') {
+			this.emit('code.sent', this.config.msisdn);
+			return;
+		}
+
+		if(response.reason === 'too_recent') {
+			this.emit('code.wait', this.config.msisdn, response.retry_after);
+			return;
+		}
+
+		this.emit('error', 'Code request error: ' + source);
+	}.bind(this));
+};
+
+WhatsApiRegistration.prototype.registerCode = function(code) {
+	var params = {
+		c    : 'cookie',
+		code : code
+	};
+
+	this.request('register', params, function(response, source) {
+		this.emit('error', 'Code registration failed: ' + source);
+	});
+};
+
+WhatsApiRegistration.prototype.request = function(method, queryParams, callback) {
+	var match = this.config.msisdn.match(/^998(\d+)$/);
+
+	if(!match) {
+		this.emit('error', 'Invalid msisdn provided');
+	}
+
+	var query = {
+		cc : '998',
+		in : match[1],
+		id : 'id:' + this.config.device_id
+	};
+
+	if(queryParams instanceof Function) {
+		callback = queryParams;
+	} else {
+		common.extend(query, queryParams);
+	}
+
+	var escape = querystring.escape;
+
+	querystring.escape = function(value) {
+		return value.toString().match(/^id\:/)
+			? value.replace(/^id\:/, '')
+			: escape.apply(querystring, arguments);
+	};
+
+	var url = {
+		hostname : 'v.whatsapp.net',
+		path     : '/v2/' + method + '?' + querystring.stringify(query)
+	};
+
+	querystring.escape = escape;
+
+	var req = https.get(url, function(res) {
+		var buffers = [];
+
+		res.on('data', function(buf) {
+			buffers.push(buf);
+		});
+
+		res.on('end', function() {
+			var jsonbody = Buffer.concat(buffers).toString();
+
+			try {
+				var response = JSON.parse(jsonbody);
+			} catch(e) {
+				this.emit('error', 'Non-json response: ' + response);
+				return;
+			}
+
+			if(response.status !== 'ok') {
+				callback(response, jsonbody);
+				return;
+			}
+
+			this.emit('success',
+				this.config.msisdn,
+				response.login,
+				response.pw,
+				response.type,
+				response.expiration,
+				response.kind,
+				response.price,
+				response.cost,
+				response.currency,
+				response.price_expiration
+			);
+		}.bind(this));
+	}.bind(this));
+
+	req.on('error', function(e) {
+		this.emit('error', e);
+	}.bind(this));
+};
+
+WhatsApiRegistration.prototype.generateToken = function(country, msisdn) {
+	var magicxor  = new Buffer('The piano has been drinking', 'utf8');
+	var magicfile = fs.readFileSync(this.config.magic_file);
+
+	for(var i = 0, idx = 0; i < magicfile.length; i++, idx++) {
+		if(idx === magicxor.length) {
+			idx = 0;
+		}
+
+		magicfile[i] = magicfile[i] ^ magicxor[idx];
+	}
+
+	var password = Buffer.concat([
+		new Buffer('Y29tLndoYXRzYXBw', 'base64'),
+		magicfile
+	]);
+
+	var salt = new Buffer('PkTwKSZqUfAUyR0rPQ8hYJ0wNsQQ3dW1+3SCnyTXIfEAxxS75FwkDf47wNv/c8pP3p0GXKR6OOQmhyERwx74fw1RYSU10I4r1gyBVDbRJ40pidjM41G1I1oN', 'base64');
+
+	var key = encryption.pbkdf2(password, salt, 128, 80);
+
+	var padlen = 64;
+
+	var opad = new Buffer(padlen);
+	var ipad = new Buffer(padlen);
+
+	for(var i = 0; i < padlen; i++) {
+		opad[i] = 0x5C ^ key[i];
+		ipad[i] = 0x36 ^ key[i];
+	}
+
+	var ipadHash = crypto.createHash('sha1');
+
+	var data = Buffer.concat([
+		new Buffer('MIIDMjCCAvCgAwIBAgIETCU2pDALBgcqhkjOOAQDBQAwfDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFDASBgNVBAcTC1NhbnRhIENsYXJhMRYwFAYDVQQKEw1XaGF0c0FwcCBJbmMuMRQwEgYDVQQLEwtFbmdpbmVlcmluZzEUMBIGA1UEAxMLQnJpYW4gQWN0b24wHhcNMTAwNjI1MjMwNzE2WhcNNDQwMjE1MjMwNzE2WjB8MQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEUMBIGA1UEBxMLU2FudGEgQ2xhcmExFjAUBgNVBAoTDVdoYXRzQXBwIEluYy4xFDASBgNVBAsTC0VuZ2luZWVyaW5nMRQwEgYDVQQDEwtCcmlhbiBBY3RvbjCCAbgwggEsBgcqhkjOOAQBMIIBHwKBgQD9f1OBHXUSKVLfSpwu7OTn9hG3UjzvRADDHj+AtlEmaUVdQCJR+1k9jVj6v8X1ujD2y5tVbNeBO4AdNG/yZmC3a5lQpaSfn+gEexAiwk+7qdf+t8Yb+DtX58aophUPBPuD9tPFHsMCNVQTWhaRMvZ1864rYdcq7/IiAxmd0UgBxwIVAJdgUI8VIwvMspK5gqLrhAvwWBz1AoGBAPfhoIXWmz3ey7yrXDa4V7l5lK+7+jrqgvlXTAs9B4JnUVlXjrrUWU/mcQcQgYC0SRZxI+hMKBYTt88JMozIpuE8FnqLVHyNKOCjrh4rs6Z1kW6jfwv6ITVi8ftiegEkO8yk8b6oUZCJqIPf4VrlnwaSi2ZegHtVJWQBTDv+z0kqA4GFAAKBgQDRGYtLgWh7zyRtQainJfCpiaUbzjJuhMgo4fVWZIvXHaSHBU1t5w//S0lDK2hiqkj8KpMWGywVov9eZxZy37V26dEqr/c2m5qZ0E+ynSu7sqUD7kGx/zeIcGT0H+KAVgkGNQCo5Uc0koLRWYHNtYoIvt5R3X6YZylbPftF/8ayWTALBgcqhkjOOAQDBQADLwAwLAIUAKYCp0d6z4QQdyN74JDfQ2WCyi8CFDUM4CaNB+ceVXdKtOrNTQcc0e+t', 'base64'),
+		new Buffer('30CnAF22oY+2PUD5pcJGqw==', 'base64'),
+		new Buffer(msisdn)
+	]);
+
+	ipadHash.update(ipad);
+	ipadHash.update(data);
+
+	var output = crypto.createHash('sha1');
+
+	output.update(opad);
+	output.update(ipadHash.digest());
+
+	return output.digest('base64');
+};
+
+
 function createAdapter(config, debug, reader, writer, processor, transport) {
 	reader    = reader    || new protocol.Reader(dictionary);
 	writer    = writer    || new protocol.Writer(dictionary);
@@ -769,4 +1191,14 @@ function createAdapter(config, debug, reader, writer, processor, transport) {
 	return new WhatsApp(config, reader, writer, processor, transport);
 }
 
-exports.createAdapter = createAdapter;
+function createContactsSync(config) {
+	return new WhatsApiContactsSync(config);
+}
+
+function createRegistration(config) {
+	return new WhatsApiRegistration(config);
+}
+
+exports.createAdapter      = createAdapter;
+exports.createContactsSync = createContactsSync;
+exports.createRegistration = createRegistration;

@@ -33,8 +33,11 @@ KeyStream.prototype.decode = function(data) {
 	return this.cipher.update(data.slice(4)).slice();
 };
 
-function pbkdf2(password, salt) {
-	return crypto.pbkdf2Sync(password, salt, 16, 20);
+function pbkdf2(password, salt, iterations, length) {
+	iterations = iterations || 16;
+	length     = length || 20;
+
+	return crypto.pbkdf2Sync(password, salt, iterations, length);
 }
 
 exports.KeyStream = KeyStream;
