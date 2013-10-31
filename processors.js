@@ -15,8 +15,7 @@ function Aggregate(list) {
 }
 
 Aggregate.prototype.setAdapter = function(adapter) {
-	this.selfAddress = new RegExp(adapter.config.msisdn + '@' + adapter.config.server);
-	this.adapter     = adapter;
+	this.adapter = adapter;
 
 	this.list.forEach(function(processor) {
 		processor.setAdapter(adapter);
@@ -24,10 +23,6 @@ Aggregate.prototype.setAdapter = function(adapter) {
 };
 
 Aggregate.prototype.process = function(node) {
-	if(!node.attribute('from').match(this.selfAddress)) {
-		this.adapter.sendNode(this.adapter.createReceivedNode(node));
-	}
-
 	this.list.forEach(function(processor) {
 		if(processor.match(node)) {
 			processor.process(node);
@@ -49,7 +44,8 @@ Text.prototype.process = function(node) {
 		node.attribute('from'),
 		node.attribute('id'),
 		node.child('notify').attribute('name'),
-		node.child('body').data()
+		node.child('body').data(),
+		node.attribute('author')
 	);
 };
 
@@ -72,7 +68,8 @@ Location.prototype.process = function(node) {
 		location.attribute('latitude'),
 		location.attribute('longitude'),
 		location.attribute('name'),
-		location.attribute('url')
+		location.attribute('url'),
+		node.attribute('author')
 	);
 };
 
@@ -108,7 +105,8 @@ Image.prototype.process = function(node) {
 		image.attribute('filehash'),
 		image.attribute('width'),
 		image.attribute('height'),
-		image.data()
+		image.data(),
+		node.attribute('author')
 	);
 };
 
@@ -134,7 +132,8 @@ Video.prototype.process = function(node) {
 		video.attribute('duration'),
 		video.attribute('vcodec'),
 		video.attribute('acodec'),
-		video.data()
+		video.data(),
+		node.attribute('author')
 	);
 };
 
@@ -158,7 +157,8 @@ Audio.prototype.process = function(node) {
 		audio.attribute('mimetype'),
 		audio.attribute('filehash'),
 		audio.attribute('duration'),
-		audio.attribute('acodec')
+		audio.attribute('acodec'),
+		node.attribute('author')
 	);
 };
 

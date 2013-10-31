@@ -128,6 +128,11 @@ Node.prototype.data = function() {
 	return this.contents.data;
 };
 
+Node.prototype.shouldBeReplied = function() {
+	return this.tag() === 'message'
+		&& (this.child('notify') || this.child('received') || this.child('request'));
+};
+
 Node.prototype.isChallenge = function() {
 	return this.tag() === 'challenge';
 };
@@ -137,7 +142,8 @@ Node.prototype.isSuccess = function() {
 };
 
 Node.prototype.isMessage = function() {
-	return this.tag() === 'message';
+	return this.tag() === 'message' && this.child('notify') &&
+		   this.child('notify').attribute('name') !== null;
 };
 
 Node.prototype.isPing = function() {
@@ -162,6 +168,23 @@ Node.prototype.isGroupAdd = function() {
 		   this.child('body').attribute('event') === 'add';
 };
 
+Node.prototype.isGroupTopic = function() {
+	return this.tag() === 'message' && this.attribute('type') === 'subject' && this.child('body');
+};
+
+Node.prototype.isGroupMembers = function() {
+	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child(0)
+		&& this.child(0).tag() === 'participant' && this.child(0).attribute('xmlns') === 'w:g';
+};
+
+Node.prototype.isGroupNewcomer = function() {
+	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('add');
+};
+
+Node.prototype.isGroupOutcomer = function() {
+	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('remove');
+};
+
 Node.prototype.isLastSeen = function() {
 	return this.child('query') && this.child('query').attribute('xmlns') === 'jabber:iq:last';
 };
@@ -173,6 +196,14 @@ Node.prototype.isNotFound = function() {
 
 Node.prototype.isFailure = function() {
 	return this.tag() === 'failure';
+};
+
+Node.prototype.isReceived = function() {
+	return this.tag() === 'message' && this.child('received');
+};
+
+Node.prototype.isProfilePicture = function() {
+	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture';
 };
 
 Node.prototype.toXml = function(prefix) {

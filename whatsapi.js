@@ -84,12 +84,13 @@ WhatsApi.prototype.init = function() {
 	this.transport.onError(this.onTransportError, this);
 	this.transport.onEnd(this.onTransportEnd, this);
 
-	this.connected  = false;
-	this.challenge  = null;
-	this.messageId  = 0;
-	this.queue      = [];
-	this.loggedIn   = false;
-	this.mediaQueue = {};
+	this.connected   = false;
+	this.challenge   = null;
+	this.messageId   = 0;
+	this.queue       = [];
+	this.loggedIn    = false;
+	this.mediaQueue  = {};
+	this.selfAddress = this.createJID(this.config.msisdn);
 
 	this.processor.setAdapter(this);
 };
@@ -123,11 +124,11 @@ WhatsApi.prototype.sendIsOnline = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
-WhatsApi.prototype.sendMessage = function(to, message) {
-	this.sendMessageNode(to, new protocol.Node('body', null, null, message));
+WhatsApi.prototype.sendMessage = function(to, message, msgid) {
+	this.sendMessageNode(to, new protocol.Node('body', null, null, message), msgid);
 };
 
-WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url) {
+WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
 	var attributes = {
 		xmlns     : 'urn:xmpp:whatsapp:mms',
 		type      : 'location',
@@ -137,22 +138,22 @@ WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url) {
 		url       : url || ''
 	};
 
-	this.sendMessageNode(to, new protocol.Node('media', attributes));
+	this.sendMessageNode(to, new protocol.Node('media', attributes), msgid);
 };
 
-WhatsApi.prototype.sendImage = function(to, filepath) {
-	this.sendMedia(to, filepath, MediaType.IMAGE);
+WhatsApi.prototype.sendImage = function(to, filepath, msgid) {
+	this.sendMedia(to, filepath, MediaType.IMAGE, msgid);
 };
 
-WhatsApi.prototype.sendVideo = function(to, filepath) {
-	this.sendMedia(to, filepath, MediaType.VIDEO);
+WhatsApi.prototype.sendVideo = function(to, filepath, msgid) {
+	this.sendMedia(to, filepath, MediaType.VIDEO, msgid);
 };
 
-WhatsApi.prototype.sendAudio = function(to, filepath) {
-	this.sendMedia(to, filepath, MediaType.AUDIO);
+WhatsApi.prototype.sendAudio = function(to, filepath, msgid) {
+	this.sendMedia(to, filepath, MediaType.AUDIO, msgid);
 };
 
-WhatsApi.prototype.sendMedia = function(to, filepath, type) {
+WhatsApi.prototype.sendMedia = function(to, filepath, type, msgid) {
 	this.getMediaFile(filepath, type, function(err, path) {
 		if(err) {
 			this.emit('media.error', err);
@@ -162,7 +163,7 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type) {
 		var stat = fs.statSync(path);
 		var hash = crypto.createHash('sha256').update(fs.readFileSync(path)).digest('base64');
 
-		this.sendNode(this.createRequestMediaUploadNode(hash, type, stat.size, path, to));
+		this.sendNode(this.createRequestMediaUploadNode(hash, type, stat.size, path, to, msgid));
 	}.bind(this));
 };
 
@@ -180,6 +181,48 @@ WhatsApi.prototype.requestGroupList = function(type) {
 	this.sendNode(new protocol.Node('iq', attributes, [listNode]));
 };
 
+WhatsApi.prototype.requestGroupMembers = function(groupId) {
+	var listNode = new protocol.Node('list', {xmlns : 'w:g'});
+
+	var attributes = {
+		id   : this.nextMessageId('groupmembers'),
+		type : 'get',
+		to   : this.createJID(groupId)
+	};
+
+	this.sendNode(new protocol.Node('iq', attributes, [listNode]));
+};
+
+WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
+	var groupNodes = [];
+
+	groupIds.forEach(function(groupId) {
+		groupNodes.push(new protocol.Node('group', {id : this.createJID(groupId)}));
+	}, this);
+
+	var leaveNode = new protocol.Node('leave', {xmlns : 'w:g', action : 'delete'}, groupNodes);
+
+	var attributes = {
+		id   : this.nextMessageId('leavegroups'),
+		to   : this.config.gserver,
+		type : 'set'
+	};
+
+	this.sendNode(new protocol.Node('iq', attributes, [leaveNode]));
+};
+
+WhatsApi.prototype.requestGroupInfo = function(groupId) {
+	var queryNode = new protocol.Node('query', {xmlns : 'w:g'});
+
+	var attributes = {
+		id   : this.nextMessageId('groupinfo'),
+		type : 'get',
+		to   : this.createJID(groupId)
+	};
+
+	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
+};
+
 WhatsApi.prototype.requestLastSeen = function(who) {
 	var queryNode = new protocol.Node('query', {xmlns : 'jabber:iq:last'});
 
@@ -193,7 +236,52 @@ WhatsApi.prototype.requestLastSeen = function(who) {
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
 };
 
-WhatsApi.prototype.sendMessageNode = function(to, node) {
+WhatsApi.prototype.requestContactsSync = function(msisdnList) {
+	if(!this.contactsSync) {
+		this.initContactsSync();
+	}
+
+	this.contactsSync.requestSync(msisdnList);
+};
+
+WhatsApi.prototype.requestProfilePicture = function(target, small) {
+	var picAttributes = {
+		xmlns : 'w:profile:picture',
+		type  : 'image'
+	};
+
+	if(small) {
+		picAttributes['type'] = 'preview';
+	}
+
+	var pictureNode = new protocol.Node('picture', picAttributes);
+
+	var attributes = {
+		id   : this.nextMessageId('profilepicture'),
+		type : 'get',
+		to   : this.createJID(target)
+	};
+
+	this.sendNode(new protocol.Node('iq', attributes, [pictureNode]));
+};
+
+WhatsApi.prototype.initContactsSync = function() {
+	this.contactsSync = createContactsSync(this.config);
+
+	this.contactsSync.on('contacts.error', function(e) {
+		this.emit('contacts.error', e);
+	}.bind(this));
+
+	this.contactsSync.on('error', function(e) {
+		this.emit('contacts.error', e);
+	}.bind(this));
+
+	this.contactsSync.on('sync', function(list) {
+		this.emit('contacts.sync', list);
+	}.bind(this));
+};
+
+WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
 	if(!this.loggedIn) {
 		this.queue.push({to : to, node : node});
 		return;
@@ -208,7 +296,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node) {
 	var attributes = {
 		to   : this.createJID(to),
 		type : 'chat',
-		id   : this.nextMessageId('message'),
+		id   : msgid || this.nextMessageId('message'),
 		t    : common.tstamp().toString()
 	};
 
@@ -235,6 +323,10 @@ WhatsApi.prototype.send = function(buffer) {
 };
 
 WhatsApi.prototype.processNode = function(node) {
+	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
+		this.sendNode(this.createReceivedNode(node));
+	}
+
 	if(node.isChallenge()) {
 		this.sendNode(this.createAuthResposeNode(node.data()));
 		this.reader.setKey(this.readerKey);
@@ -273,32 +365,74 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 
 	if(node.isGroupList()) {
-		var groupIds = node.children().map(function(child) {
-			return child.attribute('id');
+		var groupList = node.children().map(function(child) {
+			return {
+				groupId : child.attribute('id'),
+				topic   : child.attribute('subject')
+			};
 		});
 
-		this.emit('group.list', groupIds);
+		this.emit('group.list', groupList);
 		return;
 	}
 
 	if(node.isGroupAdd()) {
-		this.emit('group.new', node.attribute('from').split('@')[0]);
+		this.emit('group.new', node.attribute('from'), node.child('body').data().toString('utf8'));
 		return;
+	}
+
+	if(node.isGroupTopic()) {
+		this.emit('group.topic', node.attribute('from'), node.child('body').data().toString('utf8'));
+		return;
+	}
+
+	if(node.isGroupMembers()) {
+		var members = node.children().map(function(child) {
+			return child.attribute('jid');
+		});
+
+		this.emit('group.members', node.attribute('from'), members);
+		return;
+	}
+
+	if(node.isGroupNewcomer() && node.attribute('add') !== this.selfAddress) {
+		this.emit('group.newcomer', node.attribute('from'), node.attribute('add'));
+		return;
+	}
+
+	if(node.isGroupOutcomer()) {
+		if(node.attribute('remove') === this.selfAddress) {
+			this.emit('group.excommunicate', node.attribute('from'));
+		} else {
+			this.emit('group.outcomer',
+				node.attribute('from'), node.attribute('remove'), node.attribute('author'));
+		}
 	}
 
 	if(node.isLastSeen()) {
 		var tstamp = Date.now() - (+node.child('query').attribute('seconds')) * 1000;
-		this.emit('lastseen.found', node.attribute('from').split('@')[0], new Date(tstamp));
+		this.emit('lastseen.found', node.attribute('from'), new Date(tstamp));
 		return;
 	}
 
 	if(node.isNotFound()) {
-		this.emit('lastseen.notfound', node.attribute('from').split('@')[0]);
+		this.emit('lastseen.notfound', node.attribute('from'));
 		return;
 	}
 
 	if(node.isFailure()) {
 		this.emit('error', node.toXml());
+		return;
+	}
+
+	if(node.isReceived()) {
+		this.emit('message.delivered', node.attribute('from'), node.attribute('id'), node.attribute('t'));
+		return;
+	}
+
+	if(node.isProfilePicture()) {
+		var preview = node.child('picture').attribute('type') === 'preview';
+		this.emit('profile.picture', node.attribute('from'), preview, node.child('picture').data());
 		return;
 	}
 
@@ -421,7 +555,7 @@ WhatsApi.prototype.createReceivedNode = function(node) {
 	return new protocol.Node('message', attributes, [receivedNode]);
 };
 
-WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to) {
+WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to, msgid) {
 	var attributes = {
 		xmlns : 'w:m',
 		hash  : filehash,
@@ -432,7 +566,7 @@ WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, f
 	var mediaNode = new protocol.Node('media', attributes);
 
 	var iqAttributes = {
-		id   : this.nextMessageId('upload'),
+		id   : msgid || this.nextMessageId('upload'),
 		to   : this.config.server,
 		type : 'set'
 	};
@@ -855,6 +989,7 @@ WhatsApiContactsSync.prototype.requestSync = function(msisdnList) {
 					var response = JSON.parse(jsonbody);
 				} catch(e) {
 					this.emit('error', 'Received non-json respose: ' + jsonbody);
+					return;
 				}
 
 				var contacts = response.c.map(function(item) {
@@ -979,8 +1114,9 @@ WhatsApiRegistration.prototype.defaultConfig = {
 	msisdn     : '',
 	device_id  : '',
 	ccode      : '',
-	language   : 'ru',
-	country    : 'RU',
+	ua         : 'WhatsApp/2.11.69 Android/4.3 Device/GalaxyS3',
+	language   : 'uz',
+	country    : 'UZ',
 	magic_file : __dirname + '/magic'
 };
 
@@ -1068,7 +1204,7 @@ WhatsApiRegistration.prototype.request = function(method, queryParams, callback)
 	var query = {
 		cc : '998',
 		in : match[1],
-		id : 'id:' + this.config.device_id
+		id : querystring.unescape(this.config.device_id)
 	};
 
 	if(queryParams instanceof Function) {
@@ -1077,20 +1213,14 @@ WhatsApiRegistration.prototype.request = function(method, queryParams, callback)
 		common.extend(query, queryParams);
 	}
 
-	var escape = querystring.escape;
-
-	querystring.escape = function(value) {
-		return value.toString().match(/^id\:/)
-			? value.replace(/^id\:/, '')
-			: escape.apply(querystring, arguments);
-	};
-
 	var url = {
 		hostname : 'v.whatsapp.net',
-		path     : '/v2/' + method + '?' + querystring.stringify(query)
+		path     : '/v2/' + method + '?' + querystring.stringify(query),
+		headers  : {
+			'User-Agent' : this.config.ua,
+			'Accept'     : 'text/json'
+		}
 	};
-
-	querystring.escape = escape;
 
 	var req = https.get(url, function(res) {
 		var buffers = [];
@@ -1135,7 +1265,7 @@ WhatsApiRegistration.prototype.request = function(method, queryParams, callback)
 };
 
 WhatsApiRegistration.prototype.generateToken = function(country, msisdn) {
-	var magicxor  = new Buffer('The piano has been drinking', 'utf8');
+	var magicxor  = new Buffer('The piano has been drinkin', 'utf8');
 	var magicfile = fs.readFileSync(this.config.magic_file);
 
 	for(var i = 0, idx = 0; i < magicfile.length; i++, idx++) {
