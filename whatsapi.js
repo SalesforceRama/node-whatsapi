@@ -341,6 +341,10 @@ WhatsApi.prototype.processNode = function(node) {
 		this.emit('login');
 		return;
 	}
+	
+	if(node.isAvailable()) {
+		this.emit('presence.available', node.attribute('from'), node.attribute('type'));
+	}
 
 	if(node.isDirtyPresence()) {
 		this.sendNode(this.createClearDirtyNode(node));
@@ -438,6 +442,10 @@ WhatsApi.prototype.processNode = function(node) {
 
 	if(node.isMessage()) {
 		this.processor.process(node);
+	}
+	
+	if(node.isTyping()) {
+		this.emit('typing', node.attribute('from'), node.contents.children[0].contents.tag);
 	}
 };
 
