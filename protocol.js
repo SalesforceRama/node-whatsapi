@@ -141,6 +141,10 @@ Node.prototype.isSuccess = function() {
 	return this.tag() === 'success';
 };
 
+Node.prototype.isTyping = function() {
+	return this.tag() === 'message' && (this.contents.children[0].contents.tag === 'composing' || this.contents.children[0].contents.tag === 'paused');
+};
+
 Node.prototype.isMessage = function() {
 	return this.tag() === 'message' && this.child('notify') &&
 		   this.child('notify').attribute('name') !== null;
@@ -149,6 +153,10 @@ Node.prototype.isMessage = function() {
 Node.prototype.isPing = function() {
 	return this.tag() === 'iq' && this.attribute('type') === 'get' && this.child(0).tag() === 'ping';
 };
+
+Node.prototype.isAvailable = function() {
+	return this.tag() === 'presence' && (this.attribute('type') === 'available' || this.attribute('type') === 'unavailable');
+}
 
 Node.prototype.isDirtyPresence = function() {
 	return this.tag() === 'presence' && this.attribute('status') === 'dirty';
