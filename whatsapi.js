@@ -124,6 +124,15 @@ WhatsApi.prototype.sendIsOnline = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
+WhatsApi.prototype.sendofflineStatus = function() {
+	var attributes = {
+		type : 'unavailable',
+		name : this.config.username
+	};
+
+	this.sendNode(new protocol.Node('presence', attributes));
+};
+
 WhatsApi.prototype.sendMessage = function(to, message, msgid) {
 	this.sendMessageNode(to, new protocol.Node('body', null, null, message), msgid);
 };
