@@ -863,6 +863,7 @@ WhatsApi.prototype.nextMessageId = function(prefix) {
 };
 
 WhatsApi.prototype.createJID = function(msisdn) {
+	msisdn = msisdn.toString();
 	if(msisdn.indexOf('@') !== -1) {
 		return msisdn;
 	}
