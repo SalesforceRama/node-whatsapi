@@ -207,7 +207,7 @@ Node.prototype.isFailure = function() {
 };
 
 Node.prototype.isReceived = function() {
-	return this.tag() === 'message' && this.child('received');
+	return this.tag() === 'message' && (this.child('received') || this.child('x'));
 };
 
 Node.prototype.isProfilePicture = function() {
