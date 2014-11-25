@@ -133,6 +133,31 @@ WhatsApi.prototype.sendofflineStatus = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
+WhatsApi.prototype.sendMessageComposing = function(to) {
+
+	var state = new protocol.Node('composing', {xmlns : 'http://jabber.org/protocol/chatstates'});
+
+	var attributes = {
+		to : this.createJID(to),
+		type : 'chat',
+		t : common.tstamp().toString()
+	};
+
+    this.sendNode(new protocol.Node('message', attributes, [state]));
+};
+
+WhatsApi.prototype.sendMessagePaused = function(to) {
+	var state = new protocol.Node('paused', {xmlns : 'http://jabber.org/protocol/chatstates'});
+
+	var attributes = {
+		to : this.createJID(to),
+		type : 'chat',
+		t : common.tstamp().toString()
+	};
+	
+    this.sendNode(new protocol.Node('message', attributes, [state]));
+};
+
 WhatsApi.prototype.sendMessage = function(to, message, msgid) {
 	this.sendMessageNode(to, new protocol.Node('body', null, null, message), msgid);
 };
