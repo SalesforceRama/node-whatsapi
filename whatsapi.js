@@ -43,13 +43,13 @@ WhatsApi.prototype.defaultConfig = {
 	password       : '',
 	ccode          : '',
 	reconnect      : true,
-	host           : 'c.whatsapp.net',
+	host           : 'c2.whatsapp.net',
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
-	port           : 5222,
-	device_type    : 'Android',
-	app_version    : '2.11.69',
-	ua             : 'WhatsApp/2.11.69 Android/4.3 Device/GalaxyS3',
+	port           : 443,
+	device_type    : 'S40-2.12.53',
+	app_version    : '2.12.53',
+	ua             : 'WhatsApp/2.12.53 S40Version/14.26 Device/Nokia302',
 	challenge_file : __dirname + '/challenge'
 };
 
@@ -376,7 +376,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	
-	if(node.isAvailable()) {
+	if(node.isAvailable() && node.attribute('from') !== this.selfAddress) {
 		this.emit('presence.available', node.attribute('from'), node.attribute('type'));
 	}
 
