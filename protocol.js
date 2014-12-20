@@ -211,7 +211,7 @@ Node.prototype.isReceived = function() {
 };
 
 Node.prototype.isProfilePicture = function() {
-	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture';
+	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length >0;
 };
 
 Node.prototype.toXml = function(prefix) {

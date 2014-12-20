@@ -278,6 +278,44 @@ WhatsApi.prototype.requestContactsSync = function(msisdnList) {
 	this.contactsSync.requestSync(msisdnList);
 };
 
+WhatsApi.prototype.setProfilePicture = function(filepath) {
+//See this discussion when moving to WAUTH-2: https://github.com/tgalal/yowsup/issues/296
+//The xmlns needs to be moved to the parent node and the order of thumb and fullsize picture is reversed
+	var pictureNode, thumbNode;
+	var attributes = {
+		id: this.nextMessageId('setphoto'),
+		to: this.createJID(this.config.msisdn),
+		type: 'set'
+	};
+
+	var onThumbReady = function(err, data) {
+		//data is returned as a base64 string
+		if(err) {
+			this.emit('media.error', err);
+			return;
+		}
+		thumbNode = new protocol.Node('picture', {type:'preview', xmlns:'w:profile:picture'}, null, new Buffer(data, 'base64'));
+		this.sendNode(new protocol.Node('iq', attributes, [thumbNode, pictureNode]));
+	}.bind(this);
+
+	this.getMediaFile(filepath, MediaType.IMAGE, function(err, path) {
+		if(err) {
+			this.emit('media.error', err);
+			return;
+		}
+		
+		fs.readFile(path, function(err, data) {
+				if(err) {
+					this.emit('media.error', err);
+					return;
+				}
+				pictureNode = new protocol.Node('picture', null, null, data); 
+				this.createImageThumbnail(path, onThumbReady);
+		}.bind(this));
+		
+	}.bind(this));
+};
+
 WhatsApi.prototype.requestProfilePicture = function(target, small) {
 	var picAttributes = {
 		xmlns : 'w:profile:picture',
@@ -356,7 +394,7 @@ WhatsApi.prototype.send = function(buffer) {
 	this.transport.send(buffer);
 };
 
-WhatsApi.prototype.processNode = function(node) {
+WhatsApi.prototype.processNode = function(node) {	
 	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
 		this.sendNode(this.createReceivedNode(node));
 	}
@@ -375,7 +413,7 @@ WhatsApi.prototype.processNode = function(node) {
 		this.emit('login');
 		return;
 	}
-	
+
 	if(node.isAvailable() && node.attribute('from') !== this.selfAddress) {
 		this.emit('presence.available', node.attribute('from'), node.attribute('type'));
 	}
@@ -853,7 +891,7 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 	var opts = {
 		srcPath : srcPath,
 		dstPath : dstPath,
-		quality : 100,
+		quality : 0.5,
 		width   : 100,
 		height  : 100
 	};
