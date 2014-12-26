@@ -124,7 +124,11 @@ WhatsApi.prototype.sendIsOnline = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
-WhatsApi.prototype.sendofflineStatus = function() {
+WhatsApi.prototype.sendIsOffline = function() {
+	this.sendOfflineStatus();
+};
+
+WhatsApi.prototype.sendOfflineStatus = function() {
 	var attributes = {
 		type : 'unavailable',
 		name : this.config.username
