@@ -274,6 +274,26 @@ WhatsApi.prototype.requestLastSeen = function(who) {
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
 };
 
+WhatsApi.prototype.sendPresenceSubscription = function(who) {
+	var attributes = {
+		type : 'subscribe',
+		name : this.createJID(who)
+	};
+	var node = new protocol.Node('presence', attributes);
+	
+	this.sendNode(node);
+};
+
+WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
+	var attributes = {
+		type : 'unsubscribe',
+		name : this.createJID(who)
+	};
+	var node = new protocol.Node('presence', attributes);
+	
+	this.sendNode(node);
+};
+
 WhatsApi.prototype.requestContactsSync = function(msisdnList) {
 	if(!this.contactsSync) {
 		this.initContactsSync();
