@@ -277,7 +277,7 @@ WhatsApi.prototype.requestLastSeen = function(who) {
 WhatsApi.prototype.sendPresenceSubscription = function(who) {
 	var attributes = {
 		type : 'subscribe',
-		name : this.createJID(who)
+		to : this.createJID(who)
 	};
 	var node = new protocol.Node('presence', attributes);
 	
@@ -287,7 +287,7 @@ WhatsApi.prototype.sendPresenceSubscription = function(who) {
 WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
 	var attributes = {
 		type : 'unsubscribe',
-		name : this.createJID(who)
+		to : this.createJID(who)
 	};
 	var node = new protocol.Node('presence', attributes);
 	
