@@ -234,9 +234,9 @@ WhatsApi.prototype.requestGroupMembers = function(groupId) {
 WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
 	var groupNodes = [];
 
-	groupIds.forEach(function(groupId) {
-		groupNodes.push(new protocol.Node('group', {id : this.createJID(groupId)}));
-	}, this);
+	for (var i = 0; i < groupIds.length; i++) {
+		groupNodes.push(new protocol.Node('group', {id : this.createJID(groupIds[i])}));
+	};
 
 	var leaveNode = new protocol.Node('leave', {xmlns : 'w:g', action : 'delete'}, groupNodes);
 
@@ -610,12 +610,14 @@ WhatsApi.prototype.initKeys = function(salt) {
 WhatsApi.prototype.createClearDirtyNode = function(node) {
 	var categories = [];
 
-	if(node.children().length) {
-		node.children().forEach(function(child) {
+	var children = node.children();
+	if(children.length) {
+		for (var i = 0; i < children.length; i++) {
+			var child = node.child(i);
 			if(child.tag() === 'category') {
 				categories.push(new protocol.Node('category', {name : child.attribute('name')}));
 			}
-		});
+		};
 	}
 
 	var cleanNode = new protocol.Node('clean', {xmlns : 'urn:xmpp:whatsapp:dirty'}, categories);
