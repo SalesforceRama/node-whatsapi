@@ -168,7 +168,7 @@ Node.prototype.isMediaReady = function() {
 };
 
 Node.prototype.isGroupList = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group');
+	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group') && this.child('group').attribute('subject');
 };
 
 Node.prototype.isGroupAdd = function() {
@@ -191,6 +191,10 @@ Node.prototype.isGroupNewcomer = function() {
 
 Node.prototype.isGroupOutcomer = function() {
 	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('remove');
+};
+
+Node.prototype.isGroupCreated = function() {
+	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group') && !this.child('group').attribute('subject');
 };
 
 Node.prototype.isLastSeen = function() {
@@ -232,7 +236,7 @@ Node.prototype.toXml = function(prefix) {
 	xml += '>';
 
 	if(this.contents.data) {
-		xml += this.contents.data;
+		xml += this.contents.data.length + ' data length';//this.contents.data;
 	}
 
 	if(this.contents.children.length) {
@@ -290,7 +294,7 @@ Reader.prototype.nextNode = function() {
 		this.input.copy(encoded, 0, 0, dataSize);
 
 		var remaining = this.input.slice(dataSize);
-		var decoded   = this.key.decode(encoded);
+		var decoded   = this.key.decodeMessage(encoded, dataSize, 0, dataSize);
 
 		this.input = Buffer.concat([decoded, remaining]);
 	}
@@ -480,7 +484,7 @@ Writer.prototype.stream = function(to, resource) {
 
 	header.write('WA');
 	header.writeUInt8(1, 2);
-	header.writeUInt8(2, 3);
+	header.writeUInt8(5, 3);
 
 	var attributes = {to : to, resource : resource};
 
@@ -510,7 +514,7 @@ Writer.prototype.flush = function() {
 	var output = this.output.toBuffer();
 
 	if(this.key !== null) {
-		output = this.key.encode(output);
+		output = this.key.encodeMessage(output,0,4,output.length -4);
 	}
 
 	var header = new Buffer(3);

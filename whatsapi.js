@@ -10,7 +10,7 @@ var querystring = require('querystring');
 var imagick     = require('imagemagick');
 var mime        = require('mime');
 var common      = require('./common');
-var dictionary  = require('./dictionary');
+var dictionary  = require('./dictionary_new');
 var protocol    = require('./protocol');
 var transports  = require('./transport');
 var encryption  = require('./encryption');
@@ -46,10 +46,10 @@ WhatsApi.prototype.defaultConfig = {
 	host           : 'c.whatsapp.net',
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
-	port           : 443,
+	port           : 5222,
 	device_type    : 'Android',
-	app_version    : '2.11.473',
-	ua             : 'WhatsApp/2.11.473 Android/4.3 Device/GalaxyS3',
+	app_version    : '2.11.339',
+	ua             : 'WhatsApp/2.11.339 Android/4.0.4 Device/GalaxyS3',
 	challenge_file : __dirname + '/challenge'
 };
 
@@ -544,12 +544,12 @@ WhatsApi.prototype.processNode = function(node) {
 
 WhatsApi.prototype.createFeaturesNode = function() {
 	var features = [
-		//new protocol.Node('receipt_acks'),
-		//new protocol.Node('status')
-		new protocol.Node('readreceipts'),
-		new protocol.Node('groups_v2'),
-		new protocol.Node('privacy'),
-		new protocol.Node('presence')
+		// //new protocol.Node('receipt_acks'),
+		// //new protocol.Node('status')
+		// new protocol.Node('readreceipts'),
+		// new protocol.Node('groups_v2'),
+		// new protocol.Node('privacy'),
+		// new protocol.Node('presence')
 	];
 
 	return new protocol.Node('stream:features', null, features);
@@ -557,12 +557,12 @@ WhatsApi.prototype.createFeaturesNode = function() {
 
 WhatsApi.prototype.createAuthNode = function() {
 	var attributes = {
-		xmlns     : 'urn:ietf:params:xml:ns:xmpp-sasl',
+		//xmlns     : 'urn:ietf:params:xml:ns:xmpp-sasl',
 		mechanism : 'WAUTH-2',
 		user      : this.config.msisdn
 	};
 
-	return new protocol.Node('auth', attributes, null, this.createAuthData());
+return new protocol.Node('auth', attributes, null, this.createAuthData());
 };
 
 WhatsApi.prototype.createAuthData = function() {
@@ -572,56 +572,54 @@ WhatsApi.prototype.createAuthData = function() {
 		return '';
 	}
 
-	this.initKeys(challenge);
+	//this.initKeys(challenge);
+	var key = encryption.pbkdf2(new Buffer(this.config.password, 'base64'), challenge, 16, 20);
+	this.readerKey = new encryption.KeyStream(new Buffer([key[2]]), new Buffer([key[3]]));
+	this.writerKey = new encryption.KeyStream(new Buffer([key[0]]), new Buffer([key[1]]));
+
 
 	this.reader.setKey(this.readerKey);
 
-	var arr = [
-		this.config.msisdn,
+	var arr = Buffer.concat([
+		new Buffer([0,0,0,0]),
+		new Buffer(this.config.msisdn),
 		challenge,
-		common.tstamp(),
-		this.config.ua,
-		' MccMnc/' + this.config.ccode + '001'
-	];
-
-	return this.writerKey.encode(arr.join(''), false);
+		new Buffer(common.tstamp().toString()),
+		new Buffer(this.config.ua),
+		new Buffer(' MccMnc/' + this.config.ccode + '001')
+	]);
+	return this.writerKey.encodeMessage(arr, 0, arr.length, false);
 };
 
 WhatsApi.prototype.createAuthResposeNode = function(challenge) {
+  console.log(challenge.toString('hex'));
 	this.initKeys(challenge);
 
 	var arr = Buffer.concat([
+		new Buffer([0,0,0,0]),
 		new Buffer(this.config.msisdn),
-		challenge/*,
-		new Buffer(common.tstamp().toString())*/
+		challenge
 	]);
-
-	var data = this.writerKey.encode(arr, false);
-
+	console.log(arr.toString('hex'));
+	var data = this.writerKey.encodeMessage(arr, 0,4,arr.length -4);
+  console.log(data.toString('hex'));
 	return new protocol.Node('response', {xmlns : 'urn:ietf:params:xml:ns:xmpp-sasl'}, null, data);
 };
 
-
-WhatsApi.prototype.generateKeys = function(nonce) {
+WhatsApi.prototype.generateKeys = function(password, nonce) {
 	var keys = [];
 	for(var j=1;j<5;j++){
-		var currNonce = nonce + String.fromCharCode(j);
-		keys.push( pbkdf2(new Buffer(this.config.password, 'base64'), currNonce, 2, 20) );		
+		var currNonce = Buffer.concat( [nonce, new Buffer([j])] );
+		keys.push( encryption.pbkdf2(new Buffer(password, 'base64'), currNonce, 2, 20) );		
 	}
 	return keys;
-	
-	//var key = encryption.pbkdf2(new Buffer(this.config.password, 'base64'), salt);
-
-	//this.readerKey = new encryption.KeyStream(key);
-	//this.writerKey = new encryption.KeyStream(key);
 };
 
+WhatsApi.prototype.initKeys = function(nonce) {
+	var keys = this.generateKeys(this.config.password, nonce);
 
-WhatsApi.prototype.initKeys = function(salt) {
-	var key = encryption.pbkdf2(new Buffer(this.config.password, 'base64'), salt);
-
-	this.readerKey = new encryption.KeyStream(key);
-	this.writerKey = new encryption.KeyStream(key);
+	this.readerKey = new encryption.KeyStream(keys[2], keys[3]);
+	this.writerKey = new encryption.KeyStream(keys[0], keys[1]);
 };
 
 WhatsApi.prototype.createClearDirtyNode = function(node) {
