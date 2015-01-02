@@ -366,8 +366,38 @@ Reader.prototype.readString = function(token, raw) {
 
 		return user.length ? user + '@' + server : server;
 	}
+	
+	if(token === 0xFF) {
+		return this.readNibble();
+	}
 
 	return '';
+};
+
+Reader.prototype.readNibble = function() {
+	var string = "";
+	var byte = this.readInt8();
+	var ignoreLastNibble = (byte & 0x80);
+	
+	var size = (byte & 0x7f);
+	var nrOfNibbles = size * 2 - ignoreLastNibble;
+	
+	var data = this.fillArray(size, true);
+	//console.log( data[0].toString('hex') );
+	
+	for(var i=0; i< nrOfNibbles; i++){
+		byte = data[Math.floor(i/2)];
+		var shift = 4 * (1- i %2);
+		var decimal = (byte & (15 << shift)) >> shift;
+		if (decimal>=0 && decimal <=9)
+			string+=decimal;
+		else if (decimal ==10)
+			string+= "-";
+		else if (decimal ==11)
+			string+=".";
+	}
+	return string;
+	
 };
 
 Reader.prototype.readAttributes = function(size) {
