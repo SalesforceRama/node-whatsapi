@@ -263,7 +263,7 @@ Reader.prototype.setKey = function(key) {
 };
 
 Reader.prototype.appendInput = function(input) {
-	console.log("appending input: %s", input.toString('hex'));
+	//console.log("appending input: %s", input.toString('hex'));
 	input = Buffer.fromBuffer(input);
 
 	this.input = buffer.Buffer.isBuffer(this.input)
@@ -275,21 +275,23 @@ Reader.prototype.nextNode = function() {
 	if(!this.input || !this.input.length) {
 		return false;
 	}
-	console.log("processing in nextNode: %s", this.input.toString('hex'));
+	//console.log("processing in nextNode: %s", this.input.toString('hex'));
 	var firstByte = this.peekInt8();
 	var encrypted = ((firstByte & 0xF0) >> 4) & 8;
 	var dataSize  = this.peekInt16(1) | ((firstByte & 0x0F) << 16);
 
 	if(dataSize > this.input.length) {
-		console.log("too big %d %d", dataSize, this.input.length);
-		return false;
+		//console.log("too big %d %d", dataSize, this.input.length);
+		//return false;
+		//very dirty hack!!!
+		this.readInt8();
+		return this.nextNode();
 	}
 
 	this.readInt24();
 
 	if(encrypted) {
 		if(this.key === null) {
-			console.log("Encountered encrypted message, missing key");
 			throw 'Encountered encrypted message, missing key';
 		}
 
@@ -298,9 +300,11 @@ Reader.prototype.nextNode = function() {
 		this.input.copy(encoded, 0, 0, dataSize);
 
 		var remaining = this.input.slice(dataSize);
-		if(remaining.length) console.log("remaining: %s",remaining.toString('hex'));
+		//if(remaining.length) console.log("remaining: %s",remaining.toString('hex'));
+		//var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
 		var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
-		console.log("decoded: %s",decoded.toString('hex'));
+		//console.log("decoded: %s",decoded.toString('hex'));
+		//console.log("sizes: decoded: %d data: %d",decoded.length, dataSize);
 		this.input = Buffer.concat([decoded, remaining]);
 	}
 
@@ -310,7 +314,7 @@ Reader.prototype.nextNode = function() {
 Reader.prototype.readNode = function() {
 	var listSize = this.readListSize(this.readInt8());
 	var token    = this.readInt8();
-	console.log ("listSize: %d token: %d", listSize, token);
+	//console.log ("listSize: %d token: %d", listSize, token);
 
 	if(token === 1) {
 		return new Node('start', this.readAttributes(listSize));
@@ -354,7 +358,7 @@ Reader.prototype.readString = function(token, raw) {
 		throw 'Invalid token';
 	}
 
-	if(token > 4 && token < 0xF5) {
+	if(token > 2 && token < 0xF5) {
 		return this.getToken(token);
 	}
 
@@ -548,17 +552,23 @@ Writer.prototype.node = function(node) {
 	return this.flush().toBuffer();
 };
 
+
+
 Writer.prototype.flush = function() {
 	var output = this.output.toBuffer();
-
-	if(this.key !== null) {
-		output = this.key.encodeMessage(output,output.length,0,output.length);
-	}
-
 	var header = new Buffer(3);
-
-	header.writeUInt8(this.key === null ? 0x00 : 0x10, 0);
-	header.writeUInt16BE(output.length, 1);
+	
+	if(this.key !== null) {
+		var size = output.length + 4;
+		output = this.key.encodeMessage(output,output.length,0,output.length);
+		header.writeUInt8( ((8 << 4) | (size & 16711680) >> 16)%256 , 0);
+		header.writeUInt8( ((size & 65280) >> 8)%256, 1);
+		header.writeUInt8( (size & 255)%256, 2);
+		
+	}else{
+		header.writeUInt8(this.key === null ? 0x00 : 0x10, 0);
+		header.writeUInt16BE(output.length, 1);
+	}
 
 	try {
 		return Buffer.concat([header, output], header.length + output.length);

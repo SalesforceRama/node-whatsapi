@@ -139,7 +139,7 @@ WhatsApi.prototype.sendMessageComposing = function(to) {
 
 	var attributes = {
 		to : this.createJID(to),
-		type : 'chat',
+		type : 'text',
 		t : common.tstamp().toString()
 	};
 
@@ -151,7 +151,7 @@ WhatsApi.prototype.sendMessagePaused = function(to) {
 
 	var attributes = {
 		to : this.createJID(to),
-		type : 'chat',
+		type : 'text',
 		t : common.tstamp().toString()
 	};
 	
@@ -380,7 +380,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
 
 	var attributes = {
 		to   : this.createJID(to),
-		type : 'chat',
+		type : 'text',
 		id   : msgid || this.nextMessageId('message'),
 		t    : common.tstamp().toString()
 	};
@@ -421,6 +421,11 @@ WhatsApi.prototype.processNode = function(node) {
 
 	if(node.isSuccess()) {
 		fs.writeFile(this.config.challenge_file, node.data());
+		
+		//this.initKeys(node.data());
+		//this.reader.setKey(this.readerKey);
+		this.writer.setKey(this.writerKey);
+		
 		this.loggedIn = true;
 		this.flushQueue();
 		this.emit('login');
@@ -592,7 +597,7 @@ WhatsApi.prototype.createAuthData = function() {
 };
 
 WhatsApi.prototype.createAuthResposeNode = function(challenge) {
-  console.log(challenge.toString('hex'));
+  //console.log(challenge.toString('hex'));
 	this.initKeys(challenge);
 
 	var arr = Buffer.concat([
@@ -600,9 +605,9 @@ WhatsApi.prototype.createAuthResposeNode = function(challenge) {
 		new Buffer(this.config.msisdn),
 		challenge
 	]);
-	console.log(arr.toString('hex'));
+	//console.log(arr.toString('hex'));
 	var data = this.writerKey.encodeMessage(arr, 0,4,arr.length -4);
-  console.log(data.toString('hex'));
+  //console.log(data.toString('hex'));
 	return new protocol.Node('response', {xmlns : 'urn:ietf:params:xml:ns:xmpp-sasl'}, null, data);
 };
 
@@ -666,7 +671,7 @@ WhatsApi.prototype.createReceivedNode = function(node) {
 
 	var attributes = {
 		to   : node.attribute('from'),
-		type : 'chat',
+		type : 'text',
 		id   : node.attribute('id'),
 		t    : common.tstamp().toString()
 	};
@@ -993,7 +998,7 @@ WhatsApi.prototype.onTransportEnd = function() {
 };
 
 WhatsApi.prototype.onTransportData = function(data) {
-	console.log("incoming data: "+ data.toString('hex'));
+	//console.log("incoming data: "+ data.toString('hex'));
 	this.reader.appendInput(data);
 
 	while(true) {
