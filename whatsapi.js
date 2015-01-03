@@ -124,7 +124,11 @@ WhatsApi.prototype.sendIsOnline = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
-WhatsApi.prototype.sendofflineStatus = function() {
+WhatsApi.prototype.sendIsOffline = function() {
+	this.sendOfflineStatus();
+};
+
+WhatsApi.prototype.sendOfflineStatus = function() {
 	var attributes = {
 		type : 'unavailable',
 		name : this.config.username
@@ -268,6 +272,26 @@ WhatsApi.prototype.requestLastSeen = function(who) {
 	};
 
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
+};
+
+WhatsApi.prototype.sendPresenceSubscription = function(who) {
+	var attributes = {
+		type : 'subscribe',
+		to : this.createJID(who)
+	};
+	var node = new protocol.Node('presence', attributes);
+	
+	this.sendNode(node);
+};
+
+WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
+	var attributes = {
+		type : 'unsubscribe',
+		to : this.createJID(who)
+	};
+	var node = new protocol.Node('presence', attributes);
+	
+	this.sendNode(node);
 };
 
 WhatsApi.prototype.requestContactsSync = function(msisdnList) {
