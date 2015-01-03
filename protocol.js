@@ -263,6 +263,7 @@ Reader.prototype.setKey = function(key) {
 };
 
 Reader.prototype.appendInput = function(input) {
+	console.log("appending input: %s", input.toString('hex'));
 	input = Buffer.fromBuffer(input);
 
 	this.input = buffer.Buffer.isBuffer(this.input)
@@ -274,11 +275,13 @@ Reader.prototype.nextNode = function() {
 	if(!this.input || !this.input.length) {
 		return false;
 	}
-
-	var encrypted = ((this.peekInt8() & 0xF0) >> 4) & 8;
-	var dataSize  = this.peekInt16(1);
+	console.log("processing in nextNode: %s", this.input.toString('hex'));
+	var firstByte = this.peekInt8();
+	var encrypted = ((firstByte & 0xF0) >> 4) & 8;
+	var dataSize  = this.peekInt16(1) | ((firstByte & 0x0F) << 16);
 
 	if(dataSize > this.input.length) {
+		console.log("too big %d %d", dataSize, this.input.length);
 		return false;
 	}
 
@@ -286,6 +289,7 @@ Reader.prototype.nextNode = function() {
 
 	if(encrypted) {
 		if(this.key === null) {
+			console.log("Encountered encrypted message, missing key");
 			throw 'Encountered encrypted message, missing key';
 		}
 
@@ -294,8 +298,9 @@ Reader.prototype.nextNode = function() {
 		this.input.copy(encoded, 0, 0, dataSize);
 
 		var remaining = this.input.slice(dataSize);
-		var decoded   = this.key.decodeMessage(encoded, dataSize, 0, dataSize);
-
+		if(remaining.length) console.log("remaining: %s",remaining.toString('hex'));
+		var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
+		console.log("decoded: %s",decoded.toString('hex'));
 		this.input = Buffer.concat([decoded, remaining]);
 	}
 
@@ -305,6 +310,7 @@ Reader.prototype.nextNode = function() {
 Reader.prototype.readNode = function() {
 	var listSize = this.readListSize(this.readInt8());
 	var token    = this.readInt8();
+	console.log ("listSize: %d token: %d", listSize, token);
 
 	if(token === 1) {
 		return new Node('start', this.readAttributes(listSize));
@@ -334,6 +340,10 @@ Reader.prototype.readNode = function() {
 Reader.prototype.getToken = function(token) {
 	if(this.dictionary.hasOwnProperty(token)) {
 		return this.dictionary[token];
+	}else{
+		var retryToken = this.readInt8();
+		if(this.dictionary.hasOwnProperty(retryToken))
+			return this.dictionary[retryToken];
 	}
 
 	throw 'Unexpected token: ' + token;
@@ -383,7 +393,6 @@ Reader.prototype.readNibble = function() {
 	var nrOfNibbles = size * 2 - ignoreLastNibble;
 	
 	var data = this.fillArray(size, true);
-	//console.log( data[0].toString('hex') );
 	
 	for(var i=0; i< nrOfNibbles; i++){
 		byte = data[Math.floor(i/2)];
@@ -397,7 +406,6 @@ Reader.prototype.readNibble = function() {
 			string+=".";
 	}
 	return string;
-	
 };
 
 Reader.prototype.readAttributes = function(size) {
@@ -544,7 +552,7 @@ Writer.prototype.flush = function() {
 	var output = this.output.toBuffer();
 
 	if(this.key !== null) {
-		output = this.key.encodeMessage(output,0,4,output.length -4);
+		output = this.key.encodeMessage(output,output.length,0,output.length);
 	}
 
 	var header = new Buffer(3);

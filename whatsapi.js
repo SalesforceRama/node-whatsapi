@@ -117,7 +117,7 @@ WhatsApi.prototype.login = function() {
 
 WhatsApi.prototype.sendIsOnline = function() {
 	var attributes = {
-		type : 'available',
+		//type : 'available',
 		name : this.config.username
 	};
 
@@ -588,7 +588,7 @@ WhatsApi.prototype.createAuthData = function() {
 		new Buffer(this.config.ua),
 		new Buffer(' MccMnc/' + this.config.ccode + '001')
 	]);
-	return this.writerKey.encodeMessage(arr, 0, arr.length, false);
+	return this.writerKey.encodeMessage(arr, 0, arr.length, 0);
 };
 
 WhatsApi.prototype.createAuthResposeNode = function(challenge) {
@@ -993,6 +993,7 @@ WhatsApi.prototype.onTransportEnd = function() {
 };
 
 WhatsApi.prototype.onTransportData = function(data) {
+	console.log("incoming data: "+ data.toString('hex'));
 	this.reader.appendInput(data);
 
 	while(true) {
