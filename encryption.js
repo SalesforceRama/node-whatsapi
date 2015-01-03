@@ -35,9 +35,6 @@ KeyStream.prototype.computeMac = function(buffer, offset, length){
 
 //WAUTH-2
 KeyStream.prototype.encodeMessage = function(buffer, macOffset, offset, length){
-    // $data = $this->rc4->cipher($buffer, $offset, $length);
-    // $mac  = $this->computeMac($data, $offset, $length);
-    // return substr($data, 0, $macOffset) . substr($mac, 0, 4) . substr($data, $macOffset + 4);
 		var data = this.rc4engine.cipher(buffer, offset, length);
 		var mac = this.computeMac(data, offset, length);
 		return Buffer.concat( [data.slice(0, macOffset), mac.slice(0,4), data.slice(macOffset + 4)] );
@@ -45,40 +42,10 @@ KeyStream.prototype.encodeMessage = function(buffer, macOffset, offset, length){
 
 //WAUTH-2
 KeyStream.prototype.decodeMessage = function(buffer, macOffset, offset, length){
-    // $mac = $this->computeMac($buffer, $offset, $length);
-    // //validate mac
-    // for ($i = 0; $i < 4; $i++) {
-    //     $foo = ord($buffer[$macOffset + $i]);
-    //     $bar = ord($mac[$i]);
-    //     if ($foo !== $bar) {
-    //         throw new Exception("MAC mismatch: $foo != $bar");
-    //     }
-    // }
-    // return $this->rc4->cipher($buffer, $offset, $length);
 		var mac = this.computeMac(buffer, offset, length);
-		return this.rc4engine.cipher(buffer, offset, length);
+		var decoded = this.rc4engine.cipher(buffer, offset, length);
+		return decoded.slice(0, length);
 };
-
-
-
-// KeyStream.prototype.encode = function(data, append) {
-// 	if(append !== false) {
-// 		append = true;
-// 	}
-// 
-// 	var hash  = this.cipher.update(data),
-// 			affix = hmac.slice(0, 4);
-// 		// hmac  = crypto.createHmac('sha1', this.key).update(hash).digest(),
-// 		// affix = hmac.slice(0, 4);
-// 
-// 	var buffers = append ? [hash, affix] : [affix, hash];
-// 
-// 	return Buffer.concat(buffers, affix.length + hash.length);
-// };
-
-// KeyStream.prototype.decode = function(data) {
-// 	return this.cipher.update(data.slice(4)).slice();
-// };
 
 function pbkdf2(password, salt, iterations, length) {
 	iterations = iterations || 16;
