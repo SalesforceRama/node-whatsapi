@@ -21,7 +21,7 @@ Buffer.concat = function(buffers, len) {
 	var offset = 0;
 	
 	for (var i = 0; i < buffers.length; i++) {
-		buffer.copy(result, offset);
+		buffers[i].copy(result, offset);
 
 		offset += buffers[i].length;
 	};
