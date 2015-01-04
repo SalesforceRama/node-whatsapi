@@ -124,7 +124,11 @@ WhatsApi.prototype.sendIsOnline = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
-WhatsApi.prototype.sendofflineStatus = function() {
+WhatsApi.prototype.sendIsOffline = function() {
+	this.sendOfflineStatus();
+};
+
+WhatsApi.prototype.sendOfflineStatus = function() {
 	var attributes = {
 		type : 'unavailable',
 		name : this.config.username
@@ -230,9 +234,9 @@ WhatsApi.prototype.requestGroupMembers = function(groupId) {
 WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
 	var groupNodes = [];
 
-	groupIds.forEach(function(groupId) {
-		groupNodes.push(new protocol.Node('group', {id : this.createJID(groupId)}));
-	}, this);
+	for (var i = 0; i < groupIds.length; i++) {
+		groupNodes.push(new protocol.Node('group', {id : this.createJID(groupIds[i])}));
+	};
 
 	var leaveNode = new protocol.Node('leave', {xmlns : 'w:g', action : 'delete'}, groupNodes);
 
@@ -268,6 +272,26 @@ WhatsApi.prototype.requestLastSeen = function(who) {
 	};
 
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
+};
+
+WhatsApi.prototype.sendPresenceSubscription = function(who) {
+	var attributes = {
+		type : 'subscribe',
+		to : this.createJID(who)
+	};
+	var node = new protocol.Node('presence', attributes);
+	
+	this.sendNode(node);
+};
+
+WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
+	var attributes = {
+		type : 'unsubscribe',
+		to : this.createJID(who)
+	};
+	var node = new protocol.Node('presence', attributes);
+	
+	this.sendNode(node);
 };
 
 WhatsApi.prototype.requestContactsSync = function(msisdnList) {
@@ -586,12 +610,14 @@ WhatsApi.prototype.initKeys = function(salt) {
 WhatsApi.prototype.createClearDirtyNode = function(node) {
 	var categories = [];
 
-	if(node.children().length) {
-		node.children().forEach(function(child) {
+	var children = node.children();
+	if(children.length) {
+		for (var i = 0; i < children.length; i++) {
+			var child = node.child(i);
 			if(child.tag() === 'category') {
 				categories.push(new protocol.Node('category', {name : child.attribute('name')}));
 			}
-		});
+		};
 	}
 
 	var cleanNode = new protocol.Node('clean', {xmlns : 'urn:xmpp:whatsapp:dirty'}, categories);

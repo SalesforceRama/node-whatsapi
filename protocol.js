@@ -11,20 +11,20 @@ util.inherits(Buffer, buffer.Buffer);
 Buffer.concat = function(buffers, len) {
 	if(!len) {
 		len = 0;
-
-		buffers.forEach(function(buffer) {
-			len += buffer.length;
-		});
+		
+		for (var i = 0; i < buffers.length; i++) {
+			len += buffers[i].length;
+		};
 	}
 
 	var result = new Buffer(len);
 	var offset = 0;
-
-	buffers.forEach(function(buffer) {
+	
+	for (var i = 0; i < buffers.length; i++) {
 		buffer.copy(result, offset);
 
-		offset += buffer.length;
-	});
+		offset += buffers[i].length;
+	};
 
 	return result;
 };
@@ -236,9 +236,9 @@ Node.prototype.toXml = function(prefix) {
 	}
 
 	if(this.contents.children.length) {
-		this.contents.children.forEach(function(child) {
-			xml += child.toXml(prefix + '  ');
-		}, this);
+		for (var i = 0; i < this.contents.children.length; i++) {
+			xml += this.contents.children[i].toXml(prefix + '  ');
+		};
 
 		xml += "\n" + prefix;
 	}
