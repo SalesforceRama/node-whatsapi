@@ -35,16 +35,18 @@ function Text() {}
 util.inherits(Text, Abstract);
 
 Text.prototype.match = function(node) {
-	return node.child('notify') && node.child('body');
+	return node.attribute('notify') && node.attribute('type') == 'text'
+			&& node.child('body');
 };
 
 Text.prototype.process = function(node) {
 	this.adapter.emit(
 		'message',
+		node.child('body').data().toString(),
 		node.attribute('from'),
 		node.attribute('id'),
-		node.child('notify').attribute('name'),
-		node.child('body').data(),
+		node.attribute('t'),
+		node.attribute('notify'),
 		node.attribute('author')
 	);
 };

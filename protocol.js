@@ -147,8 +147,7 @@ Node.prototype.isTyping = function() {
 };
 
 Node.prototype.isMessage = function() {
-	return this.tag() === 'message' && this.child('notify') &&
-		   this.child('notify').attribute('name') !== null;
+	return this.tag() === 'message' && this.attribute('notify');
 };
 
 Node.prototype.isPing = function() {
