@@ -220,7 +220,11 @@ Node.prototype.isProfilePicture = function() {
 
 Node.prototype.isSync = function() {
 	return this.tag() === 'iq' && this.child('sync');
-}
+};
+
+Node.prototype.isProperties = function() {
+	return this.tag() == 'iq' && this.child('props');
+};
 
 Node.prototype.toXml = function(prefix) {
 	prefix = prefix || '';

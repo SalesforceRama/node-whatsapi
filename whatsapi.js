@@ -632,6 +632,17 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		return;
 	};
+	
+	if (node.isProperties()) {
+		var properties = {};
+		
+		var propElements = node.child('props').children();
+		for (var i = 0; i < propElements.length; i++) {
+			properties[propElements[i].attribute('name')] = propElements[i].attribute('value');
+		};
+		
+		this.emit('properties', properties);
+	};	
 };
 
 WhatsApi.prototype.createFeaturesNode = function() {
