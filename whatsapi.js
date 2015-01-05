@@ -307,12 +307,50 @@ WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
 	this.sendNode(node);
 };
 
-WhatsApi.prototype.requestContactsSync = function(msisdnList) {
-	if(!this.contactsSync) {
-		this.initContactsSync();
+WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
+	if (!util.isArray(contacts)) {
+		this.emit('contacts.error', 'Contacts list should be an array');
+		return;
 	}
-
-	this.contactsSync.requestSync(msisdnList);
+	
+	mode = mode || 'full';
+	context = context || 'registration';
+	
+	// Create user nodes
+	var users = [];
+	for (var i = 0; i < contacts.length; i++) {
+		var number = contacts[i];
+		// Fix numbers without leading '+'
+		if (number.substring(0, 1) != '+') {
+			number = '+' + number;
+		};
+		users.push(new protocol.Node('user', null, null, number));
+	};
+	
+	var node = new protocol.Node(
+		'iq',
+		{
+			to: this.selfAddress,
+			type: 'get',
+			id: this.nextMessageId('sendsync_'),
+			xmlns: 'urn:xmpp:whatsapp:sync'
+		},
+		[ new protocol.Node(
+			'sync',
+			{
+				mode: mode,
+				context: context,
+				sid: common.winTimestamp().toString(),
+				index: '0',
+				last: 'true'
+			},
+			users,
+			''
+		) ],
+		''
+	);
+	
+	this.sendNode(node);
 };
 
 WhatsApi.prototype.setProfilePicture = function(filepath) {
@@ -374,22 +412,6 @@ WhatsApi.prototype.requestProfilePicture = function(target, small) {
 	this.sendNode(new protocol.Node('iq', attributes, [pictureNode]));
 };
 
-WhatsApi.prototype.initContactsSync = function() {
-	this.contactsSync = createContactsSync(this.config);
-
-	this.contactsSync.on('contacts.error', function(e) {
-		this.emit('contacts.error', e);
-	}.bind(this));
-
-	this.contactsSync.on('error', function(e) {
-		this.emit('contacts.error', e);
-	}.bind(this));
-
-	this.contactsSync.on('sync', function(list) {
-		this.emit('contacts.sync', list);
-	}.bind(this));
-};
-
 WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
 	if(!this.loggedIn) {
 		this.queue.push({to : to, node : node});
@@ -431,7 +453,8 @@ WhatsApi.prototype.send = function(buffer) {
 	this.transport.send(buffer);
 };
 
-WhatsApi.prototype.processNode = function(node) {	
+WhatsApi.prototype.processNode = function(node) {
+	// send message received
 	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
 		this.sendNode(this.createReceivedNode(node));
 	}
@@ -525,6 +548,7 @@ WhatsApi.prototype.processNode = function(node) {
 			this.emit('group.outcomer',
 				node.attribute('from'), node.attribute('remove'), node.attribute('author'));
 		}
+		return;
 	}
 	
 	if(node.isGroupCreated()) {
@@ -533,6 +557,7 @@ WhatsApi.prototype.processNode = function(node) {
 			groupId: node.child('group').attribute('id')
 		};
 		this.emit('group.created', group);
+		return;
 	}
 
 	if(node.isLastSeen()) {
@@ -564,11 +589,31 @@ WhatsApi.prototype.processNode = function(node) {
 
 	if(node.isMessage()) {
 		this.processor.process(node);
+		return;
 	}
 	
 	if(node.isTyping()) {
 		this.emit('typing', node.attribute('from'), node.contents.children[0].contents.tag);
+		return;
 	}
+	
+	if (node.isSync()) {		
+		var sync = node.child('sync');
+		var existing = node.child('in');
+		var nonExisting = node.child('out');
+		
+		var existingUsers = [];
+		if (existing) {
+			for (var i = 0; i < existing.children().length; i++) {
+				existingUsers.push(existing.child(i));
+			};
+		};
+		
+		console.log(existingUsers);
+		// this.emit('contacts.sync', existingUsers);
+		
+		return;
+	};
 };
 
 WhatsApi.prototype.createFeaturesNode = function() {
@@ -686,23 +731,14 @@ WhatsApi.prototype.createPongNode = function(messageId) {
 };
 
 WhatsApi.prototype.createReceivedNode = function(node) {
-	var request  = node.child('request');
-	var received = node.child('received');
-
-	if(!request && !received) {
-		return false;
-	}
-
-	var receivedNode = new protocol.Node(received ? 'ack' : 'received', {xmlns : 'urn:xmpp:receipts'});
-
 	var attributes = {
 		to   : node.attribute('from'),
-		type : 'text',
+		type : 'read',
 		id   : node.attribute('id'),
 		t    : common.tstamp().toString()
 	};
 
-	return new protocol.Node('message', attributes, [receivedNode]);
+	return new protocol.Node('receipt', attributes);
 };
 
 WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to, msgid) {
@@ -1054,204 +1090,6 @@ WhatsApiDebug.prototype.processNode = function(node) {
 WhatsApiDebug.prototype.sendNode = function(node) {
 	node && console.log(node.toXml('tx '));
 	return WhatsApiDebug.super_.prototype.sendNode.apply(this, arguments);
-};
-
-function WhatsApiContactsSync(config) {
-	this.config = common.extend({}, this.defaultConfig, config);
-
-	events.EventEmitter.call(this);
-}
-
-util.inherits(WhatsApiContactsSync, events.EventEmitter);
-
-WhatsApiContactsSync.prototype.defaultConfig = {
-	msisdn   : '',
-	password : '',
-	server   : 's.whatsapp.net'
-};
-
-WhatsApiContactsSync.prototype.requestSync = function(msisdnList) {
-	if(!util.isArray(msisdnList)) {
-		this.emit('contacts.error', 'Contacts list should be an array');
-		return;
-	}
-
-	var options = {
-		hostname : 'sro.whatsapp.net',
-		path     : '/v2/sync/a',
-		method   : 'POST',
-		headers  : this.createHeaders()
-	};
-
-	this.request(options, function(err, jsonbody, headers) {
-		try {
-			if(err) {
-				throw err;
-			}
-
-			try {
-				var body = JSON.parse(jsonbody);
-			} catch(e) {
-				throw 'Received non-json respose: ' + jsonbody;
-			}
-
-			if(body.message !== 'next token') {
-				throw 'Received invalid json respose: ' + jsonbody;
-			}
-
-			var authHeader = headers['www-authenticate'];
-
-			if(!authHeader) {
-				throw 'No auth header found';
-			}
-
-			var authParams = {};
-
-			authHeader.replace(/(?:\s|,)([^=]+)="([^"]+)"/g, function(_u, a, b) {
-				authParams[a] = b;
-			});
-
-			if(!authParams.nonce) {
-				throw 'Nonce not found in ' + authHeader;
-			}
-
-			var authOptions = options;
-
-			var escape = querystring.escape;
-
-			querystring.escape = function(value) {
-				return value.toString().match(/^\+/) ? escape.apply(querystring, arguments) : value;
-			};
-
-			var postString = querystring.stringify({
-				ut    : 'wa',
-				t     : 'c',
-				'u[]' : msisdnList.map(function(msisdn) {
-					return msisdn.toString().replace(/^(\d)/, '+$1')
-				})
-			});
-
-			querystring.escape = escape;
-
-			authOptions.path    = '/v2/sync/q';
-			authOptions.headers = this.createHeaders(authParams.nonce, postString.length);
-
-			this.request(authOptions, postString, function(err, jsonbody) {
-				try {
-					var response = JSON.parse(jsonbody);
-				} catch(e) {
-					this.emit('error', 'Received non-json respose: ' + jsonbody);
-					return;
-				}
-
-				var contacts = response.c.map(function(item) {
-					return {
-						msisdn   : item.n,
-						status   : item.s,
-						whatsapp : item.w
-					};
-				});
-
-				this.emit('sync', contacts);
-			}.bind(this));
-		} catch(e) {
-			this.emit('error', e);
-		}
-	}.bind(this));
-};
-
-WhatsApiContactsSync.prototype.createHeaders = function(nonce, contentLen) {
-	contentLen = contentLen || 0;
-
-	return {
-		'User-Agent'      : this.config.ua,
-		'Accept'          : 'text/json',
-		'Content-Type'    : 'application/x-www-form-urlencoded',
-		'Authorization'   : this.createAuth(nonce),
-		'Accept-Encoding' : 'identity',
-		'Content-Length'  : contentLen.toString()
-	};
-};
-
-WhatsApiContactsSync.prototype.createAuth = function(nonce) {
-	var credentials = Buffer.concat([
-		new Buffer(this.config.msisdn),
-		new Buffer(':' + this.config.server + ':'),
-		new Buffer(this.config.password, 'base64')
-	]);
-
-	var salt = crypto.randomBytes(5).toString('hex');
-
-	var md5 = function(buf) {
-		var hash = crypto.createHash('md5');
-		hash.update(buf);
-		return hash.digest();
-	};
-
-	nonce = nonce || '0';
-
-	var credentialsHash = md5(credentials);
-
-	var saltedCredentialsHash = md5(Buffer.concat([
-		credentialsHash,
-		new Buffer(':' + nonce + ':' + salt)
-	]));
-
-	var digestHash = md5('AUTHENTICATE:WAWA/s.whatsapp.net');
-
-	var responseHash = md5(
-		saltedCredentialsHash.toString('hex') +
-		':' + nonce + ':00000001:' + salt + ':auth:' +
-		digestHash.toString('hex')
-	);
-
-	var authParams = {
-		username     : this.config.msisdn,
-		realm        : this.config.server,
-		nonce        : nonce,
-		cnonce       : salt,
-		nc           : '00000001',
-		qop          : 'auth',
-		'digest-uri' : 'WAWA/s.whatsapp.net',
-		response     : responseHash.toString('hex'),
-		charset      : 'utf-8'
-	};
-
-	var authArray = [];
-
-	for(var param in authParams) {
-		if(authParams.hasOwnProperty(param)) {
-			authArray.push(util.format('%s="%s"', param, authParams[param]));
-		}
-	}
-
-	return 'X-WAWA:' + authArray.join(',');
-};
-
-WhatsApiContactsSync.prototype.request = function(options, post, callback) {
-	var req = https.request(options, function(res) {
-		var buffers = [];
-
-		res.on('data', function(buf) {
-			buffers.push(buf);
-		});
-
-		res.on('end', function() {
-			callback(false, Buffer.concat(buffers).toString(), res.headers);
-		});
-	});
-
-	if(post instanceof Function) {
-		callback = post;
-	} else {
-		req.write(post);
-	}
-
-	req.on('error', function(e) {
-		callback(e);
-	});
-
-	req.end();
 };
 
 function WhatsApiRegistration(config) {

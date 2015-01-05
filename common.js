@@ -6,6 +6,10 @@ function tstamp() {
 	return Math.floor(Date.now() / 1000);
 }
 
+function winTimestamp() {
+	return ((Date.now() + 11644477200) * 10000000);
+}
+
 function objSize(obj) {
 	var size = 0;
 
@@ -64,6 +68,7 @@ function fetch(target, callback) {
 }
 
 exports.tstamp  = tstamp;
+exports.winTimestamp = winTimestamp;
 exports.objSize = objSize;
 exports.extend  = extend;
 exports.fetch   = fetch;

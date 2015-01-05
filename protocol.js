@@ -128,9 +128,10 @@ Node.prototype.data = function() {
 	return this.contents.data;
 };
 
+// TOOD this needs to be checked
 Node.prototype.shouldBeReplied = function() {
 	return this.tag() === 'message'
-		&& (this.child('notify') || this.child('received') || this.child('request'));
+		&& (this.attribute('notify')/* || this.child('received') || this.child('request')*/);
 };
 
 Node.prototype.isChallenge = function() {
@@ -217,6 +218,10 @@ Node.prototype.isReceived = function() {
 Node.prototype.isProfilePicture = function() {
 	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length >0;
 };
+
+Node.prototype.isSync = function() {
+	return this.tag() === 'iq' && this.child('sync');
+}
 
 Node.prototype.toXml = function(prefix) {
 	prefix = prefix || '';
