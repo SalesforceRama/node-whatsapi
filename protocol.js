@@ -21,7 +21,7 @@ Buffer.concat = function(buffers, len) {
 	var offset = 0;
 	
 	for (var i = 0; i < buffers.length; i++) {
-		buffer.copy(result, offset);
+		buffers[i].copy(result, offset);
 
 		offset += buffers[i].length;
 	};
@@ -626,7 +626,12 @@ Writer.prototype.writeJid = function(user, server) {
 };
 
 Writer.prototype.writeBytes = function(bytes) {
-	var len = bytes.length;
+	var len;
+	
+	if (typeof bytes == 'string')
+		len = buffer.Buffer.byteLength(bytes,'utf8')
+	else
+		len = bytes.length;
 
 	if(len >= 0x100) {
 		this.writeInt8(0xFD);
@@ -671,7 +676,10 @@ Writer.prototype.getNodeBufferLength = function(node) {
 	}
 
 	if(node.data() !== '') {
-		size += this.getRawBufferLength(node.data());
+		if (node.tag() =='body')
+			size += this.getBodyRawBufferLength(node.data());
+		else
+			size += this.getRawBufferLength(node.data());
 	}
 
 	if(node.children().length) {
@@ -736,6 +744,17 @@ Writer.prototype.getRawBufferLength = function(raw) {
 	return raw.length >= 0x100 ? size + 2 : size;
 };
 
+Writer.prototype.getBodyRawBufferLength = function(raw) {
+	if (typeof raw == 'string')
+	{
+		var size = buffer.Buffer.byteLength(raw,'utf8') + 2;
+	}
+	else
+	{
+		var size = raw.length + 2;
+	}
+	return raw.length >= 0x100 ? size + 2 : size;
+	};
 exports.Buffer = Buffer;
 exports.Node   = Node;
 exports.Reader = Reader;
