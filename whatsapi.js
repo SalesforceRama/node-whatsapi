@@ -325,12 +325,13 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 		users.push(new protocol.Node('user', null, null, number));
 	};
 	
+	var id = this.nextMessageId('sendsync_');
 	var node = new protocol.Node(
 		'iq',
 		{
 			to: this.selfAddress,
 			type: 'get',
-			id: this.nextMessageId('sendsync_'),
+			id: id,
 			xmlns: 'urn:xmpp:whatsapp:sync'
 		},
 		[ new protocol.Node(
@@ -362,6 +363,23 @@ WhatsApi.prototype.requestServerProperties = function() {
 		},
 		[
 			new protocol.Node('props')
+		]
+	);
+	
+	this.sendNode(node);
+};
+
+WhatsApi.prototype.requestServicePricing = function(language, country) {	
+	var node = new protocol.Node(
+		'iq',
+		{
+			id    : this.nextMessageId('get_service_pricing_'),
+			xmlns : 'urn:xmpp:whatsapp:account',
+			type  : 'get',
+			to    : 's.whatsapp.net'
+		},
+		[
+			new protocol.Node('pricing', { lg: language || 'en', lc: country || 'us' })
 		]
 	);
 	
