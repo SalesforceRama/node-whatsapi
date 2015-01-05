@@ -281,17 +281,14 @@ Reader.prototype.nextNode = function() {
 	}
 	
 	// console.log(this.input.length);
-	// console.log("processing in nextNode: %s", this.input.toString('hex'));
+	//console.log("processing in nextNode: %s", this.input.toString('hex'));
 	var firstByte = this.peekInt8();
 	var encrypted = ((firstByte & 0xF0) >> 4) & 8;
 	var dataSize  = this.peekInt16(1) | ((firstByte & 0x0F) << 16);
 
 	if(dataSize > this.input.length) {
 		//console.log("too big %d %d", dataSize, this.input.length);
-		// return false;
-		//very dirty hack!!!
-		this.readInt8();
-		return this.nextNode();
+		return false;
 	}
 
 	this.readInt24();
@@ -307,10 +304,9 @@ Reader.prototype.nextNode = function() {
 
 		var remaining = this.input.slice(dataSize);
 		//if(remaining.length) console.log("remaining: %s",remaining.toString('hex'));
-		//var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
 		var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
-		console.log("decoded: %s",decoded.toString('hex'));
-		console.log("sizes: decoded: %d data: %d",decoded.length, dataSize);
+		//console.log("decoded: %s",decoded.toString('hex'));
+		//console.log("sizes: decoded: %d data: %d",decoded.length, dataSize);
 		this.input = Buffer.concat([decoded, remaining]);
 	}
 
@@ -320,7 +316,7 @@ Reader.prototype.nextNode = function() {
 Reader.prototype.readNode = function() {
 	var listSize = this.readListSize(this.readInt8());
 	var token    = this.readInt8();
-	//console.log ("listSize: %d token: %d", listSize, token);
+	//console.log ("listSize: %d token: %d, %s", listSize, token, (token >2)? this.readString(token) : '');
 
 	if(token === 1) {
 		return new Node('start', this.readAttributes(listSize));
@@ -353,10 +349,11 @@ Reader.prototype.readNode = function() {
 };
 
 Reader.prototype.getToken = function(token) {
-	if(this.dictionary.hasOwnProperty(token)) {
+	if(token < 0xEC && this.dictionary.hasOwnProperty(token)) {
 		return this.dictionary[token];
 	}else{
-		var retryToken = this.readInt8();
+		//retrieve from "secondary" dictionary. But since we only have one large dictionary we use an offset of 236 (0xEC)
+		var retryToken = 0xEC + this.readInt8();
 		if(this.dictionary.hasOwnProperty(retryToken))
 			return this.dictionary[retryToken];
 	}
@@ -372,7 +369,7 @@ Reader.prototype.readString = function(token, raw) {
 	if(token > 2 && token < 0xF5) { // 245
 		return this.getToken(token);
 	}
-
+	
 	if(token == 0xFC) { // 252
 		return this.fillArray(this.readInt8(), raw);
 	}
@@ -428,9 +425,11 @@ Reader.prototype.readAttributes = function(size) {
 	var attributes = {};
 
 	while(len--) {
-		var key = this.readString(this.readInt8());
-
-		attributes[key] = this.readString(this.readInt8());
+		var keytoken = this.readInt8();
+		var key = this.readString(keytoken);
+		var valtoken = this.readInt8();
+		attributes[key] = this.readString(valtoken);
+		//console.log('  key (%d): %s value (%d): %s', keytoken, key, valtoken, attributes[key]);
 	}
 
 	return attributes;
@@ -470,7 +469,7 @@ Reader.prototype.readList = function(token) {
 Reader.prototype.fillArray = function(len, raw) {
 	try {
 		return raw ? this.input.slice(0, len).toBuffer() : this.input.toString(null, 0, len);
-	} finally {
+	}finally {
 		this.input = this.input.slice(len);
 	}
 };
