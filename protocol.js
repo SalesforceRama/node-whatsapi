@@ -168,7 +168,7 @@ Node.prototype.isMediaReady = function() {
 };
 
 Node.prototype.isGroupList = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group');
+	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group') && this.child('group').attribute('subject');
 };
 
 Node.prototype.isGroupAdd = function() {
@@ -191,6 +191,10 @@ Node.prototype.isGroupNewcomer = function() {
 
 Node.prototype.isGroupOutcomer = function() {
 	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('remove');
+};
+
+Node.prototype.isGroupCreated = function() {
+	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group') && !this.child('group').attribute('subject');
 };
 
 Node.prototype.isLastSeen = function() {
@@ -232,7 +236,7 @@ Node.prototype.toXml = function(prefix) {
 	xml += '>';
 
 	if(this.contents.data) {
-		xml += this.contents.data;
+		xml += this.contents.data.length + ' data length';//this.contents.data;
 	}
 
 	if(this.contents.children.length) {
@@ -259,6 +263,7 @@ Reader.prototype.setKey = function(key) {
 };
 
 Reader.prototype.appendInput = function(input) {
+	//console.log("appending input: %s", input.toString('hex'));
 	input = Buffer.fromBuffer(input);
 
 	this.input = buffer.Buffer.isBuffer(this.input)
@@ -270,12 +275,17 @@ Reader.prototype.nextNode = function() {
 	if(!this.input || !this.input.length) {
 		return false;
 	}
-
-	var encrypted = ((this.peekInt8() & 0xF0) >> 4) & 8;
-	var dataSize  = this.peekInt16(1);
+	//console.log("processing in nextNode: %s", this.input.toString('hex'));
+	var firstByte = this.peekInt8();
+	var encrypted = ((firstByte & 0xF0) >> 4) & 8;
+	var dataSize  = this.peekInt16(1) | ((firstByte & 0x0F) << 16);
 
 	if(dataSize > this.input.length) {
-		return false;
+		//console.log("too big %d %d", dataSize, this.input.length);
+		//return false;
+		//very dirty hack!!!
+		this.readInt8();
+		return this.nextNode();
 	}
 
 	this.readInt24();
@@ -290,8 +300,11 @@ Reader.prototype.nextNode = function() {
 		this.input.copy(encoded, 0, 0, dataSize);
 
 		var remaining = this.input.slice(dataSize);
-		var decoded   = this.key.decode(encoded);
-
+		//if(remaining.length) console.log("remaining: %s",remaining.toString('hex'));
+		//var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
+		var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
+		//console.log("decoded: %s",decoded.toString('hex'));
+		//console.log("sizes: decoded: %d data: %d",decoded.length, dataSize);
 		this.input = Buffer.concat([decoded, remaining]);
 	}
 
@@ -301,6 +314,7 @@ Reader.prototype.nextNode = function() {
 Reader.prototype.readNode = function() {
 	var listSize = this.readListSize(this.readInt8());
 	var token    = this.readInt8();
+	//console.log ("listSize: %d token: %d", listSize, token);
 
 	if(token === 1) {
 		return new Node('start', this.readAttributes(listSize));
@@ -330,6 +344,10 @@ Reader.prototype.readNode = function() {
 Reader.prototype.getToken = function(token) {
 	if(this.dictionary.hasOwnProperty(token)) {
 		return this.dictionary[token];
+	}else{
+		var retryToken = this.readInt8();
+		if(this.dictionary.hasOwnProperty(retryToken))
+			return this.dictionary[retryToken];
 	}
 
 	throw 'Unexpected token: ' + token;
@@ -340,7 +358,7 @@ Reader.prototype.readString = function(token, raw) {
 		throw 'Invalid token';
 	}
 
-	if(token > 4 && token < 0xF5) {
+	if(token > 2 && token < 0xF5) {
 		return this.getToken(token);
 	}
 
@@ -362,8 +380,36 @@ Reader.prototype.readString = function(token, raw) {
 
 		return user.length ? user + '@' + server : server;
 	}
+	
+	if(token === 0xFF) {
+		return this.readNibble();
+	}
 
 	return '';
+};
+
+Reader.prototype.readNibble = function() {
+	var string = "";
+	var byte = this.readInt8();
+	var ignoreLastNibble = (byte & 0x80);
+	
+	var size = (byte & 0x7f);
+	var nrOfNibbles = size * 2 - ignoreLastNibble;
+	
+	var data = this.fillArray(size, true);
+	
+	for(var i=0; i< nrOfNibbles; i++){
+		byte = data[Math.floor(i/2)];
+		var shift = 4 * (1- i %2);
+		var decimal = (byte & (15 << shift)) >> shift;
+		if (decimal>=0 && decimal <=9)
+			string+=decimal;
+		else if (decimal ==10)
+			string+= "-";
+		else if (decimal ==11)
+			string+=".";
+	}
+	return string;
 };
 
 Reader.prototype.readAttributes = function(size) {
@@ -480,7 +526,7 @@ Writer.prototype.stream = function(to, resource) {
 
 	header.write('WA');
 	header.writeUInt8(1, 2);
-	header.writeUInt8(2, 3);
+	header.writeUInt8(5, 3);
 
 	var attributes = {to : to, resource : resource};
 
@@ -506,17 +552,23 @@ Writer.prototype.node = function(node) {
 	return this.flush().toBuffer();
 };
 
+
+
 Writer.prototype.flush = function() {
 	var output = this.output.toBuffer();
-
-	if(this.key !== null) {
-		output = this.key.encode(output);
-	}
-
 	var header = new Buffer(3);
-
-	header.writeUInt8(this.key === null ? 0x00 : 0x10, 0);
-	header.writeUInt16BE(output.length, 1);
+	
+	if(this.key !== null) {
+		var size = output.length + 4;
+		output = this.key.encodeMessage(output,output.length,0,output.length);
+		header.writeUInt8( ((8 << 4) | (size & 16711680) >> 16)%256 , 0);
+		header.writeUInt8( ((size & 65280) >> 8)%256, 1);
+		header.writeUInt8( (size & 255)%256, 2);
+		
+	}else{
+		header.writeUInt8(this.key === null ? 0x00 : 0x10, 0);
+		header.writeUInt16BE(output.length, 1);
+	}
 
 	try {
 		return Buffer.concat([header, output], header.length + output.length);

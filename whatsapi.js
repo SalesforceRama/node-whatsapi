@@ -10,7 +10,7 @@ var querystring = require('querystring');
 var imagick     = require('imagemagick');
 var mime        = require('mime');
 var common      = require('./common');
-var dictionary  = require('./dictionary');
+var dictionary  = require('./dictionary_new');
 var protocol    = require('./protocol');
 var transports  = require('./transport');
 var encryption  = require('./encryption');
@@ -43,13 +43,13 @@ WhatsApi.prototype.defaultConfig = {
 	password       : '',
 	ccode          : '',
 	reconnect      : true,
-	host           : 'c2.whatsapp.net',
+	host           : 'c.whatsapp.net',
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
-	port           : 443,
-	device_type    : 'S40-2.12.53',
-	app_version    : '2.12.53',
-	ua             : 'WhatsApp/2.12.53 S40Version/14.26 Device/Nokia302',
+	port           : 5222,
+	device_type    : 'Android',
+	app_version    : '2.11.339',
+	ua             : 'WhatsApp/2.11.339 Android/4.0.4 Device/GalaxyS3',
 	challenge_file : __dirname + '/challenge'
 };
 
@@ -117,7 +117,7 @@ WhatsApi.prototype.login = function() {
 
 WhatsApi.prototype.sendIsOnline = function() {
 	var attributes = {
-		type : 'available',
+		//type : 'available',
 		name : this.config.username
 	};
 
@@ -143,7 +143,7 @@ WhatsApi.prototype.sendMessageComposing = function(to) {
 
 	var attributes = {
 		to : this.createJID(to),
-		type : 'chat',
+		type : 'text',
 		t : common.tstamp().toString()
 	};
 
@@ -155,7 +155,7 @@ WhatsApi.prototype.sendMessagePaused = function(to) {
 
 	var attributes = {
 		to : this.createJID(to),
-		type : 'chat',
+		type : 'text',
 		t : common.tstamp().toString()
 	};
 	
@@ -259,6 +259,19 @@ WhatsApi.prototype.requestGroupInfo = function(groupId) {
 	};
 
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
+};
+
+WhatsApi.prototype.createGroup = function(subject) {
+	var groupNode = new protocol.Node('group', {xmlns: 'w:g', action : 'create', subject: subject});
+
+	var attributes = {
+		id   : this.nextMessageId('creategroup'),
+		type : 'set',
+		//xmlns: 'w:g',
+		to   : this.config.gserver
+	};
+
+	this.sendNode(new protocol.Node('iq', attributes, [groupNode]));
 };
 
 WhatsApi.prototype.requestLastSeen = function(who) {
@@ -391,7 +404,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
 
 	var attributes = {
 		to   : this.createJID(to),
-		type : 'chat',
+		type : 'text',
 		id   : msgid || this.nextMessageId('message'),
 		t    : common.tstamp().toString()
 	};
@@ -432,6 +445,11 @@ WhatsApi.prototype.processNode = function(node) {
 
 	if(node.isSuccess()) {
 		fs.writeFile(this.config.challenge_file, node.data());
+		
+		//this.initKeys(node.data());
+		//this.reader.setKey(this.readerKey);
+		this.writer.setKey(this.writerKey);
+		
 		this.loggedIn = true;
 		this.flushQueue();
 		this.emit('login');
@@ -508,6 +526,14 @@ WhatsApi.prototype.processNode = function(node) {
 				node.attribute('from'), node.attribute('remove'), node.attribute('author'));
 		}
 	}
+	
+	if(node.isGroupCreated()) {
+		var group ={
+			id: node.attribute('id'), //id of the message that created the group
+			groupId: node.child('group').attribute('id')
+		};
+		this.emit('group.created', group);
+	}
 
 	if(node.isLastSeen()) {
 		var tstamp = Date.now() - (+node.child('query').attribute('seconds')) * 1000;
@@ -547,8 +573,12 @@ WhatsApi.prototype.processNode = function(node) {
 
 WhatsApi.prototype.createFeaturesNode = function() {
 	var features = [
-		new protocol.Node('receipt_acks'),
-		new protocol.Node('status')
+		// //new protocol.Node('receipt_acks'),
+		// //new protocol.Node('status')
+		// new protocol.Node('readreceipts'),
+		// new protocol.Node('groups_v2'),
+		// new protocol.Node('privacy'),
+		// new protocol.Node('presence')
 	];
 
 	return new protocol.Node('stream:features', null, features);
@@ -556,12 +586,12 @@ WhatsApi.prototype.createFeaturesNode = function() {
 
 WhatsApi.prototype.createAuthNode = function() {
 	var attributes = {
-		xmlns     : 'urn:ietf:params:xml:ns:xmpp-sasl',
-		mechanism : 'WAUTH-1',
+		//xmlns     : 'urn:ietf:params:xml:ns:xmpp-sasl',
+		mechanism : 'WAUTH-2',
 		user      : this.config.msisdn
 	};
 
-	return new protocol.Node('auth', attributes, null, this.createAuthData());
+return new protocol.Node('auth', attributes, null, this.createAuthData());
 };
 
 WhatsApi.prototype.createAuthData = function() {
@@ -571,40 +601,54 @@ WhatsApi.prototype.createAuthData = function() {
 		return '';
 	}
 
-	this.initKeys(challenge);
+	//this.initKeys(challenge);
+	var key = encryption.pbkdf2(new Buffer(this.config.password, 'base64'), challenge, 16, 20);
+	this.readerKey = new encryption.KeyStream(new Buffer([key[2]]), new Buffer([key[3]]));
+	this.writerKey = new encryption.KeyStream(new Buffer([key[0]]), new Buffer([key[1]]));
+
 
 	this.reader.setKey(this.readerKey);
 
-	var arr = [
-		this.config.msisdn,
+	var arr = Buffer.concat([
+		new Buffer([0,0,0,0]),
+		new Buffer(this.config.msisdn),
 		challenge,
-		common.tstamp(),
-		this.config.ua,
-		' MccMnc/' + this.config.ccode + '001'
-	];
-
-	return this.writerKey.encode(arr.join(''), false);
+		new Buffer(common.tstamp().toString()),
+		new Buffer(this.config.ua),
+		new Buffer(' MccMnc/' + this.config.ccode + '001')
+	]);
+	return this.writerKey.encodeMessage(arr, 0, arr.length, 0);
 };
 
 WhatsApi.prototype.createAuthResposeNode = function(challenge) {
+  //console.log(challenge.toString('hex'));
 	this.initKeys(challenge);
 
 	var arr = Buffer.concat([
+		new Buffer([0,0,0,0]),
 		new Buffer(this.config.msisdn),
-		challenge,
-		new Buffer(common.tstamp().toString())
+		challenge
 	]);
-
-	var data = this.writerKey.encode(arr, false);
-
+	//console.log(arr.toString('hex'));
+	var data = this.writerKey.encodeMessage(arr, 0,4,arr.length -4);
+  //console.log(data.toString('hex'));
 	return new protocol.Node('response', {xmlns : 'urn:ietf:params:xml:ns:xmpp-sasl'}, null, data);
 };
 
-WhatsApi.prototype.initKeys = function(salt) {
-	var key = encryption.pbkdf2(new Buffer(this.config.password, 'base64'), salt);
+WhatsApi.prototype.generateKeys = function(password, nonce) {
+	var keys = [];
+	for(var j=1;j<5;j++){
+		var currNonce = Buffer.concat( [nonce, new Buffer([j])] );
+		keys.push( encryption.pbkdf2(new Buffer(password, 'base64'), currNonce, 2, 20) );		
+	}
+	return keys;
+};
 
-	this.readerKey = new encryption.KeyStream(key);
-	this.writerKey = new encryption.KeyStream(key);
+WhatsApi.prototype.initKeys = function(nonce) {
+	var keys = this.generateKeys(this.config.password, nonce);
+
+	this.readerKey = new encryption.KeyStream(keys[2], keys[3]);
+	this.writerKey = new encryption.KeyStream(keys[0], keys[1]);
 };
 
 WhatsApi.prototype.createClearDirtyNode = function(node) {
@@ -653,7 +697,7 @@ WhatsApi.prototype.createReceivedNode = function(node) {
 
 	var attributes = {
 		to   : node.attribute('from'),
-		type : 'chat',
+		type : 'text',
 		id   : node.attribute('id'),
 		t    : common.tstamp().toString()
 	};
@@ -980,6 +1024,7 @@ WhatsApi.prototype.onTransportEnd = function() {
 };
 
 WhatsApi.prototype.onTransportData = function(data) {
+	//console.log("incoming data: "+ data.toString('hex'));
 	this.reader.appendInput(data);
 
 	while(true) {
