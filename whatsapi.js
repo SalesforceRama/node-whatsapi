@@ -132,29 +132,32 @@ WhatsApi.prototype.sendIsOffline = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
-WhatsApi.prototype.sendMessageComposing = function(to) {
+WhatsApi.prototype.sendComposing = function(to) {
+	var node = new protocol.Node(
+		'chatstate',
+		{
+			to: this.createJID(to)
+		},
+		[
+			new protocol.Node('composing')
+		]
+	);
 
-	var state = new protocol.Node('composing', {xmlns : 'http://jabber.org/protocol/chatstates'});
-
-	var attributes = {
-		to : this.createJID(to),
-		type : 'text',
-		t : common.tstamp().toString()
-	};
-
-    this.sendNode(new protocol.Node('message', attributes, [state]));
+	this.sendNode(node);
 };
 
-WhatsApi.prototype.sendMessagePaused = function(to) {
-	var state = new protocol.Node('paused', {xmlns : 'http://jabber.org/protocol/chatstates'});
+WhatsApi.prototype.sendPaused = function(to) {
+	var node = new protocol.Node(
+		'chatstate',
+		{
+			to: this.createJID(to)
+		},
+		[
+			new protocol.Node('paused')
+		]
+	);
 
-	var attributes = {
-		to : this.createJID(to),
-		type : 'text',
-		t : common.tstamp().toString()
-	};
-	
-    this.sendNode(new protocol.Node('message', attributes, [state]));
+	this.sendNode(node);
 };
 
 WhatsApi.prototype.sendMessage = function(to, message, msgid) {
