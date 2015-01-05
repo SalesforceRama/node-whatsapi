@@ -143,7 +143,7 @@ Node.prototype.isSuccess = function() {
 };
 
 Node.prototype.isTyping = function() {
-	return this.tag() === 'message' && (this.contents.children[0].contents.tag === 'composing' || this.contents.children[0].contents.tag === 'paused');
+	return this.tag() == 'chatstate' && (this.child(0).tag() == 'composing' || this.child(0).tag() == 'paused');
 };
 
 Node.prototype.isMessage = function() {

@@ -585,12 +585,13 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 
 	if(node.isMessage()) {
+		this.emit('typing', node.attribute('from'), 'paused');
 		this.processor.process(node);
 		return;
 	}
 	
 	if(node.isTyping()) {
-		this.emit('typing', node.attribute('from'), node.contents.children[0].contents.tag);
+		this.emit('typing', node.attribute('from'), node.child(0).tag());
 		return;
 	}
 	
