@@ -479,8 +479,10 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 
-	if(node.isAvailable() && node.attribute('from') !== this.selfAddress) {
-		this.emit('presence.available', node.attribute('from'), node.attribute('type'));
+	if(node.isPresence() && node.attribute('from') != this.selfAddress) {
+		var type = node.attribute('type') || 'available';
+		this.emit('presence', node.attribute('from'), type, node.attribute('last'));
+		return;
 	}
 
 	if(node.isDirtyPresence()) {

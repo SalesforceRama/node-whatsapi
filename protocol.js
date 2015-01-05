@@ -155,8 +155,8 @@ Node.prototype.isPing = function() {
 	return this.tag() === 'iq' && this.attribute('type') === 'get' && this.child(0).tag() === 'ping';
 };
 
-Node.prototype.isAvailable = function() {
-	return this.tag() === 'presence' && (this.attribute('type') === 'available' || this.attribute('type') === 'unavailable');
+Node.prototype.isPresence = function() {
+	return this.tag() == 'presence' && this.attribute('from').indexOf('@') != -1;
 }
 
 Node.prototype.isDirtyPresence = function() {
