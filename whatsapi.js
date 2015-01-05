@@ -351,6 +351,23 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	this.sendNode(node);
 };
 
+WhatsApi.prototype.requestServerProperties = function() {
+	var node = new protocol.Node(
+		'iq',
+		{
+			id    : this.nextMessageId('getproperties'),
+			type  : 'get',
+			xmlns : 'w',
+			to    : 's.whatsapp.net'
+		},
+		[
+			new protocol.Node('props')
+		]
+	);
+	
+	this.sendNode(node);
+};
+
 WhatsApi.prototype.setProfilePicture = function(filepath) {
 //See this discussion when moving to WAUTH-2: https://github.com/tgalal/yowsup/issues/296
 //The xmlns needs to be moved to the parent node and the order of thumb and fullsize picture is reversed

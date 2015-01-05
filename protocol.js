@@ -288,7 +288,7 @@ Reader.prototype.nextNode = function() {
 
 	if(dataSize > this.input.length) {
 		//console.log("too big %d %d", dataSize, this.input.length);
-		//return false;
+		// return false;
 		//very dirty hack!!!
 		this.readInt8();
 		return this.nextNode();
@@ -309,8 +309,8 @@ Reader.prototype.nextNode = function() {
 		//if(remaining.length) console.log("remaining: %s",remaining.toString('hex'));
 		//var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
 		var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
-		//console.log("decoded: %s",decoded.toString('hex'));
-		//console.log("sizes: decoded: %d data: %d",decoded.length, dataSize);
+		console.log("decoded: %s",decoded.toString('hex'));
+		console.log("sizes: decoded: %d data: %d",decoded.length, dataSize);
 		this.input = Buffer.concat([decoded, remaining]);
 	}
 
@@ -342,7 +342,12 @@ Reader.prototype.readNode = function() {
 	var children;
 	var data;
 
-	this.isListToken(token) ? children = this.readList(token) : data = this.readString(token, true);
+	if (this.isListToken(token)) {
+		children = this.readList(token)
+	}
+	else {
+		data = this.readString(token, true);
+	};
 
 	return new Node(tag, attributes, children, data);
 };
@@ -364,15 +369,15 @@ Reader.prototype.readString = function(token, raw) {
 		throw 'Invalid token';
 	}
 
-	if(token > 2 && token < 0xF5) {
+	if(token > 2 && token < 0xF5) { // 245
 		return this.getToken(token);
 	}
 
-	if(token === 0xFC) {
+	if(token == 0xFC) { // 252
 		return this.fillArray(this.readInt8(), raw);
 	}
 
-	if(token === 0xFD) {
+	if(token == 0xFD) {
 		return this.fillArray(this.readInt24(), raw);
 	}
 
@@ -395,7 +400,7 @@ Reader.prototype.readString = function(token, raw) {
 };
 
 Reader.prototype.readNibble = function() {
-	var string = "";
+	var string = '';
 	var byte = this.readInt8();
 	var ignoreLastNibble = (byte & 0x80);
 	
@@ -411,9 +416,9 @@ Reader.prototype.readNibble = function() {
 		if (decimal>=0 && decimal <=9)
 			string+=decimal;
 		else if (decimal ==10)
-			string+= "-";
+			string+= '-';
 		else if (decimal ==11)
-			string+=".";
+			string+='.';
 	}
 	return string;
 };
@@ -432,19 +437,23 @@ Reader.prototype.readAttributes = function(size) {
 };
 
 Reader.prototype.isListToken = function(token) {
-	return [0, 0xF8, 0xF9].indexOf(token) !== -1;
+	return [0xF8, 0, 0xF9].indexOf(token) !== -1;
 };
 
 Reader.prototype.readListSize = function(token) {
-	if(token === 0xF8) {
+	if (token == 0) {
+		return 0;
+	};
+	
+	if (token == 0xF8) { // 248
 		return this.readInt8();
 	}
 
-	if(token === 0xF9) {
+	if (token == 0xF9) { // 249
 		return this.readInt16();
 	}
 
-	throw 'Invalid token: ' + token;
+	throw 'Invalid list size in readListSize: token: ' + token;
 };
 
 Reader.prototype.readList = function(token) {
