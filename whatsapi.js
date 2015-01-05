@@ -117,7 +117,6 @@ WhatsApi.prototype.login = function() {
 
 WhatsApi.prototype.sendIsOnline = function() {
 	var attributes = {
-		//type : 'available',
 		name : this.config.username
 	};
 
@@ -125,10 +124,6 @@ WhatsApi.prototype.sendIsOnline = function() {
 };
 
 WhatsApi.prototype.sendIsOffline = function() {
-	this.sendOfflineStatus();
-};
-
-WhatsApi.prototype.sendOfflineStatus = function() {
 	var attributes = {
 		type : 'unavailable',
 		name : this.config.username
