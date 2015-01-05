@@ -275,13 +275,13 @@ WhatsApi.prototype.createGroup = function(subject) {
 };
 
 WhatsApi.prototype.requestLastSeen = function(who) {
-	var queryNode = new protocol.Node('query', {xmlns : 'jabber:iq:last'});
+	var queryNode = new protocol.Node('query');
 
 	var attributes = {
 		to   : this.createJID(who),
 		type : 'get',
 		id   : this.nextMessageId('lastseen'),
-		from : this.createJID(this.config.msisdn)
+		xmlns: 'jabber:iq:last'
 	};
 
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
@@ -620,12 +620,12 @@ WhatsApi.prototype.processNode = function(node) {
 
 WhatsApi.prototype.createFeaturesNode = function() {
 	var features = [
-		// //new protocol.Node('receipt_acks'),
-		// //new protocol.Node('status')
-		// new protocol.Node('readreceipts'),
-		// new protocol.Node('groups_v2'),
-		// new protocol.Node('privacy'),
-		// new protocol.Node('presence')
+		//new protocol.Node('receipt_acks'),
+		//new protocol.Node('status')
+		new protocol.Node('readreceipts'),
+		new protocol.Node('groups_v2'),
+		new protocol.Node('privacy'),
+		new protocol.Node('presence')
 	];
 
 	return new protocol.Node('stream:features', null, features);

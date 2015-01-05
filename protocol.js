@@ -199,12 +199,12 @@ Node.prototype.isGroupCreated = function() {
 };
 
 Node.prototype.isLastSeen = function() {
-	return this.child('query') && this.child('query').attribute('xmlns') === 'jabber:iq:last';
+	return this.child('query') && this.child('query').attribute('seconds');
 };
 
 Node.prototype.isNotFound = function() {
 	return this.tag() === 'iq' && this.child('error') &&
-		   this.child('error').attribute('code') === '405';
+		   this.child('error').attribute('code');
 };
 
 Node.prototype.isFailure = function() {
@@ -277,10 +277,12 @@ Reader.prototype.appendInput = function(input) {
 };
 
 Reader.prototype.nextNode = function() {
-	if(!this.input || !this.input.length) {
+	if(!this.input || !this.input.length || this.input.length == 1) {
 		return false;
 	}
-	//console.log("processing in nextNode: %s", this.input.toString('hex'));
+	
+	// console.log(this.input.length);
+	// console.log("processing in nextNode: %s", this.input.toString('hex'));
 	var firstByte = this.peekInt8();
 	var encrypted = ((firstByte & 0xF0) >> 4) & 8;
 	var dataSize  = this.peekInt16(1) | ((firstByte & 0x0F) << 16);
