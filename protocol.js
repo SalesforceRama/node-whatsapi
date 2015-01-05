@@ -203,7 +203,7 @@ Node.prototype.isLastSeen = function() {
 
 Node.prototype.isNotFound = function() {
 	return this.tag() === 'iq' && this.child('error') &&
-		   this.child('error').attribute('code');
+		   this.child('error').attribute('code') == '405';
 };
 
 Node.prototype.isFailure = function() {

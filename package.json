@@ -1,8 +1,8 @@
 {
   "name": "whatsapi",
   "main": "whatsapi",
-  "description": "WhatsApp messenger interface",
-  "version": "0.1.7",
+  "description": "A Node.js interface to WhatsApp private API",
+  "version": "0.2",
   "keywords": [
     "WhatsApp",
     "WhatsApi"
