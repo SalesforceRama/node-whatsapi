@@ -4,7 +4,7 @@ A Node.js interface to the private WhatsApp API. Ported from [WhatsAPI](https://
 
 For usage read the [wiki](https://github.com/hidespb/node-whatsapi/wiki/Documentation).
 
-We are working on bringing WAUTH-2 support, there will be big changes and the code will be refactored. New documentation will come as weel. Stay tuned!
+We are working on bringing WAUTH-2 support, there will be big changes and the code will be refactored. New documentation will come as well. Stay tuned!
 
 ## Credits
 - [hidespb](https://github.com/hidespb)
