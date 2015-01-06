@@ -324,9 +324,48 @@ WhatsApi.prototype.requestGroupInfo = function(groupId) {
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
 };
 
+/*@param name:
+*	'last'-last seen, 'status'-status message, 'profile'-profile picture
+*@param value:
+*	'all'-anyone in WA, 'contacts'-to your contacts only, 'none'-hidden
+*/
+WhatsApi.prototype.setPrivacySettings = function(name, value){
+	var node = new protocol.Node('category', 
+		{
+			name  : name,
+			value : value
+		}
+	);
 
+    var attributes = {
+    	to    : 's.whatsapp.net',
+        type  : 'set',
+        xmlns : 'privacy',
+        id    : this.nextMessageId('send_privacy_settings_')
+    };
 
-//Working fine @param: status-Message which is required to set as status message
+    var child =  new protocol.Node('privacy', null, [node]);
+
+    this.sendNode(new protocol.Node('iq', attributes, [child]));
+};
+
+//Get your current privacy settings. Protocol and processNode to be updated
+WhatsApi.prototype.getPrivacySettings = function(){
+    var attributes = {
+    	to    : 's.whatsapp.net',
+        type  : 'get',
+        xmlns : 'privacy',
+        id    : this.nextMessageId('get_privacy_settings_')
+    };
+
+    var child =  new protocol.Node('privacy');
+
+    this.sendNode(new protocol.Node('iq', attributes, [child]));
+};
+
+/*@param status:
+*	Message to be displayed as your status message
+*/
 WhatsApi.prototype.setStatus = function(status){
     var child = new protocol.Node('status', null, null, status);
 
@@ -340,8 +379,11 @@ WhatsApi.prototype.setStatus = function(status){
     this.sendNode(new protocol.Node('iq', attributes, [child]));
 };
 
-//Partially working. No response from WA Server. 
-//@param: list should be passed as array
+/*@param array list:
+*	phone numbers for which status message is to be seen
+*
+*Partially working. No response from WA Server.
+*/
 WhatsApi.prototype.getStatus = function(list){
 	var contacts = [];
 
