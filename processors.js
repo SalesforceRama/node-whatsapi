@@ -42,7 +42,7 @@ Text.prototype.match = function(node) {
 Text.prototype.process = function(node) {
 	this.adapter.emit(
 		'message',
-		node.child('body').data().toString(),
+		node.child('body').data().toString('utf8'),
 		node.attribute('from'),
 		node.attribute('id'),
 		node.attribute('t'),

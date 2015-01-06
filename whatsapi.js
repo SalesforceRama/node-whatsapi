@@ -46,10 +46,10 @@ WhatsApi.prototype.defaultConfig = {
 	host           : 'c.whatsapp.net',
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
-	port           : 5222,
+	port           : 443,
 	device_type    : 'Android',
-	app_version    : '2.11.339',
-	ua             : 'WhatsApp/2.11.339 Android/4.0.4 Device/GalaxyS3',
+	app_version    : '2.11.473',
+	ua             : 'WhatsApp/2.11.473 Android/4.3 Device/GalaxyS3',
 	challenge_file : __dirname + '/challenge'
 };
 
@@ -203,18 +203,83 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type, msgid) {
 	}.bind(this));
 };
 
+/*
+ *
+ * GROUPS
+ *
+ */
+
+/**
+ * Request a filtered list of groups
+ * @param  {string}     type   Groups list filter, 'owning' or 'participating'
+ * @return {undefined}
+ * @example
+ * wa.requestGroupList();
+ * wa.on('group.list', function(list) {
+ * 	// every object in list has groupId, subject, creationTime properties
+ * });
+ */
 WhatsApi.prototype.requestGroupList = function(type) {
 	type = type || 'participating';
 
-	var listNode = new protocol.Node('list', {xmlns : 'w:g', type : type});
+	var listNode = new protocol.Node(type);
 
 	var attributes = {
-		id   : this.nextMessageId('getgroups'),
-		type : 'get',
-		to   : this.config.gserver
+		id    : this.nextMessageId('getgroups'),
+		type  : 'get',
+		to    : this.config.gserver,
+		xmlns : 'w:g2'
 	};
 
 	this.sendNode(new protocol.Node('iq', attributes, [listNode]));
+};
+
+/**
+ * Creates a new group
+ * @param  {string} subject   The subject/topic of the group
+ * @param  {array}  contacts  An array of phone numbers to be added as participants to the group
+ * @return {undefined}
+ * @example
+ * wa.createGroup('Group name', '39xxxxxxxxxx');
+ * // or
+ * wa.createGroup('Group name', ['39xxxxxxxxxx', '31xxxxxxxxxx']);
+ */
+WhatsApi.prototype.createGroup = function(subject, contacts) {
+	if (!util.isArray(contacts)) {
+		contacts = [contacts];
+	};
+	
+	var participants = [];
+	for (var i = 0; i < contacts.length; i++) {
+		participants.push(
+			new protocol.Node(
+				'participant',
+				{
+					jid: this.createJID(contacts[i])
+				}
+			)
+		);
+	};
+	
+	var node = new protocol.Node(
+		'iq',
+		{
+			xmlns : 'w:g2',
+			id    : this.nextMessageId('creategroup'),
+			type  : 'set',
+			to    : this.config.gserver
+		},
+		[
+			new protocol.Node(
+				'create',
+				{
+					subject : subject
+				},
+				participants
+			)
+		]);
+
+	this.sendNode(node);
 };
 
 WhatsApi.prototype.requestGroupMembers = function(groupId) {
@@ -259,18 +324,7 @@ WhatsApi.prototype.requestGroupInfo = function(groupId) {
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
 };
 
-WhatsApi.prototype.createGroup = function(subject) {
-	var groupNode = new protocol.Node('group', {xmlns: 'w:g', action : 'create', subject: subject});
 
-	var attributes = {
-		id   : this.nextMessageId('creategroup'),
-		type : 'set',
-		//xmlns: 'w:g',
-		to   : this.config.gserver
-	};
-
-	this.sendNode(new protocol.Node('iq', attributes, [groupNode]));
-};
 
 //Working fine @param: status-Message which is required to set as status message
 WhatsApi.prototype.setStatus = function(status){
@@ -368,7 +422,6 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	var node = new protocol.Node(
 		'iq',
 		{
-			to: this.selfAddress,
 			type: 'get',
 			id: id,
 			xmlns: 'urn:xmpp:whatsapp:sync'
@@ -548,11 +601,12 @@ WhatsApi.prototype.send = function(buffer) {
 };
 
 WhatsApi.prototype.processNode = function(node) {
-	// send message received
+	// Send 'read'
 	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
 		this.sendNode(this.createReceivedNode(node));
 	}
 
+	// Authentication
 	if(node.isChallenge()) {
 		this.sendNode(this.createAuthResposeNode(node.data()));
 		this.reader.setKey(this.readerKey);
@@ -560,6 +614,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 
+	// Successfully logged in
 	if(node.isSuccess()) {
 		fs.writeFile(this.config.challenge_file, node.data());
 		
@@ -572,49 +627,66 @@ WhatsApi.prototype.processNode = function(node) {
 		this.emit('login');
 		return;
 	}
-
+	
+	// Login failed
+	if(node.isFailure()) {
+		this.loggedIn = false;
+		this.emit('error', node.toXml());
+		return;
+	}
+	
+	// Contact presence update
 	if(node.isPresence() && node.attribute('from') != this.selfAddress) {
 		var type = node.attribute('type') || 'available';
 		this.emit('presence', node.attribute('from'), type, node.attribute('last'));
 		return;
 	}
-
+	
 	if(node.isDirtyPresence()) {
 		this.sendNode(this.createClearDirtyNode(node));
 		return;
 	}
+	
+	// Last seen -- found
+	if(node.isLastSeen()) {
+		var tstamp = Date.now() - (+node.child('query').attribute('seconds')) * 1000;
+		this.emit('lastseen.found', node.attribute('from'), new Date(tstamp));
+		return;
+	}
 
+	// Last seen -- not found
+	if(node.isNotFound()) {
+		this.emit('lastseen.notfound', node.attribute('from'));
+		return;
+	}
+	
 	if(node.isPing()) {
 		this.sendNode(this.createPongNode(node.attribute('id')));
 		return;
 	}
 
-	if(node.isMediaReady()) {
-		this.createMediaUploadNode(node, function(err, to, node) {
-			if(err) {
-				this.emit('media.error', err);
-				return;
-			}
-
-			this.sendMessageNode(to, node);
-		}.bind(this));
-		return;
-	}
-
-	if(node.isGroupList()) {
-		var groupList = node.children().map(function(child) {
-			return {
-				groupId : child.attribute('id'),
-				topic   : child.attribute('subject')
-			};
-		});
+	// Groups query list response
+	if (node.isGroupList()) {
+		var groupList = [];
+		var groupsNode = node.child('groups');
+		for (var i = 0; i < groupsNode.children().length; i++) {
+			groupList.push({
+				groupId      : groupsNode.child(i).attribute('id'),
+				subject      : groupsNode.child(i).attribute('subject'),
+				creationTime : groupsNode.child(i).attribute('creation')
+			});
+		};
 
 		this.emit('group.list', groupList);
 		return;
 	}
-
-	if(node.isGroupAdd()) {
-		this.emit('group.new', node.attribute('from'), node.child('body').data().toString('utf8'));
+	
+	// New group created
+	if (node.isGroupAdd()) {
+		var groupId = node.child('group').attribute('id');
+		var subject = node.child('group').attribute('subject');
+		var creationTs = node.child('group').attribute('creation');
+		this.emit('group.new',  { groupId: groupId, subject: subject, creationTime: creationTs });
 		return;
 	}
 
@@ -647,28 +719,16 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	
-	if(node.isGroupCreated()) {
-		var group ={
-			id: node.attribute('id'), //id of the message that created the group
-			groupId: node.child('group').attribute('id')
-		};
-		this.emit('group.created', group);
-		return;
-	}
+	
+	if(node.isMediaReady()) {
+		this.createMediaUploadNode(node, function(err, to, node) {
+			if(err) {
+				this.emit('media.error', err);
+				return;
+			}
 
-	if(node.isLastSeen()) {
-		var tstamp = Date.now() - (+node.child('query').attribute('seconds')) * 1000;
-		this.emit('lastseen.found', node.attribute('from'), new Date(tstamp));
-		return;
-	}
-
-	if(node.isNotFound()) {
-		this.emit('lastseen.notfound', node.attribute('from'));
-		return;
-	}
-
-	if(node.isFailure()) {
-		this.emit('error', node.toXml());
+			this.sendMessageNode(to, node);
+		}.bind(this));
 		return;
 	}
 
@@ -726,8 +786,6 @@ WhatsApi.prototype.processNode = function(node) {
 
 WhatsApi.prototype.createFeaturesNode = function() {
 	var features = [
-		//new protocol.Node('receipt_acks'),
-		//new protocol.Node('status')
 		new protocol.Node('readreceipts'),
 		new protocol.Node('groups_v2'),
 		new protocol.Node('privacy'),
@@ -744,7 +802,7 @@ WhatsApi.prototype.createAuthNode = function() {
 		user      : this.config.msisdn
 	};
 
-return new protocol.Node('auth', attributes, null, this.createAuthData());
+	return new protocol.Node('auth', attributes, null, this.createAuthData());
 };
 
 WhatsApi.prototype.createAuthData = function() {
@@ -1152,6 +1210,7 @@ WhatsApi.prototype.createJID = function(msisdn) {
 
 WhatsApi.prototype.onTransportConnect = function() {
 	this.emit('connect');
+	this.connected = true;
 };
 
 WhatsApi.prototype.onTransportError = function(e) {
@@ -1159,6 +1218,7 @@ WhatsApi.prototype.onTransportError = function(e) {
 };
 
 WhatsApi.prototype.onTransportEnd = function() {
+	this.connected = false;
 	if(this.config.reconnect) {
 		this.emit('reconnect');
 		this.connect();
@@ -1168,7 +1228,6 @@ WhatsApi.prototype.onTransportEnd = function() {
 };
 
 WhatsApi.prototype.onTransportData = function(data) {
-	//console.log("incoming data: "+ data.toString('hex'));
 	this.reader.appendInput(data);
 
 	while(true) {

@@ -128,10 +128,10 @@ Node.prototype.data = function() {
 	return this.contents.data;
 };
 
-// TOOD this needs to be checked
+// TODO this needs to be checked with all the message kinds
 Node.prototype.shouldBeReplied = function() {
-	return this.tag() === 'message'
-		&& (this.attribute('notify')/* || this.child('received') || this.child('request')*/);
+	return (this.tag() === 'message' && this.attribute('notify'))
+		|| this.tag() == 'notification';
 };
 
 Node.prototype.isChallenge = function() {
@@ -167,13 +167,17 @@ Node.prototype.isMediaReady = function() {
 		   this.child(0) && ['media', 'duplicate'].indexOf(this.child(0).tag()) !== -1;
 };
 
+/*
+ * GROUPS
+ */
 Node.prototype.isGroupList = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group') && this.child('group').attribute('subject');
+	return this.tag() === 'iq' && this.attribute('type') === 'result'
+		&& this.child('groups');
 };
 
 Node.prototype.isGroupAdd = function() {
-	return this.tag() === 'message' && this.attribute('type') === 'subject' && this.child('body') &&
-		   this.child('body').attribute('event') === 'add';
+	return this.tag() === 'iq' && this.attribute('id').indexOf('creategroup') != -1
+		&& this.child('group') && this.child('group').attribute('id');
 };
 
 Node.prototype.isGroupTopic = function() {
@@ -192,10 +196,9 @@ Node.prototype.isGroupNewcomer = function() {
 Node.prototype.isGroupOutcomer = function() {
 	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('remove');
 };
-
-Node.prototype.isGroupCreated = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group') && !this.child('group').attribute('subject');
-};
+/*
+ * END GROUPS
+ */
 
 Node.prototype.isLastSeen = function() {
 	return this.child('query') && this.child('query').attribute('seconds');
