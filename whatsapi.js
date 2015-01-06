@@ -389,8 +389,7 @@ WhatsApi.prototype.getStatus = function(list){
 
 	for(var i=0; i<list.length; i++){
 		var node = {
-			jid : this.createJID(list[i]),
-			t   : common.tstamp().toString()
+			jid : this.createJID(list[i])
 		};
 		contacts.push(new protocol.Node('user', node));
 	}
@@ -398,8 +397,8 @@ WhatsApi.prototype.getStatus = function(list){
     var attributes = {
     	to    : 's.whatsapp.net',
         type  : 'get',
-        id    : this.nextMessageId('getstatus'),
-        xmlns : 'status'
+        xmlns : 'status',
+        id    : this.nextMessageId('getstatus')
     };
 
     var child =  new protocol.Node('status', null, contacts);
