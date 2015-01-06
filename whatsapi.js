@@ -22,6 +22,15 @@ var MediaType = {
 	AUDIO : 'audio'
 };
 
+/**
+ * Constructor for WhatsApi
+ * @class
+ * @param {array} config
+ * @param {object} reader
+ * @param {object} writer
+ * @param {object} processor
+ * @param {object} transport
+ */
 function WhatsApi(config, reader, writer, processor, transport) {
 	this.config    = common.extend({}, this.defaultConfig, config);
 	this.reader    = reader;
@@ -79,6 +88,11 @@ WhatsApi.prototype.mediaMimeTypes[MediaType.AUDIO] = {
 	]
 };
 
+/**
+ * Initializes WhatsApi
+ * Internal method, should not be called
+ * @private
+ */
 WhatsApi.prototype.init = function() {
 	this.transport.onReceive(this.onTransportData, this);
 	this.transport.onError(this.onTransportError, this);
@@ -522,7 +536,7 @@ WhatsApi.prototype.requestServicePricing = function(language, country) {
 /**
  * Set a new profile picture for the active account
  * @param {string} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of +/- 65.000 bytes and that includes the generated thumbnail.
- * @returns null
+ * @returns {undefined}
  * @emits media.error
  * @example
  * //sets a random image from lorempixel.com
@@ -571,7 +585,7 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
  * When profile picture can not be retrieved an error 404 item-not-found is returned
  * @param {string} target - Phonenumber of the account to request profile picture from
  * @param {boolean} small - true for thumbnail, false for full size profile picture
- * @returns null
+ * @returns {undefined}
  * @example
  * //request full size profile picture from 49xxxxxxxx
  * wa.requestProfilePicture('49xxxxxxxx', false);
