@@ -47,7 +47,7 @@ WhatsApi.prototype.defaultConfig = {
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
 	port           : 443,
-	device_type    : 'S40-2.12.53',
+	device_type    : 'S40',
 	app_version    : '2.12.53',
 	ua             : 'WhatsApp/2.12.53 S40Version/14.26 Device/Nokia302',
 	challenge_file : __dirname + '/challenge'
@@ -125,10 +125,6 @@ WhatsApi.prototype.sendIsOnline = function() {
 };
 
 WhatsApi.prototype.sendIsOffline = function() {
-	this.sendOfflineStatus();
-};
-
-WhatsApi.prototype.sendOfflineStatus = function() {
 	var attributes = {
 		type : 'unavailable',
 		name : this.config.username
