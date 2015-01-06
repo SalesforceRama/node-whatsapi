@@ -130,9 +130,12 @@ Node.prototype.data = function() {
 
 // TODO this needs to be checked with all the message kinds
 Node.prototype.shouldBeReplied = function() {
-	return (this.tag() === 'message' && this.attribute('notify'))
-		|| this.tag() == 'notification';
+	return this.tag() === 'message' && this.attribute('notify');
 };
+
+Node.prototype.isNotification = function() {
+	return this.tag() == 'notification';
+}
 
 Node.prototype.isChallenge = function() {
 	return this.tag() === 'challenge';

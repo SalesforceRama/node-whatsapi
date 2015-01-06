@@ -605,6 +605,10 @@ WhatsApi.prototype.processNode = function(node) {
 	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
 		this.sendNode(this.createReceivedNode(node));
 	}
+	
+	if (node.isNotification()) {
+		this.sendNode(this.createNotificationAckNode(node));
+	}
 
 	// Authentication
 	if(node.isChallenge()) {
@@ -905,6 +909,23 @@ WhatsApi.prototype.createReceivedNode = function(node) {
 	};
 
 	return new protocol.Node('receipt', attributes);
+};
+
+WhatsApi.prototype.createNotificationAckNode = function(node) {
+	var attributes = {
+		to    : node.attribute('from'),
+		class : 'notification',
+		id    : node.attribute('id'),
+		type  : node.attribute('type')
+	};
+	if (node.attribute('to')) {
+		attributes['from'] = node.attribute('to');
+	}
+	if (node.attribute('participant')) {
+		attributes['participant'] = node.attribute('participant');
+	}
+
+	return new protocol.Node('ack', attributes);
 };
 
 WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to, msgid) {
