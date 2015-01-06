@@ -425,14 +425,22 @@ WhatsApi.prototype.requestServicePricing = function(language, country) {
 	this.sendNode(node);
 };
 
+/**
+ * Set a new profile picture for the active account
+ * @param {string} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of +/- 65.000 bytes and that includes the generated thumbnail.
+ * @returns null
+ * @emits media.error
+ * @example
+ * //sets a random image from lorempixel.com
+ * wa.setProfilePicture('http://lorempixel.com/400/400/?.jpg');
+ */
 WhatsApi.prototype.setProfilePicture = function(filepath) {
-//See this discussion when moving to WAUTH-2: https://github.com/tgalal/yowsup/issues/296
-//The xmlns needs to be moved to the parent node and the order of thumb and fullsize picture is reversed
 	var pictureNode, thumbNode;
 	var attributes = {
 		id: this.nextMessageId('setphoto'),
 		to: this.createJID(this.config.msisdn),
-		type: 'set'
+		type: 'set',
+		xmlns:'w:profile:picture'
 	};
 
 	var onThumbReady = function(err, data) {
@@ -441,8 +449,8 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
 			this.emit('media.error', err);
 			return;
 		}
-		thumbNode = new protocol.Node('picture', {type:'preview', xmlns:'w:profile:picture'}, null, new Buffer(data, 'base64'));
-		this.sendNode(new protocol.Node('iq', attributes, [thumbNode, pictureNode]));
+		thumbNode = new protocol.Node('picture', {type:'preview'}, null, new Buffer(data, 'base64'));
+		this.sendNode(new protocol.Node('iq', attributes, [pictureNode, thumbNode]));
 	}.bind(this);
 
 	this.getMediaFile(filepath, MediaType.IMAGE, function(err, path) {
@@ -463,9 +471,22 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
 	}.bind(this));
 };
 
+/**
+ * Send a request for the profile picture for the specified account
+ * When received from server a profile.picture event is fired
+ * When profile picture can not be retrieved an error 404 item-not-found is returned
+ * @param {string} target - Phonenumber of the account to request profile picture from
+ * @param {boolean} small - true for thumbnail, false for full size profile picture
+ * @returns null
+ * @example
+ * //request full size profile picture from 49xxxxxxxx
+ * wa.requestProfilePicture('49xxxxxxxx', false);
+ * wa.on('profile.picture', function(from,isPreview,pictureData){
+ *   fs.writeFile('whatsapi/media/profilepic-'+from+'.jpg', pictureData); 
+ * });
+ */
 WhatsApi.prototype.requestProfilePicture = function(target, small) {
 	var picAttributes = {
-		xmlns : 'w:profile:picture',
 		type  : 'image'
 	};
 
@@ -478,7 +499,8 @@ WhatsApi.prototype.requestProfilePicture = function(target, small) {
 	var attributes = {
 		id   : this.nextMessageId('profilepicture'),
 		type : 'get',
-		to   : this.createJID(target)
+		to   : this.createJID(target),
+		xmlns : 'w:profile:picture'
 	};
 
 	this.sendNode(new protocol.Node('iq', attributes, [pictureNode]));
