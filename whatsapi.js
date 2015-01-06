@@ -272,6 +272,45 @@ WhatsApi.prototype.createGroup = function(subject) {
 	this.sendNode(new protocol.Node('iq', attributes, [groupNode]));
 };
 
+//Working fine @param: status-Message which is required to set as status message
+WhatsApi.prototype.setStatus = function(status){
+    var child = new protocol.Node('status', null, null, status);
+
+    var attributes = {
+    	to    : 's.whatsapp.net',
+        type  : 'set',
+        id    : this.nextMessageId('sendstatus'),
+        xmlns : 'status'
+    };
+
+    this.sendNode(new protocol.Node('iq', attributes, [child]));
+};
+
+//Partially working. No response from WA Server. 
+//@param: list should be passed as array
+WhatsApi.prototype.getStatus = function(list){
+	var contacts = [];
+
+	for(var i=0; i<list.length; i++){
+		var node = {
+			jid : this.createJID(list[i]),
+			t   : common.tstamp().toString()
+		};
+		contacts.push(new protocol.Node('user', node));
+	}
+
+    var attributes = {
+    	to    : 's.whatsapp.net',
+        type  : 'get',
+        id    : this.nextMessageId('getstatus'),
+        xmlns : 'status'
+    };
+
+    var child =  new protocol.Node('status', null, contacts);
+
+    this.sendNode(new protocol.Node('iq', attributes, [child]));
+};
+
 WhatsApi.prototype.requestLastSeen = function(who) {
 	var queryNode = new protocol.Node('query');
 
