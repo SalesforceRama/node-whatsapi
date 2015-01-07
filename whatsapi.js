@@ -341,11 +341,11 @@ WhatsApi.prototype.requestGroupInfo = function(groupId) {
 	this.sendNode(node);
 };
 
-/*@param name:
-*	'last'-last seen, 'status'-status message, 'profile'-profile picture
-*@param value:
-*	'all'-anyone in WA, 'contacts'-to your contacts only, 'none'-hidden
-*/
+/**
+ * Update privacy settings
+ * @param {string} name  The name of the setting to update: 'last' for last seen, 'status', 'profile' for profile picture
+ * @param {string} value The new value for the setting: 'all', 'contacts', 'none'
+ */
 WhatsApi.prototype.setPrivacySettings = function(name, value){
 	var node = new protocol.Node('category', 
 		{
@@ -366,8 +366,11 @@ WhatsApi.prototype.setPrivacySettings = function(name, value){
     this.sendNode(new protocol.Node('iq', attributes, [child]));
 };
 
-//Get your current privacy settings. Protocol and processNode to be updated
-WhatsApi.prototype.getPrivacySettings = function(){
+/**
+ * Request privacy settings for the current user
+ * @return {undefined}
+ */
+WhatsApi.prototype.requestPrivacySettings = function(){
     var attributes = {
     	to    : 's.whatsapp.net',
         type  : 'get',
@@ -924,7 +927,7 @@ WhatsApi.prototype.processNode = function(node) {
 		this.emit('contacts.sync', existingUsers, nonExistingUsers, invalidNumbers);
 		
 		return;
-	};
+	}
 	
 	// Server properties response
 	if (node.isProperties()) {
@@ -938,6 +941,7 @@ WhatsApi.prototype.processNode = function(node) {
 		// console.log(properties);
 		
 		this.emit('properties', properties);
+		return;
 	}
 	
 	// Service pricing response
@@ -952,6 +956,41 @@ WhatsApi.prototype.processNode = function(node) {
 			pricingNode.attribute('currency'),
 			pricingNode.attribute('expiration')
 		);
+		return;
+	}
+	
+	// Get privacy settings
+	if (node.isGetPrivacySettings()) {
+		var privacyNode = node.child('privacy');
+		
+		var settings = {};
+		for (var i = 0; i < privacyNode.children().length; i++) {
+			var s = privacyNode.child(i);
+			settings[s.attribute('name')] = s.attribute('value');
+		};
+		
+		// console.log(settings);
+		
+		// Naming conventions?
+		this.emit('privacySettings.get', settings);
+		return;
+	}
+	
+	// Set privacy settings
+	if (node.isSendPrivacySettings()) {
+		var privacyNode = node.child('privacy');
+		
+		var settings = {};
+		for (var i = 0; i < privacyNode.children().length; i++) {
+			var s = privacyNode.child(i);
+			settings[s.attribute('name')] = s.attribute('value');
+		};
+		
+		// console.log(settings);
+		
+		// Naming conventions?
+		this.emit('privacySettings.updated', settings);
+		return;
 	}
 };
 

@@ -222,11 +222,11 @@ Node.prototype.isProfilePicture = function() {
 
 Node.prototype.isGetStatus = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('getstatus') != -1 && this.child('status');
-}
+};
 
 Node.prototype.isSendStatus = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('sendstatus') != -1;
-}
+};
 
 Node.prototype.isSync = function() {
 	return this.tag() === 'iq' && this.child('sync');
@@ -238,7 +238,15 @@ Node.prototype.isProperties = function() {
 
 Node.prototype.isServicePricing = function() {
 	return this.tag() == 'iq' && this.child('pricing');
-}
+};
+
+Node.prototype.isGetPrivacySettings = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('get_privacy_settings') != -1;
+};
+
+Node.prototype.isSendPrivacySettings = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('send_privacy_settings') != -1;
+};
 
 Node.prototype.toXml = function(prefix) {
 	prefix = prefix || '';
