@@ -3,11 +3,11 @@ var http  = require('http');
 var https = require('https');
 
 function tstamp() {
-	return Math.floor(Date.now() / 1000);
+	return Math.round(Date.now() / 1000);
 }
 
 function winTimestamp() {
-	var unixtimestamp = Math.round((new Date()).getTime() / 1000);
+	var unixtimestamp = tstamp();
 	return ((unixtimestamp + 11644477200) * 10000000);
 }
 

@@ -232,6 +232,10 @@ Node.prototype.isProperties = function() {
 	return this.tag() == 'iq' && this.child('props');
 };
 
+Node.prototype.isServicePricing = function() {
+	return this.tag() == 'iq' && this.child('pricing');
+}
+
 Node.prototype.toXml = function(prefix) {
 	prefix = prefix || '';
 

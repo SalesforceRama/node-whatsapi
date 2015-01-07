@@ -453,10 +453,18 @@ WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
 	this.sendNode(node);
 };
 
+/**
+ * Requests contacts sync
+ * @param  {array}   contacts    Array of contacts to be synced; single string phone number is accepted
+ * @param  {string}  mode        The sync mode. 'full' or 'delta'
+ * @param  {string}  context     The sync context. 'registration' or 'background' (more info in the wiki, later)
+ * @return {undefined}
+ */
 WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	if (!util.isArray(contacts)) {
-		this.emit('contacts.error', 'Contacts list should be an array');
-		return;
+		// this.emit('contacts.error', 'Contacts list should be an array');
+		// return;
+		contacts = [contacts];
 	}
 	
 	mode = mode || 'full';
@@ -467,9 +475,8 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	for (var i = 0; i < contacts.length; i++) {
 		var number = contacts[i];
 		// Fix numbers without leading '+'
-		if (number.substring(0, 1) != '+') {
-			number = '+' + number;
-		};
+		number = '+' + number.replace('+', '');
+		
 		users.push(new protocol.Node('user', null, null, number));
 	};
 	
@@ -802,36 +809,60 @@ WhatsApi.prototype.processNode = function(node) {
 		this.emit('profile.picture', node.attribute('from'), preview, node.child('picture').data());
 		return;
 	}
-
+	
+	// Incoming plain message
 	if(node.isMessage()) {
+		// Emit stopped typing
 		this.emit('typing', node.attribute('from'), 'paused');
+		// Process message
 		this.processor.process(node);
 		return;
 	}
 	
+	// Emit typing (composing or paused)
 	if(node.isTyping()) {
 		this.emit('typing', node.attribute('from'), node.child(0).tag());
 		return;
 	}
 	
+	// Sync response
 	if (node.isSync()) {		
 		var sync = node.child('sync');
-		var existing = node.child('in');
-		var nonExisting = node.child('out');
+		var existing = sync.child('in');
+		var nonExisting = sync.child('out');
+		var invalid = sync.child('invalid');
 		
 		var existingUsers = [];
 		if (existing) {
 			for (var i = 0; i < existing.children().length; i++) {
-				existingUsers.push(existing.child(i));
+				existingUsers.push(existing.child(i).data().toString());
 			};
 		};
 		
-		console.log(existingUsers);
-		// this.emit('contacts.sync', existingUsers);
+		var nonExistingUsers = [];
+		if (nonExisting) {
+			for (var i = 0; i < nonExisting.children().length; i++) {
+				nonExistingUsers.push(nonExisting.child(i).data().toString());
+			};
+		};
+		
+		var invalidNumbers = [];
+		if (invalid) {
+			for (var i = 0; i < invalid.children().length; i++) {
+				invalidNumbers.push(invalid.child(i).data().toString());
+			};
+		};
+		
+		// console.log(existingUsers);
+		// console.log(nonExistingUsers);
+		// console.log(invalidNumbers);
+		
+		this.emit('contacts.sync', existingUsers, nonExistingUsers, invalidNumbers);
 		
 		return;
 	};
 	
+	// Server properties response
 	if (node.isProperties()) {
 		var properties = {};
 		
@@ -840,8 +871,24 @@ WhatsApi.prototype.processNode = function(node) {
 			properties[propElements[i].attribute('name')] = propElements[i].attribute('value');
 		};
 		
+		// console.log(properties);
+		
 		this.emit('properties', properties);
-	};	
+	}
+	
+	// Service pricing response
+	if (node.isServicePricing()) {
+		var pricingNode = node.child('pricing');
+		
+		// naming conventions for event names?
+		this.emit(
+			'servicePricing',
+			pricingNode.attribute('price'),
+			pricingNode.attribute('cost'),
+			pricingNode.attribute('currency'),
+			pricingNode.attribute('expiration')
+		);
+	}
 };
 
 WhatsApi.prototype.createFeaturesNode = function() {
