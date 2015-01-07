@@ -36,7 +36,7 @@ util.inherits(Text, Abstract);
 
 Text.prototype.match = function(node) {
 	return node.attribute('notify') && node.attribute('type') == 'text'
-			&& node.child('body');
+		&& node.child('body');
 };
 
 Text.prototype.process = function(node) {
@@ -56,22 +56,23 @@ function Location() {}
 util.inherits(Location, Abstract);
 
 Location.prototype.match = function(node) {
-	return node.child('notify') && node.child('media') && node.child(2).attribute('type') == 'location';
+	return node.attribute('notify') && node.child('media')
+		&& node.child('media').attribute('type') == 'location';
 };
 
 Location.prototype.process = function(node) {
-	var location = node.child(2);
+	var location = node.child('media');
 
 	this.adapter.emit(
 		'message.location',
 		node.attribute('from'),
 		node.attribute('id'),
-		node.child(0).attribute('name'),
 		location.attribute('latitude'),
 		location.attribute('longitude'),
 		location.attribute('name'),
 		location.attribute('url'),
-		node.attribute('author')
+		node.attribute('t'),
+		node.attribute('notify')
 	);
 };
 

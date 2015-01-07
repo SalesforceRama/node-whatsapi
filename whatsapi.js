@@ -880,7 +880,9 @@ WhatsApi.prototype.processNode = function(node) {
 	// Incoming plain message
 	if(node.isMessage()) {
 		// Emit stopped typing
-		this.emit('typing', node.attribute('from'), 'paused');
+		if (node.attribute('type') == 'text') {
+			this.emit('typing', node.attribute('from'), 'paused');
+		}		
 		// Process message
 		this.processor.process(node);
 		return;
