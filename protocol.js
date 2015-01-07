@@ -178,18 +178,14 @@ Node.prototype.isGroupList = function() {
 		&& this.child('groups');
 };
 
+Node.prototype.isGroupInfo = function() {
+	return this.tag() === 'iq' && this.attribute('id').indexOf('get_groupv2_info') != -1
+		&& this.child('group') && this.child('group').attribute('id');
+}
+
 Node.prototype.isGroupAdd = function() {
 	return this.tag() === 'iq' && this.attribute('id').indexOf('creategroup') != -1
 		&& this.child('group') && this.child('group').attribute('id');
-};
-
-Node.prototype.isGroupTopic = function() {
-	return this.tag() === 'message' && this.attribute('type') === 'subject' && this.child('body');
-};
-
-Node.prototype.isGroupMembers = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child(0)
-		&& this.child(0).tag() === 'participant' && this.child(0).attribute('xmlns') === 'w:g';
 };
 
 Node.prototype.isGroupNewcomer = function() {

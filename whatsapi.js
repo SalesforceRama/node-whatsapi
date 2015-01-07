@@ -296,18 +296,6 @@ WhatsApi.prototype.createGroup = function(subject, contacts) {
 	this.sendNode(node);
 };
 
-WhatsApi.prototype.requestGroupMembers = function(groupId) {
-	var listNode = new protocol.Node('list', {xmlns : 'w:g'});
-
-	var attributes = {
-		id   : this.nextMessageId('groupmembers'),
-		type : 'get',
-		to   : this.createJID(groupId)
-	};
-
-	this.sendNode(new protocol.Node('iq', attributes, [listNode]));
-};
-
 WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
 	var groupNodes = [];
 
@@ -326,16 +314,31 @@ WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
 	this.sendNode(new protocol.Node('iq', attributes, [leaveNode]));
 };
 
+/**
+ * Request info for a group
+ * @param  {string}    groupId The ID of the group to request info for
+ * @return {undefined}
+ */
 WhatsApi.prototype.requestGroupInfo = function(groupId) {
-	var queryNode = new protocol.Node('query', {xmlns : 'w:g'});
+	var node = new protocol.Node(
+		'iq',
+		{
+			id    : this.nextMessageId('get_groupv2_info'),
+			xmlns : 'w:g2',
+			type  : 'get',
+			to    : this.createJID(groupId)
+		},
+		[
+			new protocol.Node(
+				'query',
+				{
+					request : 'interactive'
+				}
+			)
+		]
+	);
 
-	var attributes = {
-		id   : this.nextMessageId('groupinfo'),
-		type : 'get',
-		to   : this.createJID(groupId)
-	};
-
-	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
+	this.sendNode(node);
 };
 
 /*@param name:
@@ -753,21 +756,33 @@ WhatsApi.prototype.processNode = function(node) {
 		var groupId = node.child('group').attribute('id');
 		var subject = node.child('group').attribute('subject');
 		var creationTs = node.child('group').attribute('creation');
+		
 		this.emit('group.new',  { groupId: groupId, subject: subject, creationTime: creationTs });
+		
 		return;
 	}
-
-	if(node.isGroupTopic()) {
-		this.emit('group.topic', node.attribute('from'), node.child('body').data().toString('utf8'));
-		return;
-	}
-
-	if(node.isGroupMembers()) {
-		var members = node.children().map(function(child) {
-			return child.attribute('jid');
-		});
-
-		this.emit('group.members', node.attribute('from'), members);
+	
+	// Group info + participants
+	if (node.isGroupInfo()) {
+		var groupNode = node.child('group');
+		
+		var group = {
+			id       : groupNode.attribute('id'),
+			creator  : groupNode.attribute('creator'),
+			creation : groupNode.attribute('creation'),
+			subject  : groupNode.attribute('subject'),
+			participants : groupNode.children().map(function(p) {
+				return {
+					admin : p.attribute('type') == 'admin' ? true : false,
+					jid   : p.attribute('jid')
+				}
+			})
+		};
+		
+		// console.log(group);
+		
+		this.emit('group.info', group);
+		
 		return;
 	}
 
