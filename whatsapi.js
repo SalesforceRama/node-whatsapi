@@ -694,13 +694,25 @@ WhatsApi.prototype.send = function(buffer) {
 };
 
 WhatsApi.prototype.processNode = function(node) {
-	// Send 'read'
+	// Got new message, send a 'receipt' node
 	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
-		this.sendNode(this.createReceivedNode(node));
+		this.sendNode(this.createReceiptNode(node));
 	}
 	
 	if (node.isNotification()) {
 		this.sendNode(this.createNotificationAckNode(node));
+	}
+	
+	// Client received the message
+	if (node.isReceipt()) {
+		this.sendNode(this.createAckNode(node));
+		
+		// TODO emit client received event
+	}
+	
+	// Server received the message
+	if (node.isAck()) {
+		// TODO emit server received event
 	}
 
 	// Authentication
@@ -1108,7 +1120,7 @@ WhatsApi.prototype.createPongNode = function(messageId) {
 	return new protocol.Node('iq', attributes);
 };
 
-WhatsApi.prototype.createReceivedNode = function(node) {
+WhatsApi.prototype.createReceiptNode = function(node) {
 	var attributes = {
 		to   : node.attribute('from'),
 		type : 'read',
@@ -1134,6 +1146,26 @@ WhatsApi.prototype.createNotificationAckNode = function(node) {
 	}
 
 	return new protocol.Node('ack', attributes);
+};
+
+WhatsApi.prototype.createAckNode = function(node) {
+	var attributes = {
+		to   : node.attribute('from'),
+		id   : node.attribute('id'),
+		t    : common.tstamp().toString()
+	};
+	
+	// Ack type --> nothing or 'read'
+	if (node.attribute('type')) {
+		attributes['type'] = node.attribute('type');
+	}
+	
+	var node = new protocol.Node(
+		'ack',
+		attributes
+	);
+	
+	return node;
 };
 
 WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to, msgid) {

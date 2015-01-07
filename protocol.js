@@ -135,7 +135,15 @@ Node.prototype.shouldBeReplied = function() {
 
 Node.prototype.isNotification = function() {
 	return this.tag() == 'notification';
-}
+};
+
+Node.prototype.isReceipt = function() {
+	return this.tag() == 'receipt';
+};
+
+Node.prototype.isAck = function() {
+	return this.tag() == 'ack';
+};
 
 Node.prototype.isChallenge = function() {
 	return this.tag() === 'challenge';
