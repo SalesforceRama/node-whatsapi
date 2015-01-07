@@ -396,19 +396,36 @@ WhatsApi.prototype.setStatus = function(status){
     this.sendNode(new protocol.Node('iq', attributes, [child]));
 };
 
-/*@param array list:
-*	phone numbers for which status message is to be seen
-*
-*Partially working. No response from WA Server.
-*/
-WhatsApi.prototype.getStatus = function(list){
+/**
+ * Request status for the given number
+ * @param  {string} number Phone number
+ * @return {undefined}
+ */
+WhatsApi.prototype.requestStatus = function(number) {
+	this.requestStatuses([number]);
+};
+
+/**
+ * Request statuses for the given number
+ * @type {array} numbers   Array of phone numbers
+ */
+WhatsApi.prototype.requestStatuses = function(numbers){
+	// String to Array, just in case
+	if (!util.isArray(numbers)) {
+		numbers = [numbers];
+	}
+	
 	var contacts = [];
 
-	for(var i=0; i<list.length; i++){
-		var node = {
-			jid : this.createJID(list[i])
-		};
-		contacts.push(new protocol.Node('user', node));
+	for (var i = 0; i < numbers.length; i++) {
+		var userNode = new protocol.Node(
+			'user',
+			{
+				jid : this.createJID(numbers[i]),
+				// t   : common.tstamp().toString() // this seems to break the response
+			}
+		);
+		contacts.push(userNode);
 	}
 
     var attributes = {
@@ -418,9 +435,15 @@ WhatsApi.prototype.getStatus = function(list){
         id    : this.nextMessageId('getstatus')
     };
 
-    var child =  new protocol.Node('status', null, contacts);
+    var node = new protocol.Node(
+    	'iq',
+    	attributes,
+    	[
+    		new protocol.Node('status', null, contacts)
+    	]
+    );
 
-    this.sendNode(new protocol.Node('iq', attributes, [child]));
+    this.sendNode(node);
 };
 
 WhatsApi.prototype.requestLastSeen = function(who) {
@@ -822,6 +845,25 @@ WhatsApi.prototype.processNode = function(node) {
 	if(node.isProfilePicture()) {
 		var preview = node.child('picture').attribute('type') === 'preview';
 		this.emit('profile.picture', node.attribute('from'), preview, node.child('picture').data());
+		return;
+	}
+	
+	// User statuses
+	if (node.isStatuses()) {
+		var statusNode = node.child('status');
+		var result = [];
+		
+		for (var i = 0; i < statusNode.children().length; i++) {
+			result.push({
+				jid    : statusNode.child(i).attribute('jid'),
+				status : statusNode.child(i).data().toString('utf8')
+			});
+		};
+		
+		// console.log(result);
+		
+		this.emit('statuses', result);
+		
 		return;
 	}
 	
