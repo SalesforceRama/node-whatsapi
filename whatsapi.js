@@ -658,12 +658,6 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
 		return;
 	}
 
-	var serverNode  = new protocol.Node('server');
-	var xNode       = new protocol.Node('x', {xmlns : 'jabber:x:event'}, [serverNode]);
-	var notyAttrs   = {xmlns : 'urn:xmpp:whatsapp', name : this.config.username};
-	var notifyNode  = new protocol.Node('notify', notyAttrs);
-	var requestNode = new protocol.Node('request', {xmlns : 'urn:xmpp:receipts'});
-
 	var attributes = {
 		to   : this.createJID(to),
 		type : 'text',
@@ -671,7 +665,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
 		t    : common.tstamp().toString()
 	};
 
-	var messageNode = new protocol.Node('message', attributes, [xNode, notifyNode, requestNode, node]);
+	var messageNode = new protocol.Node('message', attributes, [node]);
 
 	this.sendNode(messageNode);
 };
