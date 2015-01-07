@@ -220,8 +220,12 @@ Node.prototype.isProfilePicture = function() {
 	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length >0;
 };
 
-Node.prototype.isStatuses = function() {
+Node.prototype.isGetStatus = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('getstatus') != -1 && this.child('status');
+}
+
+Node.prototype.isSendStatus = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('sendstatus') != -1;
 }
 
 Node.prototype.isSync = function() {

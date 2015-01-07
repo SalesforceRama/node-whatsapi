@@ -380,9 +380,10 @@ WhatsApi.prototype.getPrivacySettings = function(){
     this.sendNode(new protocol.Node('iq', attributes, [child]));
 };
 
-/*@param status:
-*	Message to be displayed as your status message
-*/
+/**
+ * Set current logged in user status
+ * @param {string} status The new status message
+ */
 WhatsApi.prototype.setStatus = function(status){
     var child = new protocol.Node('status', null, null, status);
 
@@ -849,7 +850,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	
 	// User statuses
-	if (node.isStatuses()) {
+	if (node.isGetStatus()) {
 		var statusNode = node.child('status');
 		var result = [];
 		
@@ -862,10 +863,16 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		// console.log(result);
 		
-		this.emit('statuses', result);
+		this.emit('status.get', result);
 		
 		return;
 	}
+	
+	// Set new status response
+	if (node.isSendStatus()) {
+		this.emit('status.updated');
+		return;
+	};
 	
 	// Incoming plain message
 	if(node.isMessage()) {
