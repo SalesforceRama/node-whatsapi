@@ -433,7 +433,7 @@ Reader.prototype.readString = function(token, raw) {
 Reader.prototype.readNibble = function() {
 	var string = '';
 	var byte = this.readInt8();
-	var ignoreLastNibble = (byte & 0x80);
+	var ignoreLastNibble = (byte & 0x80) ? 1:0;
 	
 	var size = (byte & 0x7f);
 	var nrOfNibbles = size * 2 - ignoreLastNibble;
