@@ -1,7 +1,7 @@
 module.exports = [
-	0,
-	0,
-	0,
+	'',
+	'',
+	'',
 	"account",
 	"ack",
 	"action",
@@ -236,7 +236,7 @@ module.exports = [
 	"h264",
 	"jpeg",
 	//secondary dictionary
-  "mpeg4",
+  "mpeg4",            //0 | 236
   "wmv",
   "audio/3gpp",
   "audio/aac",
@@ -246,8 +246,8 @@ module.exports = [
   "audio/ogg",
   "audio/qcelp",
   "audio/wav",
-  "audio/webm",
-  "audio/x-caf",
+  "audio/webm",       //10
+  "audio/x-caf", 
   "audio/x-ms-wma",
   "image/gif",
   "image/jpeg",
@@ -256,8 +256,8 @@ module.exports = [
   "video/avi",
   "video/mp4",
   "video/mpeg",
-  "video/quicktime",
-  "video/x-flv",
+  "video/quicktime",  //20
+  "video/x-flv",      
   "video/x-ms-asf",
   "302",
   "400",
@@ -266,7 +266,7 @@ module.exports = [
   "403",
   "404",
   "405",
-  "406",
+  "406",              //30
   "407",
   "409",
   "410",
@@ -276,7 +276,7 @@ module.exports = [
   "504",
   "abitrate",
   "acodec",
-  "app_uptime",
+  "app_uptime",       //40
   "asampfmt",
   "asampfreq",
   "audio",
@@ -286,7 +286,7 @@ module.exports = [
   "cost",
   "currency",
   "duration",
-  "extend",
+  "extend",           //50
   "file",
   "fps",
   "g_notify",
@@ -296,7 +296,7 @@ module.exports = [
   "google_play",
   "hash",
   "height",
-  "invalid",
+  "invalid",          //60
   "jid-malformed",
   "latitude",
   "lc",
@@ -306,7 +306,7 @@ module.exports = [
   "log",
   "longitude",
   "max_groups",
-  "max_participants",
+  "max_participants", //70
   "max_subject",
   "mimetype",
   "mode",
@@ -316,7 +316,7 @@ module.exports = [
   "origin",
   "passive",
   "password",
-  "played",
+  "played",           //80
   "policy-violation",
   "pop_mean_time",
   "pop_plus_minus",

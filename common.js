@@ -7,7 +7,8 @@ function tstamp() {
 }
 
 function winTimestamp() {
-	return ((Date.now() + 11644477200) * 10000000);
+	var unixtimestamp = Math.round((new Date()).getTime() / 1000);
+	return ((unixtimestamp + 11644477200) * 10000000);
 }
 
 function objSize(obj) {

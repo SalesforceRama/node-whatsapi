@@ -154,7 +154,7 @@ Node.prototype.isMessage = function() {
 };
 
 Node.prototype.isPing = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'get' && this.child(0).tag() === 'ping';
+	return this.tag() === 'iq' && this.attribute('type') === 'get' && this.attribute('xmlns') === 'urn:xmpp:ping';
 };
 
 Node.prototype.isPresence = function() {
@@ -580,6 +580,7 @@ Writer.prototype.node = function(node) {
 
 Writer.prototype.flush = function() {
 	var output = this.output.toBuffer();
+	//console.log('sending: %s',output.toString('hex'));
 	var header = new Buffer(3);
 	
 	if(this.key !== null) {
@@ -661,8 +662,18 @@ Writer.prototype.writeAttributes = function(attributes) {
 };
 
 Writer.prototype.writeString = function(string) {
+	//console.log('writeString: %s', string);
 	if(this.dictionary.hasOwnProperty(string)) {
-		return this.writeToken(this.dictionary[string]);
+		var token = this.dictionary[string];
+		//see if it comens from the "secondary" dictionary
+		if(token >= 0xEC){
+			//console.log('@@@@ token > 0xEC: %d', token);
+			//if so, write an extra token 0xEC (236) to indicate it comen from the secondary dictionary and compensate the offset
+			this.writeInt8(0xEC);
+			token -= 0xEC;
+			//console.log('@@@@ new token: %d', token)
+		} 
+		return this.writeToken(token);
 	}
 
 	var index = string.indexOf('@');
