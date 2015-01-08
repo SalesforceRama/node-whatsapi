@@ -81,10 +81,10 @@ function Media() {}
 util.inherits(Media, Abstract);
 
 Media.prototype.match = function(node) {
-	return node.child('notify') &&
-		   node.child(0).attribute('name') &&
+	return node.attribute('notify') &&
+//		   node.child(0).attribute('name') &&
 		   node.child('media') &&
-		   node.child(2).attribute('type') === this.type;
+		   node.child('media').attribute('type') === this.type;
 };
 
 function Image() {
@@ -94,22 +94,54 @@ function Image() {
 util.inherits(Image, Media);
 
 Image.prototype.process = function(node) {
-	var image = node.child(2);
+	var image = node.child('media');
 
+	/**			
+	 * reveivedImage - event
+	 *  
+	 * @event reveivedImage
+	 * @type {object}
+	 * @property {string} from
+	 * @property {string} id
+	 * @property {integer} size
+	 * @property {string} url
+	 * @property {string} encoding
+	 * @property {string} ip
+	 * @property {string} mimetype
+	 * @property {string} filehash
+	 * @property {string} width
+	 * @property {string} height
+	 * @property {Buffer} thumbnailData
+	 * @example
+	 * wa.on('reveivedImage', function(from, id, size, url, file, encoding, ip, mimetype, filehash, width, height, thumbData){
+	 *   console.log(
+	 *     "Received image:\n From: %s\n id: %s\n size: %d bytes\n url: %s\n file: %s\n encoding: %s\n ip: %s\n mimetype: %s\n filehash: %s\n width: %d px\n height: %d px",
+	 *     from, id, size, url, file, encoding, ip, mimetype, filehash, width, height
+	 *   );
+	 *   fs.writeFile('whatsapi/media/video-'+from+'-'+file+'-thumb.jpg', thumbData); 
+	 *   wa.downloadMediaFile(url,function(err,path){
+	 *     if(err){
+	 *       console.log('error storing file: ' + err);
+	 *     }else{
+	 *       console.log('file downloaded at: '+ path);
+	 *     }
+	 *   });
+	 * });
+	 */			
 	this.adapter.emit(
-		'message.image',
+		'reveivedImage',
 		node.attribute('from'),
 		node.attribute('id'),
-		node.child(0).attribute('name'),
 		image.attribute('size'),
 		image.attribute('url'),
 		image.attribute('file'),
+		image.attribute('encoding'),
+		image.attribute('ip'),
 		image.attribute('mimetype'),
 		image.attribute('filehash'),
 		image.attribute('width'),
 		image.attribute('height'),
-		image.data(),
-		node.attribute('author')
+		image.data()
 	);
 };
 
