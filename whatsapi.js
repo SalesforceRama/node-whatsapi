@@ -670,10 +670,11 @@ WhatsApi.prototype.requestServicePricing = function(language, country) {
 };
 
 /**
- * Set a new profile picture for the active account
- * @param {string} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of +/- 65.000 bytes and that includes the generated thumbnail.
+ * setProfilePicture - Set a new profile picture for the active account
+ *
+ * @param {string} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of approx. 65.000 bytes and that includes the generated thumbnail.
  * @returns {undefined}
- * @emits media.error
+ * @fires media.error
  * @example
  * //sets a random image from lorempixel.com
  * wa.setProfilePicture('http://lorempixel.com/400/400/?.jpg');
@@ -690,6 +691,13 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
 	var onThumbReady = function(err, data) {
 		//data is returned as a base64 string
 		if(err) {
+			/**			
+			 * media.error - event
+			 *  
+			 * @event media.error
+			 * @type {object}
+			 * @property {object} err 
+			 */			
 			this.emit('media.error', err);
 			return;
 		}
@@ -716,7 +724,8 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
 };
 
 /**
- * Send a request for the profile picture for the specified account
+ * requestProfilePicture - Send a request for the profile picture for the specified account
+ * 
  * When received from server a profile.picture event is fired
  * When profile picture can not be retrieved an error 404 item-not-found is returned
  * @param {string} target - Phonenumber of the account to request profile picture from
