@@ -360,6 +360,28 @@ WhatsApi.prototype.requestGroupInfo = function(groupId) {
 };
 
 /**
+ * Update the subject for the given group
+ * @param {string} groupId    The ID of the group you want to change the subject for
+ * @param {string} subject    The new subject/topic text
+ */
+WhatsApi.prototype.setGroupSubject = function(groupId, subject) {
+	var node = new protocol.Node(
+		'iq',
+		{
+			id    : this.nextMessageId('set_group_subject'),
+			type  : 'set',
+			to    : this.createJID(groupId),
+			xmlns : 'w:g2'
+		},
+		[
+			new protocol.Node('subject', null, null, subject)
+		]
+	);
+	
+	this.sendNode(node);
+};
+
+/**
  * Update privacy settings
  * @param {string} name  The name of the setting to update: 'last' for last seen, 'status', 'profile' for profile picture
  * @param {string} value The new value for the setting: 'all', 'contacts', 'none'
