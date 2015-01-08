@@ -162,6 +162,10 @@ WhatsApi.prototype.login = function() {
 	this.sendNode(this.createAuthNode());
 };
 
+/**
+ * Send online presence for the current user
+ * @return {undefined}
+ */
 WhatsApi.prototype.sendIsOnline = function() {
 	var attributes = {
 		name : this.config.username
@@ -170,6 +174,10 @@ WhatsApi.prototype.sendIsOnline = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
+/**
+ * Send offline presence for the current user
+ * @return {undefined}
+ */
 WhatsApi.prototype.sendIsOffline = function() {
 	var attributes = {
 		type : 'unavailable',
@@ -179,6 +187,11 @@ WhatsApi.prototype.sendIsOffline = function() {
 	this.sendNode(new protocol.Node('presence', attributes));
 };
 
+/**
+ * Send composing state to the given user
+ * @param  {string} to     Phone number
+ * @return {undefined}
+ */
 WhatsApi.prototype.sendComposing = function(to) {
 	var node = new protocol.Node(
 		'chatstate',
@@ -193,6 +206,11 @@ WhatsApi.prototype.sendComposing = function(to) {
 	this.sendNode(node);
 };
 
+/**
+ * Send stopped typing/composing to the given user
+ * @param  {string} to     Phone number
+ * @return {undefined}
+ */
 WhatsApi.prototype.sendPaused = function(to) {
 	var node = new protocol.Node(
 		'chatstate',
@@ -375,6 +393,28 @@ WhatsApi.prototype.requestGroupInfo = function(groupId) {
 };
 
 /**
+ * Update the subject for the given group
+ * @param {string} groupId    The ID of the group you want to change the subject for
+ * @param {string} subject    The new subject/topic text
+ */
+WhatsApi.prototype.setGroupSubject = function(groupId, subject) {
+	var node = new protocol.Node(
+		'iq',
+		{
+			id    : this.nextMessageId('set_group_subject'),
+			type  : 'set',
+			to    : this.createJID(groupId),
+			xmlns : 'w:g2'
+		},
+		[
+			new protocol.Node('subject', null, null, subject)
+		]
+	);
+	
+	this.sendNode(node);
+};
+
+/**
  * Update privacy settings
  * @param {string} name  The name of the setting to update: 'last' for last seen, 'status', 'profile' for profile picture
  * @param {string} value The new value for the setting: 'all', 'contacts', 'none'
@@ -483,6 +523,11 @@ WhatsApi.prototype.requestStatuses = function(numbers){
     this.sendNode(node);
 };
 
+/**
+ * Request last seen time for given user
+ * @param  {string} who    Phone number
+ * @return {undefined}
+ */
 WhatsApi.prototype.requestLastSeen = function(who) {
 	var queryNode = new protocol.Node('query');
 
@@ -496,6 +541,11 @@ WhatsApi.prototype.requestLastSeen = function(who) {
 	this.sendNode(new protocol.Node('iq', attributes, [queryNode]));
 };
 
+/**
+ * Request subscription to presence of the given user
+ * @param  {string} who    Phone number
+ * @return {undefined}
+ */
 WhatsApi.prototype.sendPresenceSubscription = function(who) {
 	var attributes = {
 		type : 'subscribe',
@@ -506,6 +556,11 @@ WhatsApi.prototype.sendPresenceSubscription = function(who) {
 	this.sendNode(node);
 };
 
+/**
+ * Requst unsubscription to presence for the given user
+ * @param  {string} who    Phone number
+ * @return {undefined}
+ */
 WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
 	var attributes = {
 		type : 'unsubscribe',
@@ -570,6 +625,10 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	this.sendNode(node);
 };
 
+/**
+ * Request WhatsApp server properties
+ * @return {undefined}
+ */
 WhatsApi.prototype.requestServerProperties = function() {
 	var node = new protocol.Node(
 		'iq',
@@ -587,6 +646,12 @@ WhatsApi.prototype.requestServerProperties = function() {
 	this.sendNode(node);
 };
 
+/**
+ * Request WhatsApp service pricing
+ * @param  {string} language    Language code (e.g. 'en')
+ * @param  {string} country     Country code (e.g. 'us')
+ * @return {undefined}
+ */
 WhatsApi.prototype.requestServicePricing = function(language, country) {	
 	var node = new protocol.Node(
 		'iq',
@@ -720,6 +785,12 @@ WhatsApi.prototype.send = function(buffer) {
 	this.transport.send(buffer);
 };
 
+/**
+ * Process incoming node
+ * @param  {protocol.Node} node    Node to parse
+ * @return {undefined}
+ * @private
+ */
 WhatsApi.prototype.processNode = function(node) {
 	// Got new message, send a 'receipt' node
 	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
@@ -989,9 +1060,8 @@ WhatsApi.prototype.processNode = function(node) {
 	if (node.isServicePricing()) {
 		var pricingNode = node.child('pricing');
 		
-		// naming conventions for event names?
 		this.emit(
-			'servicePricing',
+			'servicepricing',
 			pricingNode.attribute('price'),
 			pricingNode.attribute('cost'),
 			pricingNode.attribute('currency'),
@@ -1012,8 +1082,7 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		// console.log(settings);
 		
-		// Naming conventions?
-		this.emit('privacySettings.get', settings);
+		this.emit('privacysettings.get', settings);
 		return;
 	}
 	
@@ -1029,8 +1098,7 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		// console.log(settings);
 		
-		// Naming conventions?
-		this.emit('privacySettings.updated', settings);
+		this.emit('privacysettings.updated', settings);
 		return;
 	}
 };
@@ -1137,6 +1205,11 @@ WhatsApi.prototype.createClearDirtyNode = function(node) {
 	return new protocol.Node('iq', attributes, [cleanNode]);
 };
 
+/**
+ * Create a pong node, to be sent in response to ping
+ * @param  {string} messageId    The ping message ID
+ * @return {protocol.Node}       Created node
+ */
 WhatsApi.prototype.createPongNode = function(messageId) {
 	var attributes = {
 		to   : this.config.server,
@@ -1147,6 +1220,11 @@ WhatsApi.prototype.createPongNode = function(messageId) {
 	return new protocol.Node('iq', attributes);
 };
 
+/**
+ * Create a 'receipt' node, to be sent when a new message is received/read
+ * @param  {protocol.Node} node    The received message node
+ * @return {protocol.Node}         Created node
+ */
 WhatsApi.prototype.createReceiptNode = function(node) {
 	var attributes = {
 		to   : node.attribute('from'),
@@ -1158,6 +1236,11 @@ WhatsApi.prototype.createReceiptNode = function(node) {
 	return new protocol.Node('receipt', attributes);
 };
 
+/**
+ * Create a 'ack' node, to be sent when a new notification is received
+ * @param  {protocol.Node} node    The notification node
+ * @return {protocol.Node}         Created node
+ */
 WhatsApi.prototype.createNotificationAckNode = function(node) {
 	var attributes = {
 		to    : node.attribute('from'),
@@ -1175,6 +1258,11 @@ WhatsApi.prototype.createNotificationAckNode = function(node) {
 	return new protocol.Node('ack', attributes);
 };
 
+/**
+ * Create a 'ack' node, to be sent when a 'receipt' node is received
+ * @param  {protocol.Node} node     The 'receipt' node
+ * @return {protocol.Node}          Created node
+ */
 WhatsApi.prototype.createAckNode = function(node) {
 	var attributes = {
 		to   : node.attribute('from'),
@@ -1481,10 +1569,20 @@ WhatsApi.prototype.createVideoThumbnail = function(srcPath, callback) {
 	callback(false, '/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMpaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjAtYzA2MCA2MS4xMzQ3NzcsIDIwMTAvMDIvMTItMTc6MzI6MDAgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzUgV2luZG93cyIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo2MTQyRUVCOEI3MDgxMUUyQjNGQkY1OEU5M0U2MDE1MyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo2MTQyRUVCOUI3MDgxMUUyQjNGQkY1OEU5M0U2MDE1MyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjYxNDJFRUI2QjcwODExRTJCM0ZCRjU4RTkzRTYwMTUzIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjYxNDJFRUI3QjcwODExRTJCM0ZCRjU4RTkzRTYwMTUzIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+/+4ADkFkb2JlAGTAAAAAAf/bAIQAAgICAgICAgICAgMCAgIDBAMCAgME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');
 };
 
+/**
+ * Generate the next ID for outcoming messages
+ * @param  {string} prefix    The ID prefix
+ * @return {string}           Message ID
+ */
 WhatsApi.prototype.nextMessageId = function(prefix) {
 	return [prefix, common.tstamp(), ++this.messageId].join('-');
 };
 
+/**
+ * Create the JID for the given number
+ * @param  {string} msisdn    Phone number
+ * @return {string}           The JID
+ */
 WhatsApi.prototype.createJID = function(msisdn) {
 	msisdn = msisdn.toString();
 	if(msisdn.indexOf('@') !== -1) {
