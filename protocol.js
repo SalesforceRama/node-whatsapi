@@ -2,12 +2,20 @@ var util   = require('util');
 var buffer = require('buffer');
 var common = require('./common');
 
+/**
+ * @class Buffer
+ */
 function Buffer() {
 	Buffer.super_.apply(this, arguments);
 }
 
 util.inherits(Buffer, buffer.Buffer);
 
+/**
+ * @param {array} buffers - Array of buffers to concatenate
+ * @param {integer} len - (optional) length of the buffer
+ * @returns {Buffer} - New buffer
+ */
 Buffer.concat = function(buffers, len) {
 	if(!len) {
 		len = 0;
@@ -83,6 +91,13 @@ Buffer.prototype.toString = function(enconding, start, len) {
 	return '[WhatsApp Buffer]';
 };
 
+/**
+ * @class Node
+ * @param {string} tag
+ * @param {array} attributes
+ * @param {array} children
+ * @param {string} data
+ */
 function Node(tag, attributes, children, data) {
 	this.contents = {
 		tag        : tag,
@@ -290,6 +305,10 @@ Node.prototype.toXml = function(prefix) {
 	return xml;
 };
 
+/**
+ * @class Reader
+ * @param {dictionary} dictionary
+ */
 function Reader(dictionary) {
 	this.dictionary = dictionary;
 	this.setKey(null);
@@ -550,6 +569,10 @@ Reader.prototype.readInt24 = function() {
 	}
 };
 
+/**
+ * @class Writer
+ * @param {dictionary} dictionary
+ */
 function Writer(dictionary) {
 	this.dictionary = {};
 

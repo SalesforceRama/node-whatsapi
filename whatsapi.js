@@ -16,6 +16,8 @@ var transports  = require('./transport');
 var encryption  = require('./encryption');
 var processors  = require('./processors');
 
+
+
 var MediaType = {
 	IMAGE : 'image',
 	VIDEO : 'video',
@@ -25,11 +27,11 @@ var MediaType = {
 /**
  * Constructor for WhatsApi
  * @class
- * @param {array} config
- * @param {object} reader
- * @param {object} writer
- * @param {object} processor
- * @param {object} transport
+ * @param {WhatsApiConfig} config
+ * @param {Reader} reader
+ * @param {Writer} writer
+ * @param {Processor} processor
+ * @param {Transport} transport
  */
 function WhatsApi(config, reader, writer, processor, transport) {
 	this.config    = common.extend({}, this.defaultConfig, config);
@@ -45,6 +47,26 @@ function WhatsApi(config, reader, writer, processor, transport) {
 
 util.inherits(WhatsApi, events.EventEmitter);
 
+/**
+* @typedef WhatsApiConfig
+* @type {array}
+* @property {string} msisdn - phone number in international format, without leading '+'. E.g. 491234567890
+* @property {string} device_id - Device ID (only used for registration)
+* @property {string} username - User name
+* @property {string} password - Password provided by WhatsApp upon registration
+* @property {string} ccode -  MCC (Mobile Country Code) See documentation at http://en.wikipedia.org/wiki/Mobile_country_code
+* @property {boolean} reconnect - specify true for automatic reconnect upon disconnect
+* @property {string} host - host URI of the WhatsApp server
+* @property {string} server - server URI (not used for connecting)
+* @property {string} gserver - group server URI (not used for connecting)
+* @property {integer} port - port number to connect to WhatsApp server
+* @property {string} device_type
+* @property {string} app_version - version of the WhatsApp App to use in communication
+* @property {string} ua - user agent string to use in communication
+* @property {string} challenge_file - path to challenge file
+*/
+
+/** @type {WhatsApiConfig} */
 WhatsApi.prototype.defaultConfig = {
 	msisdn         : '',
 	device_id      : '',
@@ -89,9 +111,10 @@ WhatsApi.prototype.mediaMimeTypes[MediaType.AUDIO] = {
 };
 
 /**
- * Initializes WhatsApi
+ * init - Initializes WhatsApi
  * Internal method, should not be called
- * @private
+ * 
+ * @return {undefined}
  */
 WhatsApi.prototype.init = function() {
 	this.transport.onReceive(this.onTransportData, this);
@@ -109,11 +132,21 @@ WhatsApi.prototype.init = function() {
 	this.processor.setAdapter(this);
 };
 
+/**
+ * connect - connects to the WhatsApp server using the connection parameters specified in the configuration
+ * 
+ * @return {undefined}
+ */
 WhatsApi.prototype.connect = function() {
 	this.loggedIn = false;
 	this.transport.connect(this.config.host, this.config.port, this.onTransportConnect, this);
 };
 
+/**
+ * disconnect - disconnectd from the WhatsApp server
+ * 
+ * @return {undefined}
+ */
 WhatsApi.prototype.disconnect = function() {
 	this.transport.disconnect();
 };
@@ -411,7 +444,7 @@ WhatsApi.prototype.requestStatus = function(number) {
 
 /**
  * Request statuses for the given number
- * @type {array} numbers   Array of phone numbers
+ * @param {array} numbers   Array of phone numbers
  */
 WhatsApi.prototype.requestStatuses = function(numbers){
 	// String to Array, just in case
@@ -1498,11 +1531,21 @@ WhatsApi.prototype.onTransportData = function(data) {
 	}
 };
 
+/**
+* @class WhatsApiDebug
+* @augments WhatsApi
+* @param {array} config
+* @param {object} reader
+* @param {object} writer
+* @param {object} processor
+* @param {object} transport
+*/
 function WhatsApiDebug() {
 	WhatsApiDebug.super_.apply(this, arguments);
 }
 
 util.inherits(WhatsApiDebug, WhatsApi);
+
 
 WhatsApiDebug.prototype.processNode = function(node) {
 	node && console.log(node.toXml('rx '));
@@ -1514,6 +1557,12 @@ WhatsApiDebug.prototype.sendNode = function(node) {
 	return WhatsApiDebug.super_.prototype.sendNode.apply(this, arguments);
 };
 
+
+/**
+* @class WhatsApiRegistration
+* @augments WhatsApi
+* @param {array} config
+*/
 function WhatsApiRegistration(config) {
 	this.config = common.extend({}, this.defaultConfig, config);
 
