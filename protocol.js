@@ -692,7 +692,7 @@ Writer.prototype.writeString = function(string) {
 		//see if it comens from the "secondary" dictionary
 		if(token >= 0xEC){
 			//console.log('@@@@ token > 0xEC: %d', token);
-			//if so, write an extra token 0xEC (236) to indicate it comen from the secondary dictionary and compensate the offset
+			//if so, write an extra token 0xEC (236) to indicate it came from the secondary dictionary and compensate the offset
 			this.writeInt8(0xEC);
 			token -= 0xEC;
 			//console.log('@@@@ new token: %d', token)
