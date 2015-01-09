@@ -251,8 +251,41 @@ Audio.prototype.process = function(node) {
 	);
 };
 
+function Vcard() {
+	this.type = 'vcard';
+}
+
+util.inherits(Vcard, Media);
+
+Vcard.prototype.process = function(node) {
+	var vcard = node.child('media').child('vcard');
+
+	/**			
+	* receivedVcard - event
+	*  
+	* @event receivedVcard
+	* @type {object}
+	* @property {string} from
+	* @property {string} id
+	* @property {string} name
+	* @property {Buffer} vcardData
+	* @example
+	* wa.on('receivedVcard', function(from, id, name, vcardData){
+	*   console.log("Received vCard:\n From: %s\n id: %s\n name: %s", from, id, name);
+	*   fs.writeFile('whatsapi/media/vcard-'+from+'-'+name+'.vcard', vcardData);
+  * });
+	*/		
+	this.adapter.emit(
+		'receivedVcard',
+		node.attribute('from'),
+		node.attribute('id'),
+		vcard.attribute('name'),
+		vcard.data()
+	);
+};
+
 function createProcessor() {
-	return new Aggregate([new Text, new Location, new Image, new Video, new Audio]);
+	return new Aggregate([new Text, new Location, new Image, new Video, new Audio, new Vcard]);
 }
 
 exports.createProcessor = createProcessor;
