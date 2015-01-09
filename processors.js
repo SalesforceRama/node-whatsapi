@@ -82,7 +82,6 @@ util.inherits(Media, Abstract);
 
 Media.prototype.match = function(node) {
 	return node.attribute('notify') &&
-//		   node.child(0).attribute('name') &&
 		   node.child('media') &&
 		   node.child('media').attribute('type') === this.type;
 };
@@ -118,7 +117,7 @@ Image.prototype.process = function(node) {
 	 *     "Received image:\n From: %s\n id: %s\n size: %d bytes\n url: %s\n file: %s\n encoding: %s\n ip: %s\n mimetype: %s\n filehash: %s\n width: %d px\n height: %d px",
 	 *     from, id, size, url, file, encoding, ip, mimetype, filehash, width, height
 	 *   );
-	 *   fs.writeFile('whatsapi/media/video-'+from+'-'+file+'-thumb.jpg', thumbData); 
+	 *   fs.writeFile('whatsapi/media/image-'+from+'-'+file+'-thumb.jpg', thumbData); 
 	 *   wa.downloadMediaFile(url,function(err,path){
 	 *     if(err){
 	 *       console.log('error storing file: ' + err);
@@ -151,24 +150,77 @@ function Video() {
 
 util.inherits(Video, Media);
 
+/**			
+ * reveivedVideo - event
+ *  
+ * @event reveivedVideo
+ * @type {object}
+ * @property {string} from
+ * @property {string} id
+ * @property {string} url
+ * @property {string} caption
+ * @property {string} seconds
+ * @property {string} file
+ * @property {string} encoding
+ * @property {string} size
+ * @property {string} ip
+ * @property {string} mimetype
+ * @property {string} filehash
+ * @property {string} duration
+ * @property {string} vcodec
+ * @property {string} width
+ * @property {string} height
+ * @property {string} fps
+ * @property {string} vbitrate
+ * @property {string} acodec
+ * @property {string} asampfreq
+ * @property {string} asampfmt
+ * @property {string} abitrate
+ * @property {Buffer} thumbnailData
+ * @example
+ * wa.on('receivedVideo', function(from, id, url, caption, seconds, file, encoding, size, ip, mimetype, filehash, duration, vcodec, width, height, fps, vbitrate, acodec, asampfreq, asampfmt, abitrate, thumbData){
+ * console.log(
+ *     "Received video:\n from: %s \n id: %s \n url: %s \n caption: %s \n seconds: %s \n file: %s \n encoding: %s \n size: %s bytes\n ip: %s \n mimetype: %s \n filehash: %s \n duration: %s sec\n vcodec: %s \n width: %s px\n height: %s px\n fps: %s \n vbitrate: %s bit/s\n acodec: %s \n asampfreq: %s \n asampfmt: %s \n abitrate %s bit/s",
+ *     from, id, url, caption, seconds, file, encoding, size, ip, mimetype, filehash, duration, vcodec, width, height, fps, vbitrate, acodec, asampfreq, asampfmt, abitrate
+ *   );
+ *   fs.writeFile('whatsapi/media/video-'+from+'-'+file+'-thumb.jpg', thumbData); 
+ *   wa.downloadMediaFile(url,function(err,path){
+ *     if(err){
+ *       console.log('error storing file: ' + err);
+ *     }else{
+ *       console.log('file downloaded at: '+ path);
+ *     }
+ *   });
+ * });
+ */
+
 Video.prototype.process = function(node) {
-	var video = node.child(2);
+	var video = node.child('media');
 
 	this.adapter.emit(
-		'message.video',
+		'receivedVideo',
 		node.attribute('from'),
 		node.attribute('id'),
-		node.child(0).attribute('name'),
-		video.attribute('size'),
 		video.attribute('url'),
+		video.attribute('caption') || '',
+		video.attribute('seconds'),
 		video.attribute('file'),
+		video.attribute('encoding'),
+		video.attribute('size'),
+		video.attribute('ip'),
 		video.attribute('mimetype'),
 		video.attribute('filehash'),
 		video.attribute('duration'),
 		video.attribute('vcodec'),
+		video.attribute('width'),
+		video.attribute('height'),
+		video.attribute('fps'),
+		video.attribute('vbitrate'),
 		video.attribute('acodec'),
-		video.data(),
-		node.attribute('author')
+		video.attribute('asampfreq'),
+		video.attribute('asampfmt'),
+		video.attribute('abitrate'),
+		video.data()
 	);
 };
 
