@@ -63,8 +63,25 @@ Location.prototype.match = function(node) {
 Location.prototype.process = function(node) {
 	var location = node.child('media');
 
+	/**
+	 * 
+	 * receivedLocation - emitted when a location message is received
+	 * 
+	 * @event receivedLocation
+	 * @type {object}
+	 * @property {string} from       Sender JID
+	 * @property {string} id         Message ID
+	 * @property {number} latitude
+	 * @property {number} longitude
+	 * @property {string} name       Name of the place
+	 * @property {string} url        URL of the place (usually foursquare)
+	 * @property {number} timestamp  Message UNIX timestamp
+	 * @property {string} notify
+	 * @property {object} body       Raw body (thumbnail of the map)
+	 * 
+	 */
 	this.adapter.emit(
-		'message.location',
+		'receivedLocation',
 		node.attribute('from'),
 		node.attribute('id'),
 		location.attribute('latitude'),
@@ -72,7 +89,8 @@ Location.prototype.process = function(node) {
 		location.attribute('name'),
 		location.attribute('url'),
 		node.attribute('t'),
-		node.attribute('notify')
+		node.attribute('notify'),
+		location.data()
 	);
 };
 

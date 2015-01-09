@@ -225,21 +225,39 @@ WhatsApi.prototype.sendPaused = function(to) {
 	this.sendNode(node);
 };
 
+/**
+ * Send a text message
+ * @param  {string} to      Recipient number or JID
+ * @param  {string} message Message text content
+ * @param  {string} msgid   Message ID (optional)
+ */
 WhatsApi.prototype.sendMessage = function(to, message, msgid) {
 	this.sendMessageNode(to, new protocol.Node('body', null, null, message), msgid);
 };
 
+/**
+ * Send a location message
+ * @param  {string} to    Recipient number or JID
+ * @param  {number} lat   Latitude
+ * @param  {number} lng   Longitude
+ * @param  {string} name  Place name (optional)
+ * @param  {string} url   Place URL (optional)
+ * @param  {string} msgid Message ID (optional)
+ */
 WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
 	var attributes = {
 		xmlns     : 'urn:xmpp:whatsapp:mms',
 		type      : 'location',
 		latitude  : lat.toString(),
-		longitude : lng.toString(),
-		name      : name || '',
-		url       : url || ''
+		longitude : lng.toString()
 	};
+	
+	if (name) attributes['name'] = name;
+	if (url) attributes['url'] = url;
+	
+	var node = new protocol.Node('media', attributes);
 
-	this.sendMessageNode(to, new protocol.Node('media', attributes), msgid);
+	this.sendMessageNode(to, node, msgid);
 };
 
 WhatsApi.prototype.sendImage = function(to, filepath, msgid) {
@@ -767,7 +785,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
 
 	var attributes = {
 		to   : this.createJID(to),
-		type : 'text',
+		type : (node.child('body') ? 'text' : 'media'),
 		id   : msgid || this.nextMessageId('message'),
 		t    : common.tstamp().toString()
 	};
