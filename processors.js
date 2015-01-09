@@ -96,9 +96,9 @@ Image.prototype.process = function(node) {
 	var image = node.child('media');
 
 	/**			
-	 * reveivedImage - event
+	 * receivedImage - event
 	 *  
-	 * @event reveivedImage
+	 * @event receivedImage
 	 * @type {object}
 	 * @property {string} from
 	 * @property {string} id
@@ -129,7 +129,7 @@ Image.prototype.process = function(node) {
 	 * });
 	 */			
 	this.adapter.emit(
-		'reveivedImage',
+		'receivedImage',
 		node.attribute('from'),
 		node.attribute('id'),
 		image.attribute('size'),

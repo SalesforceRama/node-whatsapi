@@ -812,14 +812,68 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	// Client received the message
 	if (node.isReceipt()) {
+		// Reply with ack
 		this.sendNode(this.createAckNode(node));
 		
-		// TODO emit client received event
+		var type = node.attribute('type') || 'received';
+		var from = node.attribute('from');
+		var time = node.attribute('time');
+		
+		var messageIds = [];
+		
+		// Main ID
+		var id = node.attribute('id');
+		messageIds.push(id);
+		
+		// Other IDs
+		if (node.child('list')) {
+			var list = node.child('list');
+			for (var i = 0; i < list.children().length; i++) {
+				messageIds.push(list.child(i).attribute('id'));
+			}
+		}
+		
+		for (var i = 0; i < messageIds.length; i++) {
+			var id = messageIds[i];
+			/**
+			 * 
+			 * clientReceived - emitted when a client received your message
+			 * 
+			 * @event clientReceived
+			 * @type  {object}
+			 * @property {string} from    The JID of the user who received the message
+			 * @property {string} id      The ID of the received message
+			 * @property {string} type    Event type: 'received' or 'read'
+			 * @property {number} time    The event UNIX timestamp
+			 */
+			this.emit('clientReceived', from, id, type, time);
+		}
+		
+		return;
 	}
 	
 	// Server received the message
 	if (node.isAck()) {
-		// TODO emit server received event
+		/**
+		 * 
+		 * serverReceived - Emitted when the server received your sent message
+		 * 
+		 * @event serverReceived
+		 * @type {object}
+		 * @property {string} from      The JID of the recipient
+		 * @property {string} id        The message ID
+		 * @property {string} class
+		 * @property {number} time      The event UNIX timestamp
+		 * 
+		 */
+		this.emit('serverReceived',
+			node.attribute('from'),
+			node.attribute('id')
+			node.attribute('class'),
+			node.attribute('t')
+		);
+		
+		return;
 	}
 
 	// Authentication
