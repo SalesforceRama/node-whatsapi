@@ -102,8 +102,9 @@ Image.prototype.process = function(node) {
 	 * @type {object}
 	 * @property {string} from
 	 * @property {string} id
-	 * @property {integer} size
+	 * @property {string} size
 	 * @property {string} url
+	 * @property {string} caption - optional caption. Empty string when not provided
 	 * @property {string} encoding
 	 * @property {string} ip
 	 * @property {string} mimetype
@@ -112,10 +113,10 @@ Image.prototype.process = function(node) {
 	 * @property {string} height
 	 * @property {Buffer} thumbnailData
 	 * @example
-	 * wa.on('reveivedImage', function(from, id, size, url, file, encoding, ip, mimetype, filehash, width, height, thumbData){
+	 * wa.on('reveivedImage', function(from, id, size, url, caption, file, encoding, ip, mimetype, filehash, width, height, thumbData){
 	 *   console.log(
-	 *     "Received image:\n From: %s\n id: %s\n size: %d bytes\n url: %s\n file: %s\n encoding: %s\n ip: %s\n mimetype: %s\n filehash: %s\n width: %d px\n height: %d px",
-	 *     from, id, size, url, file, encoding, ip, mimetype, filehash, width, height
+	 *     "Received image:\n From: %s\n id: %s\n size: %d bytes\n url: %s\n caption: %s \n file: %s\n encoding: %s\n ip: %s\n mimetype: %s\n filehash: %s\n width: %d px\n height: %d px",
+	 *     from, id, size, url, caption, file, encoding, ip, mimetype, filehash, width, height
 	 *   );
 	 *   fs.writeFile('whatsapi/media/image-'+from+'-'+file+'-thumb.jpg', thumbData); 
 	 *   wa.downloadMediaFile(url,function(err,path){
@@ -133,6 +134,7 @@ Image.prototype.process = function(node) {
 		node.attribute('id'),
 		image.attribute('size'),
 		image.attribute('url'),
+		image.attribute('caption') || '',
 		image.attribute('file'),
 		image.attribute('encoding'),
 		image.attribute('ip'),
