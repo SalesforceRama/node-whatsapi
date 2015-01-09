@@ -868,7 +868,7 @@ WhatsApi.prototype.processNode = function(node) {
 		 */
 		this.emit('serverReceived',
 			node.attribute('from'),
-			node.attribute('id')
+			node.attribute('id'),
 			node.attribute('class'),
 			node.attribute('t')
 		);
