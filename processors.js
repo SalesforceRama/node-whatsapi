@@ -78,7 +78,14 @@ Location.prototype.process = function(node) {
 	 * @property {number} timestamp  Message UNIX timestamp
 	 * @property {string} notify
 	 * @property {object} body       Raw body (thumbnail of the map)
-	 * 
+	 * @example
+	 * wa.on('receivedLocation', function(from, id, latitude, longitude, name, url, t, notify, thumbData){
+	 *   console.log(
+	 *     "Received location:\n From: %s\n id: %s\n latitude: %d\n longitude: %s\n name: %s \n url: %s \n t: %s\n notify: %s",
+	 *     from, id, latitude, longitude, name, url, t, notify
+	 *   );
+	 *   fs.writeFile('whatsapi/media/location-'+latitude+'-'+longitude+'-thumb.jpg', thumbData);
+	 * });
 	 */
 	this.adapter.emit(
 		'receivedLocation',
