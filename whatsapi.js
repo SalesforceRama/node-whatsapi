@@ -425,6 +425,82 @@ WhatsApi.prototype.createGroup = function(subject, contacts) {
 	this.sendNode(node);
 };
 
+/**
+ * Add new participants to the group
+ * @param {String} groupId  Group ID
+ * @param {Array}  numbers  Array of participants numbers to add
+ */
+WhatsApi.prototype.addGroupParticipants = function(groupId, numbers) {
+	this.changeGroupParticipants(groupId, numbers, 'add');
+};
+
+/**
+ * Remove participants from the group
+ * @param {String} groupId  Group ID
+ * @param {Array}  numbers  Array of participants numbers to remove
+ */
+WhatsApi.prototype.removeGroupParticipants = function(groupId, numbers) {
+	this.changeGroupParticipants(groupId, numbers, 'remove');
+};
+
+/**
+ * Promote participants as admin of the group
+ * @param {String} groupId  Group ID
+ * @param {Array}  numbers  Array of participants numbers to promote
+ */
+WhatsApi.prototype.promoteGroupParticipants = function(groupId, numbers) {
+	this.changeGroupParticipants(groupId, numbers, 'promote');
+};
+
+/**
+ * Demote participants from being admin of the group
+ * @param {String} groupId  Group ID
+ * @param {Array}  numbers  Array of participants numbers to demote
+ */
+WhatsApi.prototype.demoteGroupParticipants = function(groupId, numbers) {
+	this.changeGroupParticipants(groupId, numbers, 'demote');
+};
+
+/**
+ * Do an `action` on the given numbers in the given group
+ * @param  {String} groupId   Group ID
+ * @param  {Array}  numbers   Array of numbers to be affected by the action
+ * @param  {String} action    Action to execute on the numbers
+ */
+WhatsApi.prototype.changeGroupParticipants = function(groupId, numbers, action) {
+	if (!util.isArray(numbers)) {
+		numbers = [numbers];
+	}
+	
+	var participants = [];
+	for (var i = 0; i < numbers.length; i++) {
+		participants.push(
+			new protocol.Node(
+				'participant',
+				{
+					jid: this.createJID(numbers[i])
+				}
+			)
+		);
+	}
+	
+	var messageId = this.nextMessageId(action + '_group_participants_');
+	var node = new protocol.Node(
+		'iq',
+		{
+			id    : messageId,
+			type  : 'set',
+			xmlns : 'w:g2',
+			to    : this.createJID(groupId)
+		},
+		[
+			new protocol.Node(action, null, participants)
+		]
+	);
+	
+	this.sendNode(node);
+};
+
 WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
 	var groupNodes = [];
 
@@ -490,6 +566,12 @@ WhatsApi.prototype.setGroupSubject = function(groupId, subject) {
 	
 	this.sendNode(node);
 };
+
+/*
+ *
+ * END GROUPS
+ *
+ */
 
 /**
  * Update privacy settings
@@ -996,6 +1078,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	
+	// Ping/pong
 	if(node.isPing()) {
 		this.sendNode(this.createPongNode(node.attribute('id')));
 		return;
@@ -1013,7 +1096,7 @@ WhatsApi.prototype.processNode = function(node) {
 			});
 		};
 
-		this.emit('group.list', groupList);
+		this.emit('groupList', groupList);
 		return;
 	}
 	
@@ -1023,7 +1106,7 @@ WhatsApi.prototype.processNode = function(node) {
 		var subject = node.child('group').attribute('subject');
 		var creationTs = node.child('group').attribute('creation');
 		
-		this.emit('group.new',  { groupId: groupId, subject: subject, creationTime: creationTs });
+		this.emit('groupCreated', { groupId: groupId, subject: subject, creationTime: creationTs });
 		
 		return;
 	}
@@ -1045,25 +1128,29 @@ WhatsApi.prototype.processNode = function(node) {
 			})
 		};
 		
-		// console.log(group);
-		
-		this.emit('group.info', group);
+		this.emit('groupInfo', group);
 		
 		return;
 	}
-
-	if(node.isGroupNewcomer() && node.attribute('add') !== this.selfAddress) {
-		this.emit('group.newcomer', node.attribute('from'), node.attribute('add'));
-		return;
-	}
-
-	if(node.isGroupOutcomer()) {
-		if(node.attribute('remove') === this.selfAddress) {
-			this.emit('group.excommunicate', node.attribute('from'));
-		} else {
-			this.emit('group.outcomer',
-				node.attribute('from'), node.attribute('remove'), node.attribute('author'));
-		}
+	
+	// Added/removed/promoted/demoted group participants
+	if (node.isChangeGroupParticipants()) {
+		var action = node.child(0).tag();
+		var who = node.child(0).children().map(function(p) {
+			return {
+				jid   : p.attribute('jid'),
+				error : p.attribute('error') || ''
+			}
+		});
+		
+		/**
+		 * changedGroupParticipants
+		 * @event - changedGroupParticipants
+		 * @param {String} action  Action performed ('add', 'remove', 'promote', 'demote')
+		 * @param {Array}  who     Array of objects containing JID and eventual error
+		 */
+		this.emit('groupChangedParticipants', action, who);
+		
 		return;
 	}
 	

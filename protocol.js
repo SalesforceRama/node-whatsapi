@@ -204,19 +204,15 @@ Node.prototype.isGroupList = function() {
 Node.prototype.isGroupInfo = function() {
 	return this.tag() === 'iq' && this.attribute('id').indexOf('get_groupv2_info') != -1
 		&& this.child('group') && this.child('group').attribute('id');
-}
+};
 
 Node.prototype.isGroupAdd = function() {
 	return this.tag() === 'iq' && this.attribute('id').indexOf('creategroup') != -1
 		&& this.child('group') && this.child('group').attribute('id');
 };
 
-Node.prototype.isGroupNewcomer = function() {
-	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('add');
-};
-
-Node.prototype.isGroupOutcomer = function() {
-	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('remove');
+Node.prototype.isChangeGroupParticipants = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('_group_participants_') != -1;
 };
 /*
  * END GROUPS
