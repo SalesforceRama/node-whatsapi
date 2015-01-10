@@ -40,16 +40,37 @@ Text.prototype.match = function(node) {
 };
 
 Text.prototype.process = function(node) {
-	this.adapter.emit(
-		'message',
-		node.child('body').data().toString('utf8'),
-		node.attribute('from'),
-		node.attribute('id'),
-		node.attribute('t'),
-		node.attribute('notify'),
-		node.attribute('author')
-	);
+	var message = {
+		body    : node.child('body').data().toString('utf8'),
+		from    : node.attribute('from'),
+		author  : node.attribute('participant') || '',
+		id      : node.attribute('id'),
+		date    : new Date(+node.attribute('t') * 1000),
+		notify  : node.attribute('notify'),
+		isGroup : node.attribute('from').indexOf('g.us') != -1 ? true : false
+	};
+	
+	/**
+	 * 
+	 * receivedMessage - emitted when a new text message is received
+	 * 
+	 * @event receivedMessage
+	 * @property {Message} message     Message object
+	 */
+	this.adapter.emit('receivedMessage', message);
 };
+
+/**
+ * @typedef Message
+ * @type {Object}
+ * @property {String} body     UTF-8 decoded body text message
+ * @property {String} from     Sender JID
+ * @property {String} author   If `from` is a group ID, this is the real sender JID
+ * @property {String} id       Message ID
+ * @property {Date}   date     Message date/time
+ * @property {String} notify
+ * @property {Boolean} isGroup Wheter the message comes from a group or not
+ */
 
 function Location() {}
 

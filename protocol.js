@@ -235,10 +235,6 @@ Node.prototype.isFailure = function() {
 	return this.tag() === 'failure';
 };
 
-Node.prototype.isReceived = function() {
-	return this.tag() === 'message' && (this.child('received') || this.child('x'));
-};
-
 Node.prototype.isProfilePicture = function() {
 	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length >0;
 };

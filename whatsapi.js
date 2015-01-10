@@ -935,10 +935,10 @@ WhatsApi.prototype.processNode = function(node) {
 			 * 
 			 * @event clientReceived
 			 * @type  {object}
-			 * @property {string} from    The JID of the user who received the message
-			 * @property {string} id      The ID of the received message
-			 * @property {string} type    Event type: 'received' or 'read'
-			 * @property {number} time    The event UNIX timestamp
+			 * @param {string} from    The JID of the user who received the message
+			 * @param {string} id      The ID of the received message
+			 * @param {string} type    Event type: 'received' or 'read'
+			 * @param {number} time    The event UNIX timestamp
 			 */
 			this.emit('clientReceived', from, id, type, time);
 		}
@@ -954,10 +954,10 @@ WhatsApi.prototype.processNode = function(node) {
 		 * 
 		 * @event serverReceived
 		 * @type {object}
-		 * @property {string} from      The JID of the recipient
-		 * @property {string} id        The message ID
-		 * @property {string} class
-		 * @property {number} time      The event UNIX timestamp
+		 * @param {string} from      The JID of the recipient
+		 * @param {string} id        The message ID
+		 * @param {string} class
+		 * @param {number} time      The event UNIX timestamp
 		 * 
 		 */
 		this.emit('serverReceived',
@@ -1108,11 +1108,6 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 
-	if(node.isReceived()) {
-		this.emit('message.delivered', node.attribute('from'), node.attribute('id'), node.attribute('t'));
-		return;
-	}
-
 	if(node.isProfilePicture()) {
 		var preview = node.child('picture').attribute('type') === 'preview';
 		this.emit('profile.picture', node.attribute('from'), preview, node.child('picture').data());
@@ -1148,7 +1143,7 @@ WhatsApi.prototype.processNode = function(node) {
 	if(node.isMessage()) {
 		// Emit stopped typing
 		if (node.attribute('type') == 'text') {
-			this.emit('typing', node.attribute('from'), 'paused');
+			this.emit('typing', node.attribute('from'), node.attribute('participant') || '', 'paused');
 		}		
 		// Process message
 		this.processor.process(node);
@@ -1157,7 +1152,19 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	// Emit typing (composing or paused)
 	if(node.isTyping()) {
-		this.emit('typing', node.attribute('from'), node.child(0).tag());
+		var from = node.attribute('from');
+		var type = node.child(0).tag();
+		var author = node.attribute('participant') || '';
+		
+		/**
+		 * typing - Emitted when a contact is writing or stopped writing a message
+		 * @event typing
+		 * @param {String} from    Contact JID
+		 * @param {String} author  If `from` is a group, the actual contact JID
+		 * @param {String} type    'composing' or 'paused'
+		 */
+		this.emit('typing', from, author, type);
+		
 		return;
 	}
 	
