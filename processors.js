@@ -138,7 +138,7 @@ Image.prototype.process = function(node) {
 	 * @property {string} height
 	 * @property {Buffer} thumbnailData
 	 * @example
-	 * wa.on('reveivedImage', function(from, id, size, url, caption, file, encoding, ip, mimetype, filehash, width, height, thumbData){
+	 * wa.on('receivedImage', function(from, id, size, url, caption, file, encoding, ip, mimetype, filehash, width, height, thumbData){
 	 *   console.log(
 	 *     "Received image:\n From: %s\n id: %s\n size: %d bytes\n url: %s\n caption: %s \n file: %s\n encoding: %s\n ip: %s\n mimetype: %s\n filehash: %s\n width: %d px\n height: %d px",
 	 *     from, id, size, url, caption, file, encoding, ip, mimetype, filehash, width, height
@@ -178,9 +178,9 @@ function Video() {
 util.inherits(Video, Media);
 
 /**			
- * reveivedVideo - event
+ * receivedVideo - event
  *  
- * @event reveivedVideo
+ * @event receivedVideo
  * @type {object}
  * @property {string} from
  * @property {string} id
@@ -258,21 +258,58 @@ function Audio() {
 util.inherits(Audio, Media);
 
 Audio.prototype.process = function(node) {
-	var audio = node.child(2);
+	var audio = node.child('media');
 
+/**
+ * receivedAudio - event
+ *  
+ * @event receivedAudio
+ * @type {object}
+ * @property {string} from
+ * @property {string} id
+ * @property {string} seconds
+ * @property {string} size
+ * @property {string} url
+ * @property {string} file
+ * @property {string} origin
+ * @property {string} ip
+ * @property {string} mimetype
+ * @property {string} filehash
+ * @property {string} duration
+ * @property {string} acodec
+ * @property {string} asampfreq
+ * @property {string} abitrate
+ * @example
+ * wa.on('receivedAudio', function(from, id, seconds, size, url, file, origin, ip, mimetype, filehash, duration, acodec, asampfreq, abitrate){
+ *   console.log(
+ *     "Received audio:\n From: %s\n  id: %s\n  seconds: %s\n  size: %s\n  url: %s\n  file: %s\n  origin: %s\n  ip: %s\n  mimetype: %s\n  filehash: %s\n  duration: %s sec\n  acodec: %s\n  asampfreq: %s\n  abitrate: %s kbit/s",
+ *     from, id, seconds, size, url, file, origin, ip, mimetype, filehash, duration, acodec, asampfreq, abitrate
+ *   );
+ *   wa.downloadMediaFile(url,function(err,path){
+ *     if(err){
+ *       console.log('error storing file: ' + err);
+ *     }else{
+ *       console.log('file downloaded at: '+ path);
+ *     }
+ *   });
+ * });
+ */
 	this.adapter.emit(
-		'message.audio',
+		'receivedAudio',
 		node.attribute('from'),
 		node.attribute('id'),
-		node.child(0).attribute('name'),
+		audio.attribute('seconds'),
 		audio.attribute('size'),
 		audio.attribute('url'),
 		audio.attribute('file'),
+		audio.attribute('origin'),
+		audio.attribute('ip'),
 		audio.attribute('mimetype'),
 		audio.attribute('filehash'),
 		audio.attribute('duration'),
 		audio.attribute('acodec'),
-		node.attribute('author')
+		audio.attribute('asampfreq'),
+		audio.attribute('abitrate')
 	);
 };
 
