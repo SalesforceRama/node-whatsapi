@@ -291,6 +291,16 @@ WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid) {
 	this.sendMedia(to, filepath, MediaType.VIDEO, caption, msgid);
 };
 
+/**
+ * sendAudio - Send an audio file to the specified destination.
+ * 
+ * @param  {type} to       destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {type} filepath file path or URL of the audio file to send
+ * @param  {type} msgid    (optional) message ID
+ * @return {undefined}
+ * @example
+ * wa.sendAudio('491234567890', 'http://archive.org/download/Exodus1KJV/02001_Exodus_1.mp3');
+ */
 WhatsApi.prototype.sendAudio = function(to, filepath, msgid) {
 	this.sendMedia(to, filepath, MediaType.AUDIO, null, msgid);
 };
