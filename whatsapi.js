@@ -260,19 +260,42 @@ WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
 	this.sendMessageNode(to, node, msgid);
 };
 
-WhatsApi.prototype.sendImage = function(to, filepath, msgid) {
-	this.sendMedia(to, filepath, MediaType.IMAGE, msgid);
+
+/**
+ * sendImage - Send an image to the specified destination. An optional caption an message ID can be specified.
+ * 
+ * @param  {string} to       destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {string} filepath file path or URL of the image to send
+ * @param  {string} caption  (optional) caption to display together with the image
+ * @param  {string} msgid    (optional) message ID
+ * @return {undefined}
+ * @example
+ * wa.sendImage('491234567890', 'http://lorempixel.com/800/600/?.jpg', 'This is a caption');
+ */
+WhatsApi.prototype.sendImage = function(to, filepath, caption, msgid) {
+	this.sendMedia(to, filepath, MediaType.IMAGE, caption, msgid);
 };
 
-WhatsApi.prototype.sendVideo = function(to, filepath, msgid) {
-	this.sendMedia(to, filepath, MediaType.VIDEO, msgid);
+/**
+* sendVideo - Send a video to the specified destination. An optional caption an message ID can be specified.
+* 
+* @param  {string} to       destination phone number in international format, without '+'. E.g. 491234567890
+* @param  {string} filepath file path or URL of the video to send
+* @param  {string} caption  (optional) caption to display together with the video
+* @param  {string} msgid    (optional) message ID
+* @return {undefined}
+* @example
+* wa.sendVideo('491234567890','http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4', 'Big Buck Bunny');
+*/
+WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid) {
+	this.sendMedia(to, filepath, MediaType.VIDEO, caption, msgid);
 };
 
 WhatsApi.prototype.sendAudio = function(to, filepath, msgid) {
-	this.sendMedia(to, filepath, MediaType.AUDIO, msgid);
+	this.sendMedia(to, filepath, MediaType.AUDIO, null, msgid);
 };
 
-WhatsApi.prototype.sendMedia = function(to, filepath, type, msgid) {
+WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid) {
 	this.getMediaFile(filepath, type, function(err, path) {
 		if(err) {
 			this.emit('media.error', err);
@@ -282,7 +305,7 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type, msgid) {
 		var stat = fs.statSync(path);
 		var hash = crypto.createHash('sha256').update(fs.readFileSync(path)).digest('base64');
 
-		this.sendNode(this.createRequestMediaUploadNode(hash, type, stat.size, path, to, msgid));
+		this.sendNode(this.createRequestMediaUploadNode(hash, type, stat.size, path, to, caption, msgid));
 	}.bind(this));
 };
 
@@ -1364,9 +1387,8 @@ WhatsApi.prototype.createAckNode = function(node) {
 	return node;
 };
 
-WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to, msgid) {
+WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to, caption, msgid) {
 	var attributes = {
-		xmlns : 'w:m',
 		hash  : filehash,
 		type  : filetype,
 		size  : filesize.toString()
@@ -1377,7 +1399,8 @@ WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, f
 	var iqAttributes = {
 		id   : msgid || this.nextMessageId('upload'),
 		to   : this.config.server,
-		type : 'set'
+		type : 'set',
+		xmlns : 'w:m'
 	};
 
 	this.mediaQueue[iqAttributes.id] = {
@@ -1386,6 +1409,7 @@ WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, f
 		to       : to,
 		from     : this.config.msisdn
 	};
+	if(caption && caption.length) this.mediaQueue[iqAttributes.id].caption = caption;
 
 	return new protocol.Node('iq', iqAttributes, [mediaNode]);
 };
@@ -1403,6 +1427,7 @@ WhatsApi.prototype.createMediaUploadNode = function(node, callback) {
 	var attributes = {
 		xmlns : 'urn:xmpp:whatsapp:mms'
 	};
+	if (queued.caption) attributes.caption = queued.caption;
 
 	var onAttributesReady = function(url, type, size, file) {
 		attributes.url  = url;
