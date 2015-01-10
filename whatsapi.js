@@ -21,7 +21,8 @@ var processors  = require('./processors');
 var MediaType = {
 	IMAGE : 'image',
 	VIDEO : 'video',
-	AUDIO : 'audio'
+	AUDIO : 'audio',
+	VCARD : 'vcard'
 };
 
 /**
@@ -107,6 +108,15 @@ WhatsApi.prototype.mediaMimeTypes[MediaType.AUDIO] = {
 		'video/ogg',
 		'audio/x-aiff',
 		'audio/x-aac'
+	]
+};
+
+WhatsApi.prototype.mediaMimeTypes[MediaType.VCARD] = {
+	size : 10 * 1024 * 1024,
+	mime : [
+	'text/x-vcard',
+	'text/directory;profile=vCard',
+	'text/directory'
 	]
 };
 
@@ -294,9 +304,9 @@ WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid) {
 /**
  * sendAudio - Send an audio file to the specified destination.
  * 
- * @param  {type} to       destination phone number in international format, without '+'. E.g. 491234567890
- * @param  {type} filepath file path or URL of the audio file to send
- * @param  {type} msgid    (optional) message ID
+ * @param  {string} to       destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {string} filepath file path or URL of the audio file to send
+ * @param  {string} msgid    (optional) message ID
  * @return {undefined}
  * @example
  * wa.sendAudio('491234567890', 'http://archive.org/download/Exodus1KJV/02001_Exodus_1.mp3');
@@ -316,6 +326,37 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid) {
 		var hash = crypto.createHash('sha256').update(fs.readFileSync(path)).digest('base64');
 
 		this.sendNode(this.createRequestMediaUploadNode(hash, type, stat.size, path, to, caption, msgid));
+	}.bind(this));
+};
+
+/**
+ * sendVcard - Send a vCard file to the specified destination.
+ * 
+ * @param  {string} to       destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {string} filepath file path or URL of the vCard file to send
+ * @param  {string} name     name of the person in the vcard
+ * @param  {string} msgid    (optional) message ID
+ * @return {undefined}
+ */
+WhatsApi.prototype.sendVcard = function(to, filepath, name, msgid) {
+	this.getMediaFile(filepath, MediaType.VCARD, function(err, path) {
+		if(err) {
+			this.emit('media.error', err);
+			return;
+		}
+		
+		fs.readFile(path, function(err, data) {
+			if(err) {
+				this.emit('media.error', err);
+				return;
+			}
+
+			var vcardNode = new protocol.Node('vcard', {name: name}, null, data);
+			var mediaNode = new protocol.Node('media', {type: 'vcard'}, [vcardNode], null);
+			
+			this.sendMessageNode(to, mediaNode, msgid);
+			
+		}.bind(this));
 	}.bind(this));
 };
 
