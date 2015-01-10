@@ -1536,10 +1536,26 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 	var reqObj = schema === 'https:' ? https : http;
 
 	reqObj.get(destUrl, function(res) {
+		if(res.statusCode != 200){
+			if( res.statusCode == 302 && res.headers && res.headers.location){
+				return this.downloadMediaFile( res.headers.location, callback);
+			}
+			callback('HTTP 200 or 302 reponse expected, but received: ' + res.statusCode);
+		}
+		
 		var buffers = [];
-
 		res.on('data', function(data) {
 			buffers.push(data);
+		});
+		
+		res.on('error', function(err){
+			callback('Error downloading data: ' + err);
+		});
+		
+		res.on('close', function(had_error){
+			if(had_error){
+				callback('Error occured while downloading data');
+			}
 		});
 
 		res.on('end', function() {
@@ -1553,7 +1569,7 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 				}
 			});
 		});
-	}).on('error', function(e) {
+	}.bind(this)).on('error', function(e) {
 		callback('HTTP error: ' + e.message);
 	});
 };
