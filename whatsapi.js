@@ -466,6 +466,7 @@ WhatsApi.prototype.demoteGroupParticipants = function(groupId, numbers) {
  * @param  {String} groupId   Group ID
  * @param  {Array}  numbers   Array of numbers to be affected by the action
  * @param  {String} action    Action to execute on the numbers
+ * @private
  */
 WhatsApi.prototype.changeGroupParticipants = function(groupId, numbers, action) {
 	if (!util.isArray(numbers)) {
@@ -501,19 +502,28 @@ WhatsApi.prototype.changeGroupParticipants = function(groupId, numbers, action) 
 	this.sendNode(node);
 };
 
+/**
+ * Request to leave groups
+ * @param  {Array} groupIds    Group IDs you want to left
+ */
 WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
+	if (!util.isArray(groupIds)) {
+		groupIds = [groupIds];
+	}
+	
 	var groupNodes = [];
 
 	for (var i = 0; i < groupIds.length; i++) {
 		groupNodes.push(new protocol.Node('group', {id : this.createJID(groupIds[i])}));
 	};
 
-	var leaveNode = new protocol.Node('leave', {xmlns : 'w:g', action : 'delete'}, groupNodes);
+	var leaveNode = new protocol.Node('leave', { action : 'delete' }, groupNodes);
 
 	var attributes = {
-		id   : this.nextMessageId('leavegroups'),
-		to   : this.config.gserver,
-		type : 'set'
+		id    : this.nextMessageId('leavegroups'),
+		to    : this.config.gserver,
+		type  : 'set',
+		xmlns : 'w:g2'
 	};
 
 	this.sendNode(new protocol.Node('iq', attributes, [leaveNode]));
@@ -949,6 +959,13 @@ WhatsApi.prototype.send = function(buffer) {
  * @private
  */
 WhatsApi.prototype.processNode = function(node) {
+	if (node.isError()) {
+		var error = node.child('error');
+		this.emit('responseError', error.attribute('code'), error.attribute('text'));
+		
+		return;
+	}
+	
 	// Got new message, send a 'receipt' node
 	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
 		this.sendNode(this.createReceiptNode(node));
@@ -1142,14 +1159,33 @@ WhatsApi.prototype.processNode = function(node) {
 				error : p.attribute('error') || ''
 			}
 		});
+		var messageId = node.attribute('id');
 		
 		/**
-		 * changedGroupParticipants
+		 * changedGroupParticipants - emitted when group participants have changed
 		 * @event - changedGroupParticipants
-		 * @param {String} action  Action performed ('add', 'remove', 'promote', 'demote')
-		 * @param {Array}  who     Array of objects containing JID and eventual error
+		 * @param {String} action     Action performed ('add', 'remove', 'promote', 'demote')
+		 * @param {Array}  who        Array of objects containing JID and eventual error
+		 * @param {String} messageId
 		 */
-		this.emit('groupChangedParticipants', action, who);
+		this.emit('groupChangedParticipants', action, who, messageId);
+		
+		return;
+	}
+	
+	if (node.isLeaveGroup()) {
+		var jids = node.child(0).children().map(function(g) {
+			return g.attribute('id')
+		});
+		var messageId = node.attribute('id');
+		
+		/**
+		 * groupLeave - emitted when you left a group
+		 * @event - groupLeave
+		 * @param {Array}  jids        Array of group JIDs you left
+		 * @param {String} messageId
+		 */
+		this.emit('groupLeave', jids, messageId);
 		
 		return;
 	}

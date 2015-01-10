@@ -214,9 +214,19 @@ Node.prototype.isGroupAdd = function() {
 Node.prototype.isChangeGroupParticipants = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('_group_participants_') != -1;
 };
+
+Node.prototype.isLeaveGroup = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('leavegroups') != -1
+		&& this.child('leave');
+};
+
 /*
  * END GROUPS
  */
+
+Node.prototype.isError = function() {
+	return this.child('error');
+};
 
 Node.prototype.isLastSeen = function() {
 	return this.child('query') && this.child('query').attribute('seconds');
