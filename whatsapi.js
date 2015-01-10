@@ -337,6 +337,8 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid) {
  * @param  {string} name     name of the person in the vcard
  * @param  {string} msgid    (optional) message ID
  * @return {undefined}
+ * @example
+ * wa.sendVcard('491234567890', 'http://www.w3.org/2002/12/cal/vcard-examples/john-doe.vcf', 'John Doe');
  */
 WhatsApi.prototype.sendVcard = function(to, filepath, name, msgid) {
 	this.getMediaFile(filepath, MediaType.VCARD, function(err, path) {
