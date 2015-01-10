@@ -63,13 +63,13 @@ Text.prototype.process = function(node) {
 /**
  * @typedef Message
  * @type {Object}
- * @property {String} body     UTF-8 decoded body text message
- * @property {String} from     Sender JID
- * @property {String} author   If `from` is a group ID, this is the real sender JID
- * @property {String} id       Message ID
- * @property {Date}   date     Message date/time
+ * @property {String} body      UTF-8 decoded body text message
+ * @property {String} from      Sender JID
+ * @property {String} author    If `from` is a group ID, this is the real sender JID
+ * @property {String} id        Message ID
+ * @property {Date}   date      Message date/time
  * @property {String} notify
- * @property {Boolean} isGroup Wheter the message comes from a group or not
+ * @property {Boolean} isGroup  Whether the message comes from a group or not
  */
 
 function Location() {}

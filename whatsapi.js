@@ -50,21 +50,21 @@ util.inherits(WhatsApi, events.EventEmitter);
 
 /**
 * @typedef WhatsApiConfig
-* @type {array}
-* @property {string} msisdn - phone number in international format, without leading '+'. E.g. 491234567890
-* @property {string} device_id - Device ID (only used for registration)
-* @property {string} username - User name
-* @property {string} password - Password provided by WhatsApp upon registration
-* @property {string} ccode -  MCC (Mobile Country Code) See documentation at http://en.wikipedia.org/wiki/Mobile_country_code
-* @property {boolean} reconnect - specify true for automatic reconnect upon disconnect
-* @property {string} host - host URI of the WhatsApp server
-* @property {string} server - server URI (not used for connecting)
-* @property {string} gserver - group server URI (not used for connecting)
-* @property {integer} port - port number to connect to WhatsApp server
-* @property {string} device_type
-* @property {string} app_version - version of the WhatsApp App to use in communication
-* @property {string} ua - user agent string to use in communication
-* @property {string} challenge_file - path to challenge file
+* @type {Array}
+* @property {String} msisdn - phone number in international format, without leading '+'. E.g. 491234567890
+* @property {String} device_id - Device ID (only used for registration)
+* @property {String} username - User name
+* @property {String} password - Password provided by WhatsApp upon registration
+* @property {String} ccode -  MCC (Mobile Country Code) See documentation at http://en.wikipedia.org/wiki/Mobile_country_code
+* @property {Boolean} reconnect - specify true for automatic reconnect upon disconnect
+* @property {String} host - host URI of the WhatsApp server
+* @property {String} server - server URI (not used for connecting)
+* @property {String} gserver - group server URI (not used for connecting)
+* @property {Number} port - port number to connect to WhatsApp server
+* @property {String} device_type
+* @property {String} app_version - version of the WhatsApp App to use in communication
+* @property {String} ua - user agent string to use in communication
+* @property {String} challenge_file - path to challenge file
 */
 
 /** @type {WhatsApiConfig} */
@@ -123,8 +123,6 @@ WhatsApi.prototype.mediaMimeTypes[MediaType.VCARD] = {
 /**
  * init - Initializes WhatsApi
  * Internal method, should not be called
- * 
- * @return {undefined}
  */
 WhatsApi.prototype.init = function() {
 	this.transport.onReceive(this.onTransportData, this);
@@ -144,8 +142,6 @@ WhatsApi.prototype.init = function() {
 
 /**
  * connect - connects to the WhatsApp server using the connection parameters specified in the configuration
- * 
- * @return {undefined}
  */
 WhatsApi.prototype.connect = function() {
 	this.loggedIn = false;
@@ -154,8 +150,6 @@ WhatsApi.prototype.connect = function() {
 
 /**
  * disconnect - disconnectd from the WhatsApp server
- * 
- * @return {undefined}
  */
 WhatsApi.prototype.disconnect = function() {
 	this.transport.disconnect();
@@ -174,7 +168,6 @@ WhatsApi.prototype.login = function() {
 
 /**
  * Send online presence for the current user
- * @return {undefined}
  */
 WhatsApi.prototype.sendIsOnline = function() {
 	var attributes = {
@@ -186,7 +179,6 @@ WhatsApi.prototype.sendIsOnline = function() {
 
 /**
  * Send offline presence for the current user
- * @return {undefined}
  */
 WhatsApi.prototype.sendIsOffline = function() {
 	var attributes = {
@@ -199,8 +191,7 @@ WhatsApi.prototype.sendIsOffline = function() {
 
 /**
  * Send composing state to the given user
- * @param  {string} to     Phone number
- * @return {undefined}
+ * @param  {String} to     Phone number
  */
 WhatsApi.prototype.sendComposing = function(to) {
 	var node = new protocol.Node(
@@ -218,8 +209,7 @@ WhatsApi.prototype.sendComposing = function(to) {
 
 /**
  * Send stopped typing/composing to the given user
- * @param  {string} to     Phone number
- * @return {undefined}
+ * @param  {String} to     Phone number
  */
 WhatsApi.prototype.sendPaused = function(to) {
 	var node = new protocol.Node(
@@ -237,9 +227,9 @@ WhatsApi.prototype.sendPaused = function(to) {
 
 /**
  * Send a text message
- * @param  {string} to      Recipient number or JID
- * @param  {string} message Message text content
- * @param  {string} msgid   Message ID (optional)
+ * @param  {String} to      Recipient number or JID
+ * @param  {String} message Message text content
+ * @param  {String} msgid   Message ID (optional)
  */
 WhatsApi.prototype.sendMessage = function(to, message, msgid) {
 	this.sendMessageNode(to, new protocol.Node('body', null, null, message), msgid);
@@ -247,12 +237,12 @@ WhatsApi.prototype.sendMessage = function(to, message, msgid) {
 
 /**
  * Send a location message
- * @param  {string} to    Recipient number or JID
- * @param  {number} lat   Latitude
- * @param  {number} lng   Longitude
- * @param  {string} name  Place name (optional)
- * @param  {string} url   Place URL (optional)
- * @param  {string} msgid Message ID (optional)
+ * @param  {String} to    Recipient number or JID
+ * @param  {Number} lat   Latitude
+ * @param  {Number} lng   Longitude
+ * @param  {String} name  Place name (optional)
+ * @param  {String} url   Place URL (optional)
+ * @param  {String} msgid Message ID (optional)
  */
 WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
 	var attributes = {
@@ -274,11 +264,10 @@ WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
 /**
  * sendImage - Send an image to the specified destination. An optional caption an message ID can be specified.
  * 
- * @param  {string} to       destination phone number in international format, without '+'. E.g. 491234567890
- * @param  {string} filepath file path or URL of the image to send
- * @param  {string} caption  (optional) caption to display together with the image
- * @param  {string} msgid    (optional) message ID
- * @return {undefined}
+ * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {String} filepath file path or URL of the image to send
+ * @param  {String} caption  (optional) caption to display together with the image
+ * @param  {String} msgid    (optional) message ID
  * @example
  * wa.sendImage('491234567890', 'http://lorempixel.com/800/600/?.jpg', 'This is a caption');
  */
@@ -289,11 +278,10 @@ WhatsApi.prototype.sendImage = function(to, filepath, caption, msgid) {
 /**
 * sendVideo - Send a video to the specified destination. An optional caption an message ID can be specified.
 * 
-* @param  {string} to       destination phone number in international format, without '+'. E.g. 491234567890
-* @param  {string} filepath file path or URL of the video to send
-* @param  {string} caption  (optional) caption to display together with the video
-* @param  {string} msgid    (optional) message ID
-* @return {undefined}
+* @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
+* @param  {String} filepath file path or URL of the video to send
+* @param  {String} caption  (optional) caption to display together with the video
+* @param  {String} msgid    (optional) message ID
 * @example
 * wa.sendVideo('491234567890','http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4', 'Big Buck Bunny');
 */
@@ -304,10 +292,9 @@ WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid) {
 /**
  * sendAudio - Send an audio file to the specified destination.
  * 
- * @param  {string} to       destination phone number in international format, without '+'. E.g. 491234567890
- * @param  {string} filepath file path or URL of the audio file to send
- * @param  {string} msgid    (optional) message ID
- * @return {undefined}
+ * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {String} filepath file path or URL of the audio file to send
+ * @param  {String} msgid    (optional) message ID
  * @example
  * wa.sendAudio('491234567890', 'http://archive.org/download/Exodus1KJV/02001_Exodus_1.mp3');
  */
@@ -332,11 +319,10 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid) {
 /**
  * sendVcard - Send a vCard file to the specified destination.
  * 
- * @param  {string} to       destination phone number in international format, without '+'. E.g. 491234567890
- * @param  {string} filepath file path or URL of the vCard file to send
- * @param  {string} name     name of the person in the vcard
- * @param  {string} msgid    (optional) message ID
- * @return {undefined}
+ * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {String} filepath file path or URL of the vCard file to send
+ * @param  {String} name     name of the person in the vcard
+ * @param  {String} msgid    (optional) message ID
  * @example
  * wa.sendVcard('491234567890', 'http://www.w3.org/2002/12/cal/vcard-examples/john-doe.vcf', 'John Doe');
  */
@@ -370,8 +356,7 @@ WhatsApi.prototype.sendVcard = function(to, filepath, name, msgid) {
 
 /**
  * Request a filtered list of groups
- * @param  {string}     type   Groups list filter, 'owning' or 'participating'
- * @return {undefined}
+ * @param  {String}     type   Groups list filter, 'owning' or 'participating'
  * @example
  * wa.requestGroupList();
  * wa.on('group.list', function(list) {
@@ -395,9 +380,8 @@ WhatsApi.prototype.requestGroupList = function(type) {
 
 /**
  * Creates a new group
- * @param  {string} subject   The subject/topic of the group
- * @param  {array}  contacts  An array of phone numbers to be added as participants to the group
- * @return {undefined}
+ * @param  {String} subject   The subject/topic of the group
+ * @param  {Array}  contacts  An array of phone numbers to be added as participants to the group
  * @example
  * wa.createGroup('Group name', '39xxxxxxxxxx');
  * // or
@@ -461,8 +445,7 @@ WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
 
 /**
  * Request info for a group
- * @param  {string}    groupId The ID of the group to request info for
- * @return {undefined}
+ * @param  {String}    groupId The ID of the group to request info for
  */
 WhatsApi.prototype.requestGroupInfo = function(groupId) {
 	var node = new protocol.Node(
@@ -488,8 +471,8 @@ WhatsApi.prototype.requestGroupInfo = function(groupId) {
 
 /**
  * Update the subject for the given group
- * @param {string} groupId    The ID of the group you want to change the subject for
- * @param {string} subject    The new subject/topic text
+ * @param {String} groupId    The ID of the group you want to change the subject for
+ * @param {String} subject    The new subject/topic text
  */
 WhatsApi.prototype.setGroupSubject = function(groupId, subject) {
 	var node = new protocol.Node(
@@ -510,8 +493,8 @@ WhatsApi.prototype.setGroupSubject = function(groupId, subject) {
 
 /**
  * Update privacy settings
- * @param {string} name  The name of the setting to update: 'last' for last seen, 'status', 'profile' for profile picture
- * @param {string} value The new value for the setting: 'all', 'contacts', 'none'
+ * @param {String} name  The name of the setting to update: 'last' for last seen, 'status', 'profile' for profile picture
+ * @param {String} value The new value for the setting: 'all', 'contacts', 'none'
  */
 WhatsApi.prototype.setPrivacySettings = function(name, value){
 	var node = new protocol.Node('category', 
@@ -535,7 +518,6 @@ WhatsApi.prototype.setPrivacySettings = function(name, value){
 
 /**
  * Request privacy settings for the current user
- * @return {undefined}
  */
 WhatsApi.prototype.requestPrivacySettings = function(){
     var attributes = {
@@ -552,7 +534,7 @@ WhatsApi.prototype.requestPrivacySettings = function(){
 
 /**
  * Set current logged in user status
- * @param {string} status The new status message
+ * @param {String} status The new status message
  */
 WhatsApi.prototype.setStatus = function(status){
     var child = new protocol.Node('status', null, null, status);
@@ -569,8 +551,7 @@ WhatsApi.prototype.setStatus = function(status){
 
 /**
  * Request status for the given number
- * @param  {string} number Phone number
- * @return {undefined}
+ * @param  {String} number Phone number
  */
 WhatsApi.prototype.requestStatus = function(number) {
 	this.requestStatuses([number]);
@@ -578,7 +559,7 @@ WhatsApi.prototype.requestStatus = function(number) {
 
 /**
  * Request statuses for the given number
- * @param {array} numbers   Array of phone numbers
+ * @param {Array} numbers   Array of phone numbers
  */
 WhatsApi.prototype.requestStatuses = function(numbers){
 	// String to Array, just in case
@@ -619,8 +600,7 @@ WhatsApi.prototype.requestStatuses = function(numbers){
 
 /**
  * Request last seen time for given user
- * @param  {string} who    Phone number
- * @return {undefined}
+ * @param  {String} who    Phone number
  */
 WhatsApi.prototype.requestLastSeen = function(who) {
 	var queryNode = new protocol.Node('query');
@@ -637,8 +617,7 @@ WhatsApi.prototype.requestLastSeen = function(who) {
 
 /**
  * Request subscription to presence of the given user
- * @param  {string} who    Phone number
- * @return {undefined}
+ * @param  {String} who    Phone number
  */
 WhatsApi.prototype.sendPresenceSubscription = function(who) {
 	var attributes = {
@@ -652,8 +631,7 @@ WhatsApi.prototype.sendPresenceSubscription = function(who) {
 
 /**
  * Requst unsubscription to presence for the given user
- * @param  {string} who    Phone number
- * @return {undefined}
+ * @param  {String} who    Phone number
  */
 WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
 	var attributes = {
@@ -667,10 +645,9 @@ WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
 
 /**
  * Requests contacts sync
- * @param  {array}   contacts    Array of contacts to be synced; single string phone number is accepted
- * @param  {string}  mode        The sync mode. 'full' or 'delta'
- * @param  {string}  context     The sync context. 'registration' or 'background' (more info in the wiki, later)
- * @return {undefined}
+ * @param  {Array}   contacts    Array of contacts to be synced; single string phone number is accepted
+ * @param  {String}  mode        The sync mode. 'full' or 'delta'
+ * @param  {String}  context     The sync context. 'registration' or 'background' (more info in the wiki, later)
  */
 WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	if (!util.isArray(contacts)) {
@@ -721,7 +698,6 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 
 /**
  * Request WhatsApp server properties
- * @return {undefined}
  */
 WhatsApi.prototype.requestServerProperties = function() {
 	var node = new protocol.Node(
@@ -742,9 +718,8 @@ WhatsApi.prototype.requestServerProperties = function() {
 
 /**
  * Request WhatsApp service pricing
- * @param  {string} language    Language code (e.g. 'en')
- * @param  {string} country     Country code (e.g. 'us')
- * @return {undefined}
+ * @param  {String} language    Language code (e.g. 'en')
+ * @param  {String} country     Country code (e.g. 'us')
  */
 WhatsApi.prototype.requestServicePricing = function(language, country) {	
 	var node = new protocol.Node(
@@ -766,8 +741,7 @@ WhatsApi.prototype.requestServicePricing = function(language, country) {
 /**
  * setProfilePicture - Set a new profile picture for the active account
  *
- * @param {string} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of approx. 65.000 bytes and that includes the generated thumbnail.
- * @returns {undefined}
+ * @param {String} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of approx. 65.000 bytes and that includes the generated thumbnail.
  * @fires media.error
  * @example
  * //sets a random image from lorempixel.com
@@ -822,9 +796,8 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
  * 
  * When received from server a profile.picture event is fired
  * When profile picture can not be retrieved an error 404 item-not-found is returned
- * @param {string} target - Phonenumber of the account to request profile picture from
- * @param {boolean} small - true for thumbnail, false for full size profile picture
- * @returns {undefined}
+ * @param {String} target - Phonenumber of the account to request profile picture from
+ * @param {Boolean} small - true for thumbnail, false for full size profile picture
  * @example
  * //request full size profile picture from 49xxxxxxxx
  * wa.requestProfilePicture('49xxxxxxxx', false);
@@ -890,8 +863,7 @@ WhatsApi.prototype.send = function(buffer) {
 
 /**
  * Process incoming node
- * @param  {protocol.Node} node    Node to parse
- * @return {undefined}
+ * @param  {Node} node    Node to parse
  * @private
  */
 WhatsApi.prototype.processNode = function(node) {
@@ -934,11 +906,11 @@ WhatsApi.prototype.processNode = function(node) {
 			 * clientReceived - emitted when a client received your message
 			 * 
 			 * @event clientReceived
-			 * @type  {object}
-			 * @param {string} from    The JID of the user who received the message
-			 * @param {string} id      The ID of the received message
-			 * @param {string} type    Event type: 'received' or 'read'
-			 * @param {number} time    The event UNIX timestamp
+			 * @type  {Object}
+			 * @param {String} from    The JID of the user who received the message
+			 * @param {String} id      The ID of the received message
+			 * @param {String} type    Event type: 'received' or 'read'
+			 * @param {Number} time    The event UNIX timestamp
 			 */
 			this.emit('clientReceived', from, id, type, time);
 		}
@@ -953,11 +925,11 @@ WhatsApi.prototype.processNode = function(node) {
 		 * serverReceived - Emitted when the server received your sent message
 		 * 
 		 * @event serverReceived
-		 * @type {object}
-		 * @param {string} from      The JID of the recipient
-		 * @param {string} id        The message ID
-		 * @param {string} class
-		 * @param {number} time      The event UNIX timestamp
+		 * @type {Object}
+		 * @param {String} from      The JID of the recipient
+		 * @param {String} id        The message ID
+		 * @param {String} class
+		 * @param {Number} time      The event UNIX timestamp
 		 * 
 		 */
 		this.emit('serverReceived',
@@ -1371,8 +1343,8 @@ WhatsApi.prototype.createClearDirtyNode = function(node) {
 
 /**
  * Create a pong node, to be sent in response to ping
- * @param  {string} messageId    The ping message ID
- * @return {protocol.Node}       Created node
+ * @param  {String} messageId    The ping message ID
+ * @return {Node}       Created node
  */
 WhatsApi.prototype.createPongNode = function(messageId) {
 	var attributes = {
@@ -1386,8 +1358,8 @@ WhatsApi.prototype.createPongNode = function(messageId) {
 
 /**
  * Create a 'receipt' node, to be sent when a new message is received/read
- * @param  {protocol.Node} node    The received message node
- * @return {protocol.Node}         Created node
+ * @param  {Node} node    The received message node
+ * @return {Node}         Created node
  */
 WhatsApi.prototype.createReceiptNode = function(node) {
 	var attributes = {
@@ -1402,8 +1374,8 @@ WhatsApi.prototype.createReceiptNode = function(node) {
 
 /**
  * Create a 'ack' node, to be sent when a new notification is received
- * @param  {protocol.Node} node    The notification node
- * @return {protocol.Node}         Created node
+ * @param  {Node} node    The notification node
+ * @return {Node}         Created node
  */
 WhatsApi.prototype.createNotificationAckNode = function(node) {
 	var attributes = {
@@ -1424,8 +1396,8 @@ WhatsApi.prototype.createNotificationAckNode = function(node) {
 
 /**
  * Create a 'ack' node, to be sent when a 'receipt' node is received
- * @param  {protocol.Node} node     The 'receipt' node
- * @return {protocol.Node}          Created node
+ * @param  {Node} node     The 'receipt' node
+ * @return {Node}          Created node
  */
 WhatsApi.prototype.createAckNode = function(node) {
 	var attributes = {
@@ -1753,8 +1725,8 @@ WhatsApi.prototype.createVideoThumbnail = function(srcPath, callback) {
 
 /**
  * Generate the next ID for outcoming messages
- * @param  {string} prefix    The ID prefix
- * @return {string}           Message ID
+ * @param  {String} prefix    The ID prefix
+ * @return {String}           Message ID
  */
 WhatsApi.prototype.nextMessageId = function(prefix) {
 	return [prefix, common.tstamp(), ++this.messageId].join('-');
@@ -1762,8 +1734,8 @@ WhatsApi.prototype.nextMessageId = function(prefix) {
 
 /**
  * Create the JID for the given number
- * @param  {string} msisdn    Phone number
- * @return {string}           The JID
+ * @param  {String} msisdn    Phone number
+ * @return {String}           The JID
  */
 WhatsApi.prototype.createJID = function(msisdn) {
 	msisdn = msisdn.toString();
@@ -1814,11 +1786,11 @@ WhatsApi.prototype.onTransportData = function(data) {
 /**
 * @class WhatsApiDebug
 * @augments WhatsApi
-* @param {array} config
-* @param {object} reader
-* @param {object} writer
-* @param {object} processor
-* @param {object} transport
+* @param {Array} config
+* @param {Object} reader
+* @param {Object} writer
+* @param {Object} processor
+* @param {Object} transport
 */
 function WhatsApiDebug() {
 	WhatsApiDebug.super_.apply(this, arguments);
@@ -1841,7 +1813,7 @@ WhatsApiDebug.prototype.sendNode = function(node) {
 /**
 * @class WhatsApiRegistration
 * @augments WhatsApi
-* @param {array} config
+* @param {Array} config
 */
 function WhatsApiRegistration(config) {
 	this.config = common.extend({}, this.defaultConfig, config);
