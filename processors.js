@@ -90,37 +90,43 @@ Location.prototype.process = function(node) {
 	 * 
 	 * @event receivedLocation
 	 * @type {object}
-	 * @property {string} from       Sender JID
-	 * @property {string} id         Message ID
-	 * @property {number} latitude
-	 * @property {number} longitude
-	 * @property {string} name       Name of the place
-	 * @property {string} url        URL of the place (usually foursquare)
-	 * @property {number} timestamp  Message UNIX timestamp
-	 * @property {string} notify
-	 * @property {object} body       Raw body (thumbnail of the map)
+   * @property {Location} location Location object
 	 * @example
-	 * wa.on('receivedLocation', function(from, id, latitude, longitude, name, url, t, notify, thumbData){
+	 * wa.on('receivedLocation', function(location){
 	 *   console.log(
-	 *     "Received location:\n From: %s\n id: %s\n latitude: %d\n longitude: %s\n name: %s \n url: %s \n t: %s\n notify: %s",
-	 *     from, id, latitude, longitude, name, url, t, notify
+	 *     "Received location:\n From: %s\n id: %s\n date: %s\n notify: %s\n latitude: %d\n longitude: %s\n name: %s \n url: %s",
+	 *     location.from, location.id, location.date.toString(), location.notify, location.latitude, location.longitude, location.name, location.url
 	 *   );
-	 *   fs.writeFile('whatsapi/media/location-'+latitude+'-'+longitude+'-thumb.jpg', thumbData);
+	 *   fs.writeFile('whatsapi/media/location-'+location.latitude+'-'+location.longitude+'-thumb.jpg', location.thumbData);
 	 * });
 	 */
 	this.adapter.emit(
-		'receivedLocation',
-		node.attribute('from'),
-		node.attribute('id'),
-		location.attribute('latitude'),
-		location.attribute('longitude'),
-		location.attribute('name'),
-		location.attribute('url'),
-		node.attribute('t'),
-		node.attribute('notify'),
-		location.data()
+		'receivedLocation',{
+			from       : node.attribute('from'),
+			id         : node.attribute('id'),
+			date       : new Date(+node.attribute('t') * 1000),
+			notify     : node.attribute('notify'),
+			latitude   : +location.attribute('latitude'),
+			longitude  : +location.attribute('longitude'),
+			name       : location.attribute('name'),
+			url        : location.attribute('url'),
+			thumbData  : location.data()
+		}
 	);
 };
+/**
+ * @typedef Location
+ * @type {Object}
+ * @property {String} from       Sender JID
+ * @property {String} id         Message ID
+ * @property {Date}   date       Message date/time
+ * @property {String} notify
+ * @property {Number} latitude
+ * @property {Number} longitude
+ * @property {String} name       Name of the place
+ * @property {String} url        URL of the place
+ * @property {Buffer} thumbData  Raw body (thumbnail of the map)
+ */
 
 function Media() {}
 
@@ -141,31 +147,19 @@ util.inherits(Image, Media);
 Image.prototype.process = function(node) {
 	var image = node.child('media');
 
-	/**			
-	 * receivedImage - event
+	/**
+	 * Is fired when an image is received
 	 *  
 	 * @event receivedImage
-	 * @type {object}
-	 * @property {string} from
-	 * @property {string} id
-	 * @property {string} size
-	 * @property {string} url
-	 * @property {string} caption - optional caption. Empty string when not provided
-	 * @property {string} encoding
-	 * @property {string} ip
-	 * @property {string} mimetype
-	 * @property {string} filehash
-	 * @property {string} width
-	 * @property {string} height
-	 * @property {Buffer} thumbnailData
+	 * @property {Image} image Image object
 	 * @example
-	 * wa.on('receivedImage', function(from, id, size, url, caption, file, encoding, ip, mimetype, filehash, width, height, thumbData){
+	 * wa.on('receivedImage', function(image){
 	 *   console.log(
-	 *     "Received image:\n From: %s\n id: %s\n size: %d bytes\n url: %s\n caption: %s \n file: %s\n encoding: %s\n ip: %s\n mimetype: %s\n filehash: %s\n width: %d px\n height: %d px",
-	 *     from, id, size, url, caption, file, encoding, ip, mimetype, filehash, width, height
+	 *     "Received image:\n From: %s\n id: %s\n date: %s\n notify: %s\n size: %d bytes\n url: %s\n caption: %s \n file: %s\n encoding: %s\n ip: %s\n mimetype: %s\n filehash: %s\n width: %d px\n height: %d px",
+	 *     image.from, image.id, image.date.toString(), image.notify, image.size, image.url, image.caption, image.file, image.encoding, image.ip, image.mimetype, image.filehash, image.width, image.height
 	 *   );
-	 *   fs.writeFile('whatsapi/media/image-'+from+'-'+file+'-thumb.jpg', thumbData); 
-	 *   wa.downloadMediaFile(url,function(err,path){
+	 *   fs.writeFile('whatsapi/media/image-'+image.from+'-'+image.file+'-thumb.jpg', image.thumbData); 
+	 *   wa.downloadMediaFile(image.url,function(err,path){
 	 *     if(err){
 	 *       console.log('error storing file: ' + err);
 	 *     }else{
@@ -175,22 +169,44 @@ Image.prototype.process = function(node) {
 	 * });
 	 */			
 	this.adapter.emit(
-		'receivedImage',
-		node.attribute('from'),
-		node.attribute('id'),
-		image.attribute('size'),
-		image.attribute('url'),
-		image.attribute('caption') || '',
-		image.attribute('file'),
-		image.attribute('encoding'),
-		image.attribute('ip'),
-		image.attribute('mimetype'),
-		image.attribute('filehash'),
-		image.attribute('width'),
-		image.attribute('height'),
-		image.data()
+		'receivedImage',{
+			from       : node.attribute('from'),
+			id         : node.attribute('id'),
+			date       : new Date(+node.attribute('t') * 1000),
+			notify     : node.attribute('notify'),
+			size       : +image.attribute('size'),
+			url        : image.attribute('url'),
+			caption    : image.attribute('caption') || '',
+			file       : image.attribute('file'),
+			encoding   : image.attribute('encoding'),
+			ip         : image.attribute('ip'),
+			mimetype   : image.attribute('mimetype'),
+			filehash   : image.attribute('filehash'),
+			width      : +image.attribute('width'),
+			height     : +image.attribute('height'),
+			thumbData  : image.data()
+		}
 	);
 };
+/**
+ * @typedef Image
+ * @type {Object}
+ * @property {String} from
+ * @property {String} id
+ * @property {Date}   date      Message date/time
+ * @property {String} notify
+ * @property {Number} size
+ * @property {String} url
+ * @property {String} caption
+ * @property {String} file
+ * @property {String} encoding
+ * @property {String} ip
+ * @property {String} mimetype
+ * @property {String} filehash
+ * @property {Number} width
+ * @property {Number} height
+ * @property {Buffer} thumbData
+ */
 
 function Video() {
 	this.type = 'video';
@@ -199,40 +215,18 @@ function Video() {
 util.inherits(Video, Media);
 
 /**			
- * receivedVideo - event
+ * Is fired when a video is received
  *  
  * @event receivedVideo
- * @type {object}
- * @property {string} from
- * @property {string} id
- * @property {string} url
- * @property {string} caption
- * @property {string} seconds
- * @property {string} file
- * @property {string} encoding
- * @property {string} size
- * @property {string} ip
- * @property {string} mimetype
- * @property {string} filehash
- * @property {string} duration
- * @property {string} vcodec
- * @property {string} width
- * @property {string} height
- * @property {string} fps
- * @property {string} vbitrate
- * @property {string} acodec
- * @property {string} asampfreq
- * @property {string} asampfmt
- * @property {string} abitrate
- * @property {Buffer} thumbnailData
+ * @property {Video} video     Video object
  * @example
- * wa.on('receivedVideo', function(from, id, url, caption, seconds, file, encoding, size, ip, mimetype, filehash, duration, vcodec, width, height, fps, vbitrate, acodec, asampfreq, asampfmt, abitrate, thumbData){
+ * wa.on('receivedVideo', function(video){
  * console.log(
- *     "Received video:\n from: %s \n id: %s \n url: %s \n caption: %s \n seconds: %s \n file: %s \n encoding: %s \n size: %s bytes\n ip: %s \n mimetype: %s \n filehash: %s \n duration: %s sec\n vcodec: %s \n width: %s px\n height: %s px\n fps: %s \n vbitrate: %s bit/s\n acodec: %s \n asampfreq: %s \n asampfmt: %s \n abitrate %s bit/s",
- *     from, id, url, caption, seconds, file, encoding, size, ip, mimetype, filehash, duration, vcodec, width, height, fps, vbitrate, acodec, asampfreq, asampfmt, abitrate
+ *     "Received video:\n from: %s \n id: %s\n date: %s\n notify: %s\n url: %s \n caption: %s \n seconds: %s \n file: %s \n encoding: %s \n size: %s bytes\n ip: %s \n mimetype: %s \n filehash: %s \n duration: %s sec\n vcodec: %s \n width: %s px\n height: %s px\n fps: %s \n vbitrate: %s bit/s\n acodec: %s \n asampfreq: %s \n asampfmt: %s \n abitrate %s bit/s",
+ *     video.from, video.id, video.date.toString(), video.notify, video.url, video.caption, video.seconds, video.file, video.encoding, video.size, video.ip, video.mimetype, video.filehash, video.duration, video.vcodec, video.width, video.height, video.fps, video.vbitrate, video.acodec, video.asampfreq, video.asampfmt, video.abitrate
  *   );
- *   fs.writeFile('whatsapi/media/video-'+from+'-'+file+'-thumb.jpg', thumbData); 
- *   wa.downloadMediaFile(url,function(err,path){
+ *   fs.writeFile('whatsapi/media/video-'+video.from+'-'+video.file+'-thumb.jpg', video.thumbData); 
+ *   wa.downloadMediaFile(video.url, function(err, path){
  *     if(err){
  *       console.log('error storing file: ' + err);
  *     }else{
@@ -246,31 +240,63 @@ Video.prototype.process = function(node) {
 	var video = node.child('media');
 
 	this.adapter.emit(
-		'receivedVideo',
-		node.attribute('from'),
-		node.attribute('id'),
-		video.attribute('url'),
-		video.attribute('caption') || '',
-		video.attribute('seconds'),
-		video.attribute('file'),
-		video.attribute('encoding'),
-		video.attribute('size'),
-		video.attribute('ip'),
-		video.attribute('mimetype'),
-		video.attribute('filehash'),
-		video.attribute('duration'),
-		video.attribute('vcodec'),
-		video.attribute('width'),
-		video.attribute('height'),
-		video.attribute('fps'),
-		video.attribute('vbitrate'),
-		video.attribute('acodec'),
-		video.attribute('asampfreq'),
-		video.attribute('asampfmt'),
-		video.attribute('abitrate'),
-		video.data()
+		'receivedVideo',{
+			from       : node.attribute('from'),
+			id         : node.attribute('id'),
+			date       : new Date(+node.attribute('t') * 1000),
+			notify     : node.attribute('notify'),
+			url        : video.attribute('url'),
+			caption    : video.attribute('caption') || '',
+			seconds    : +video.attribute('seconds'),
+			file       : video.attribute('file'),
+			encoding   : video.attribute('encoding'),
+			size       : +video.attribute('size'),
+			ip         : video.attribute('ip'),
+			mimetype   : video.attribute('mimetype'),
+			filehash   : video.attribute('filehash'),
+			duration   : +video.attribute('duration'),
+			vcodec     : video.attribute('vcodec'),
+			width      : +video.attribute('width'),
+			height     : +video.attribute('height'),
+			fps        : +video.attribute('fps'),
+			vbitrate   : +video.attribute('vbitrate'),
+			acodec     : video.attribute('acodec'),
+			asampfreq  : +video.attribute('asampfreq'),
+			asampfmt   : video.attribute('asampfmt'),
+			abitrate   : +video.attribute('abitrate'),
+			thumbData  : video.data()
+		}
 	);
 };
+
+/**
+ * @typedef Video
+ * @type {Object}
+ * @property {String} from
+ * @property {String} id
+ * @property {Date}   date      Message date/time
+ * @property {String} notify
+ * @property {String} url
+ * @property {String} caption
+ * @property {Number} seconds
+ * @property {String} file
+ * @property {String} encoding
+ * @property {Number} size
+ * @property {String} ip
+ * @property {String} mimetype
+ * @property {String} filehash
+ * @property {Number} duration
+ * @property {String} vcodec
+ * @property {Number} width
+ * @property {Number} height
+ * @property {Number} fps
+ * @property {Number} vbitrate
+ * @property {String} acodec
+ * @property {Number} asampfreq
+ * @property {String} asampfmt
+ * @property {Number} abitrate
+ * @property {Buffer} thumbData
+ */
 
 function Audio() {
 	this.type = 'audio';
@@ -282,31 +308,17 @@ Audio.prototype.process = function(node) {
 	var audio = node.child('media');
 
 /**
- * receivedAudio - event
+ *  Is fired when an audio file is received
  *  
  * @event receivedAudio
- * @type {object}
- * @property {string} from
- * @property {string} id
- * @property {string} seconds
- * @property {string} size
- * @property {string} url
- * @property {string} file
- * @property {string} origin
- * @property {string} ip
- * @property {string} mimetype
- * @property {string} filehash
- * @property {string} duration
- * @property {string} acodec
- * @property {string} asampfreq
- * @property {string} abitrate
+ * @property {Audio} audio Audio object
  * @example
- * wa.on('receivedAudio', function(from, id, seconds, size, url, file, origin, ip, mimetype, filehash, duration, acodec, asampfreq, abitrate){
+ * wa.on('receivedAudio', function(audio){
  *   console.log(
- *     "Received audio:\n From: %s\n  id: %s\n  seconds: %s\n  size: %s\n  url: %s\n  file: %s\n  origin: %s\n  ip: %s\n  mimetype: %s\n  filehash: %s\n  duration: %s sec\n  acodec: %s\n  asampfreq: %s\n  abitrate: %s kbit/s",
- *     from, id, seconds, size, url, file, origin, ip, mimetype, filehash, duration, acodec, asampfreq, abitrate
+ *     "Received audio:\n from: %s\n id: %s\n date: %s\n notify: %s\n seconds: %s\n size: %s\n url: %s\n file: %s\n origin: %s\n ip: %s\n mimetype: %s\n filehash: %s\n duration: %s sec\n acodec: %s\n asampfreq: %s\n abitrate: %s kbit/s",
+ *     audio.from, audio.id, audio.date.toString(), audio.notify, audio.seconds, audio.size, audio.url, audio.file, audio.origin, audio.ip, audio.mimetype, audio.filehash, audio.duration, audio.acodec, audio.asampfreq, audio.abitrate
  *   );
- *   wa.downloadMediaFile(url,function(err,path){
+ *   wa.downloadMediaFile(audio.url, function(err,path){
  *     if(err){
  *       console.log('error storing file: ' + err);
  *     }else{
@@ -316,23 +328,47 @@ Audio.prototype.process = function(node) {
  * });
  */
 	this.adapter.emit(
-		'receivedAudio',
-		node.attribute('from'),
-		node.attribute('id'),
-		audio.attribute('seconds'),
-		audio.attribute('size'),
-		audio.attribute('url'),
-		audio.attribute('file'),
-		audio.attribute('origin'),
-		audio.attribute('ip'),
-		audio.attribute('mimetype'),
-		audio.attribute('filehash'),
-		audio.attribute('duration'),
-		audio.attribute('acodec'),
-		audio.attribute('asampfreq'),
-		audio.attribute('abitrate')
+		'receivedAudio',{
+			from       : node.attribute('from'),
+			id         : node.attribute('id'),
+			date       : new Date(+node.attribute('t') * 1000),
+			notify     : node.attribute('notify'),
+			seconds    : +audio.attribute('seconds'),
+			size       : +audio.attribute('size'),
+			url        : audio.attribute('url'),
+			file       : audio.attribute('file'),
+			origin     : audio.attribute('origin') || '',
+			ip         : audio.attribute('ip'),
+			mimetype   : audio.attribute('mimetype'),
+			filehash   : audio.attribute('filehash'),
+			duration   : +audio.attribute('duration'),
+			acodec     : audio.attribute('acodec'),
+			asampfreq  : +audio.attribute('asampfreq'),
+			abitrate   : +audio.attribute('abitrate')
+		}
 	);
 };
+/**
+ * @typedef Audio
+ * @type {Object}
+ * @property {String} from
+ * @property {String} id
+ * @property {Date}   date      Message date/time
+ * @property {String} notify
+ * @property {Number} seconds
+ * @property {Number} size
+ * @property {String} url
+ * @property {String} file
+ * @property {String} origin
+ * @property {String} ip
+ * @property {String} mimetype
+ * @property {String} filehash
+ * @property {Number} duration
+ * @property {String} acodec
+ * @property {Number} asampfreq
+ * @property {Number} abitrate
+ */
+
 
 function Vcard() {
 	this.type = 'vcard';
@@ -344,28 +380,40 @@ Vcard.prototype.process = function(node) {
 	var vcard = node.child('media').child('vcard');
 
 	/**			
-	* receivedVcard - event
+	* Is fired when a vCard file is received
 	*  
 	* @event receivedVcard
-	* @type {object}
-	* @property {string} from
-	* @property {string} id
-	* @property {string} name
-	* @property {Buffer} vcardData
+	* @property {Vcard} vcard vCard object
 	* @example
-	* wa.on('receivedVcard', function(from, id, name, vcardData){
-	*   console.log("Received vCard:\n From: %s\n id: %s\n name: %s", from, id, name);
-	*   fs.writeFile('whatsapi/media/vcard-'+from+'-'+name+'.vcard', vcardData);
+	* wa.on('receivedVcard', function(vcard){
+	*   console.log(
+	*     "Received vCard:\n From: %s\n id: %s\n date: %s\n notify: %s\n name: %s",
+	*     vcard.from, vcard.id, vcard.date.toString(), vcard.notify, vcard.name
+	*   );
+	*   fs.writeFile('whatsapi/media/vcard-'+vcard.from+'-'+vcard.name+'.vcard', vcard.vcardData);
   * });
 	*/		
 	this.adapter.emit(
-		'receivedVcard',
-		node.attribute('from'),
-		node.attribute('id'),
-		vcard.attribute('name'),
-		vcard.data()
+		'receivedVcard',{
+			from       : node.attribute('from'),
+			id         : node.attribute('id'),
+			date       : new Date(+node.attribute('t') * 1000),
+			notify     : node.attribute('notify'),
+			name       : vcard.attribute('name'),
+			vcardData  : vcard.data()
+		}
 	);
 };
+/**
+ * @typedef Vcard
+ * @type {Object}
+ * @property {String} from
+ * @property {String} id
+ * @property {Date}   date      Message date/time
+ * @property {String} notify
+ * @property {String} name
+ * @property {Buffer} vcardData
+ */
 
 function createProcessor() {
 	return new Aggregate([new Text, new Location, new Image, new Video, new Audio, new Vcard]);
