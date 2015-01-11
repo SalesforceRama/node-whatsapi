@@ -926,7 +926,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
 
 	var attributes = {
 		to   : this.createJID(to),
-		type : (node.child('body') ? 'text' : 'media'),
+		type : (node.tag('body') ? 'text' : 'media'),
 		id   : msgid || this.nextMessageId('message'),
 		t    : common.tstamp().toString()
 	};
