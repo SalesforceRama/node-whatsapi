@@ -273,6 +273,10 @@ Node.prototype.isSendPrivacySettings = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('send_privacy_settings') != -1;
 };
 
+Node.prototype.isOfflineCount = function() {
+	return this.tag() == 'ib' && this.child('offline') && this.child('offline').attribute('count');
+};
+
 Node.prototype.toXml = function(prefix) {
 	prefix = prefix || '';
 

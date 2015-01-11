@@ -967,7 +967,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	
 	// Got new message, send a 'receipt' node
-	if(node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
+	if (node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
 		this.sendNode(this.createReceiptNode(node));
 	}
 	
@@ -1068,6 +1068,17 @@ WhatsApi.prototype.processNode = function(node) {
 		this.loggedIn = false;
 		this.emit('error', node.toXml());
 		return;
+	}
+	
+	// Messages offline count
+	if (node.isOfflineCount()) {
+		/**
+		 * offlineCount - emitted when the count of messages received
+		 * 				  while offline is received
+		 * @event offlineCount
+		 * @param {Number} count    Count of messages/notifications
+		 */
+		this.emit('offlineCount', +node.child('offline').attribute('count'));
 	}
 	
 	// Contact presence update
