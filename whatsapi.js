@@ -121,8 +121,8 @@ WhatsApi.prototype.mediaMimeTypes[MediaType.VCARD] = {
 };
 
 /**
- * init - Initializes WhatsApi
- * Internal method, should not be called
+ * Initializes WhatsApi
+ * Internal method, should not be called externally
  */
 WhatsApi.prototype.init = function() {
 	this.transport.onReceive(this.onTransportData, this);
@@ -141,7 +141,7 @@ WhatsApi.prototype.init = function() {
 };
 
 /**
- * connect - connects to the WhatsApp server using the connection parameters specified in the configuration
+ * Connect to the WhatsApp server using the connection parameters specified in the configuration
  */
 WhatsApi.prototype.connect = function() {
 	this.loggedIn = false;
@@ -149,7 +149,7 @@ WhatsApi.prototype.connect = function() {
 };
 
 /**
- * disconnect - disconnectd from the WhatsApp server
+ * Disconnect from the WhatsApp server
  */
 WhatsApi.prototype.disconnect = function() {
 	this.transport.disconnect();
@@ -262,7 +262,7 @@ WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
 
 
 /**
- * sendImage - Send an image to the specified destination. An optional caption an message ID can be specified.
+ * Send an image to the specified destination. An optional caption an message ID can be specified.
  * 
  * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
  * @param  {String} filepath file path or URL of the image to send
@@ -276,7 +276,7 @@ WhatsApi.prototype.sendImage = function(to, filepath, caption, msgid) {
 };
 
 /**
-* sendVideo - Send a video to the specified destination. An optional caption an message ID can be specified.
+* Send a video to the specified destination. An optional caption an message ID can be specified.
 * 
 * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
 * @param  {String} filepath file path or URL of the video to send
@@ -290,7 +290,7 @@ WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid) {
 };
 
 /**
- * sendAudio - Send an audio file to the specified destination.
+ * Send an audio file to the specified destination.
  * 
  * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
  * @param  {String} filepath file path or URL of the audio file to send
@@ -317,7 +317,7 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid) {
 };
 
 /**
- * sendVcard - Send a vCard file to the specified destination.
+ * Send a vCard file to the specified destination.
  * 
  * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
  * @param  {String} filepath file path or URL of the vCard file to send
@@ -504,7 +504,7 @@ WhatsApi.prototype.changeGroupParticipants = function(groupId, numbers, action) 
 
 /**
  * Request to leave groups
- * @param  {Array} groupIds    Group IDs you want to left
+ * @param  {Array} groupIds    Group IDs you want to leave from the group
  */
 WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
 	if (!util.isArray(groupIds)) {
@@ -831,12 +831,12 @@ WhatsApi.prototype.requestServicePricing = function(language, country) {
 };
 
 /**
- * setProfilePicture - Set a new profile picture for the active account
+ * Set a new profile picture for the active account
  *
  * @param {String} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of approx. 65.000 bytes and that includes the generated thumbnail.
  * @fires media.error
  * @example
- * //sets a random image from lorempixel.com
+ * //sets a random image as profile picture. Image is retrieved from lorempixel.com
  * wa.setProfilePicture('http://lorempixel.com/400/400/?.jpg');
  */
 WhatsApi.prototype.setProfilePicture = function(filepath) {
@@ -852,11 +852,11 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
 		//data is returned as a base64 string
 		if(err) {
 			/**			
-			 * media.error - event
+			 * Is fired when an error occured in handling media
 			 *  
 			 * @event media.error
-			 * @type {object}
-			 * @property {object} err 
+			 * @type {Object}
+			 * @property {Object} err 
 			 */			
 			this.emit('media.error', err);
 			return;
@@ -1002,7 +1002,7 @@ WhatsApi.prototype.processNode = function(node) {
 			var id = messageIds[i];
 			/**
 			 * 
-			 * clientReceived - emitted when a client received your message
+			 * Emitted when a client received your message
 			 * 
 			 * @event clientReceived
 			 * @type  {Object}
@@ -1021,7 +1021,7 @@ WhatsApi.prototype.processNode = function(node) {
 	if (node.isAck()) {
 		/**
 		 * 
-		 * serverReceived - Emitted when the server received your sent message
+		 * Emitted when the server received your sent message
 		 * 
 		 * @event serverReceived
 		 * @type {Object}
@@ -1073,8 +1073,8 @@ WhatsApi.prototype.processNode = function(node) {
 	// Messages offline count
 	if (node.isOfflineCount()) {
 		/**
-		 * offlineCount - emitted when the count of messages received
-		 * 				  while offline is received
+		 * Emitted when the count of messages received while offline is received
+		 *
 		 * @event offlineCount
 		 * @param {Number} count    Count of messages/notifications
 		 */
@@ -1173,8 +1173,8 @@ WhatsApi.prototype.processNode = function(node) {
 		var messageId = node.attribute('id');
 		
 		/**
-		 * changedGroupParticipants - emitted when group participants have changed
-		 * @event - changedGroupParticipants
+		 * Emitted when group participants have changed
+		 * @event changedGroupParticipants
 		 * @param {String} action     Action performed ('add', 'remove', 'promote', 'demote')
 		 * @param {Array}  who        Array of objects containing JID and eventual error
 		 * @param {String} messageId
@@ -1191,8 +1191,8 @@ WhatsApi.prototype.processNode = function(node) {
 		var messageId = node.attribute('id');
 		
 		/**
-		 * groupLeave - emitted when you left a group
-		 * @event - groupLeave
+		 * Emitted when you left a group
+		 * @event groupLeave
 		 * @param {Array}  jids        Array of group JIDs you left
 		 * @param {String} messageId
 		 */
@@ -1263,7 +1263,7 @@ WhatsApi.prototype.processNode = function(node) {
 		var author = node.attribute('participant') || '';
 		
 		/**
-		 * typing - Emitted when a contact is writing or stopped writing a message
+		 * Emitted when a contact is writing or stopped writing a message
 		 * @event typing
 		 * @param {String} from    Contact JID
 		 * @param {String} author  If `from` is a group, the actual contact JID
@@ -1920,11 +1920,11 @@ WhatsApi.prototype.onTransportData = function(data) {
 /**
 * @class WhatsApiDebug
 * @augments WhatsApi
-* @param {Array} config
-* @param {Object} reader
-* @param {Object} writer
-* @param {Object} processor
-* @param {Object} transport
+* @param {WhatsApiConfig} config
+* @param {Reader}         reader
+* @param {Writer}         writer
+* @param {Processor}      processor
+* @param {Transport}      transport
 */
 function WhatsApiDebug() {
 	WhatsApiDebug.super_.apply(this, arguments);
@@ -1946,8 +1946,7 @@ WhatsApiDebug.prototype.sendNode = function(node) {
 
 /**
 * @class WhatsApiRegistration
-* @augments WhatsApi
-* @param {Array} config
+* @param {WhatsApiRegistationConfig} config
 */
 function WhatsApiRegistration(config) {
 	this.config = common.extend({}, this.defaultConfig, config);
