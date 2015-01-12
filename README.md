@@ -1,5 +1,9 @@
 # WhatsAPI for Node.js
 
+[![NPM module](http://img.shields.io/npm/v/whatsapi.svg)](https://www.npmjs.org/package/whatsapi)
+[![NPM module downloads per month](http://img.shields.io/npm/dm/whatsapi.svg)](https://www.npmjs.org/package/whatsapi)
+[![Dependencies](http://img.shields.io/npm/dm/whatsapi.svg)](https://david-dm.org/hidespb/node-whatsapi)
+
 A Node.js interface to the private WhatsApp API. Ported from [WhatsAPI](https://github.com/mgp25/WhatsAPI-Official).
 
 For usage read the [wiki](https://github.com/hidespb/node-whatsapi/wiki/Documentation).
