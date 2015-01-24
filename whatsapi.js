@@ -166,6 +166,10 @@ WhatsApi.prototype.login = function() {
 	this.sendNode(this.createAuthNode());
 };
 
+WhatsApi.prototype.isLoggedIn = function() {
+	return this.loggedIn;
+};
+
 /**
  * Send online presence for the current user
  */
