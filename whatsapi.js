@@ -747,8 +747,6 @@ WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
  */
 WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	if (!util.isArray(contacts)) {
-		// this.emit('contacts.error', 'Contacts list should be an array');
-		// return;
 		contacts = [contacts];
 	}
 	
@@ -1100,13 +1098,35 @@ WhatsApi.prototype.processNode = function(node) {
 	// Last seen -- found
 	if(node.isLastSeen()) {
 		var tstamp = Date.now() - (+node.child('query').attribute('seconds')) * 1000;
-		this.emit('lastseen.found', node.attribute('from'), new Date(tstamp));
+		/**
+		 * Is fired when a postive response is received to a "last seen" request
+		 * 
+		 * @event lastSeenFound
+		 * @type {object}
+		 * @property {LastSeen} lastSeen lastSeen object
+		 */
+		this.emit('lastSeenFound', {
+				from : node.attribute('from'), 
+				date : new Date(tstamp)
+			});
 		return;
 	}
+	/**
+	 * @typedef LastSeen
+	 * @type {Object}
+	 * @property {String} from       Address of the "last seen" request
+	 * @property {Date}   date       Last seen date/time
+	 */
 
-	// Last seen -- not found
+	/**
+	* Is fired when a "last seen" date/time is not available
+	* 
+	* @event lastSeenNotFound
+	* @type {object}
+	* @property {String} from Address of the "last seen" request
+	*/
 	if(node.isNotFound()) {
-		this.emit('lastseen.notfound', node.attribute('from'));
+		this.emit('lastSeenNotFound', node.attribute('from'));
 		return;
 	}
 	
