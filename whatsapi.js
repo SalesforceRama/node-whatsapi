@@ -1240,9 +1240,33 @@ WhatsApi.prototype.processNode = function(node) {
 
 	if(node.isProfilePicture()) {
 		var preview = node.child('picture').attribute('type') === 'preview';
-		this.emit('profile.picture', node.attribute('from'), preview, node.child('picture').data());
+		
+		/**
+		 * Is fired when a requested profile picture is received
+		 * 
+		 * @event profilePictureReceived
+		 * @type {object}
+		 * @property {ProfilePicture} profilePicture ProfilePicture object
+		 * @example
+		 * wa.on('profilePictureReceived', function(profilePicture){
+		 *   console.log("profilePictureReceived event fired:\n from: %s\n isPreview: %s\n pictureDate length: %d", profilePicture.from, profilePicture.isPreview, profilePicture.pictureData.length);
+		 *   fs.writeFile('whatsapi/media/profilepic-'+profilePicture.from+(profilePicture.isPreview?'-preview':'-full')+'.jpg', profilePicture.pictureData); 
+		 * });
+		 */
+		this.emit('profilePictureReceived', {
+				from        : node.attribute('from'), 
+				isPreview   : preview, 
+				pictureData : node.child('picture').data()
+			});
 		return;
 	}
+	/**
+	 * @typedef ProfilePicture
+	 * @type {Object}
+	 * @property {String}  from        JID of the users the profile picture belongs to
+	 * @property {Boolean} isPreview   Is this a preview (true) or the full picture (false)
+	 * @property {Buffer}  pictureData Raw picture data
+	 */
 	
 	// User statuses
 	if (node.isGetStatus()) {
