@@ -1306,14 +1306,33 @@ WhatsApi.prototype.processNode = function(node) {
 			};
 		};
 		
-		// console.log(existingUsers);
-		// console.log(nonExistingUsers);
-		// console.log(invalidNumbers);
+		/**
+		 * emitted when a reply to a contacts sync request is received
+		 * 
+		 * @event contactsSync
+		 * @type {object}
+		 * @property {ContactsSync} contactsSync ContactsSync object
+		 * @example
+		 * wa.on('contactsSync', function(contactsSync){
+		 *   console.log('contactsSync event fired:\n existingUsers: %j\n nonExistingUsers: %j\n invalidNumbers: %j', contactsSync.existingUsers, contactsSync.nonExistingUsers,contactsSync.invalidNumbers );
+		 * });
+		 */
 		
-		this.emit('contacts.sync', existingUsers, nonExistingUsers, invalidNumbers);
+		this.emit('contactsSync', {
+			existingUsers    : existingUsers,
+			nonExistingUsers : nonExistingUsers,
+			invalidNumbers   : invalidNumbers
+		});
 		
 		return;
 	}
+	/**
+	 * @typedef ContactsSync
+	 * @type {Object}
+	 * @property {Array}  existingUsers       An array of numbers of users that have a WhatsApp account
+	 * @property {Array}  nonExistingUsers    An array of numbers of users that don't have a WhatsApp account
+	 * @property {Array}  invalidNumbers      An array of numbers that are invalid according to WhatsApp
+	 */
 	
 	// Server properties response
 	if (node.isProperties()) {
