@@ -654,7 +654,7 @@ WhatsApi.prototype.requestStatus = function(number) {
 };
 
 /**
- * Request statuses for the given number
+ * Request statuses for the given array of phone numbers
  * @param {Array} numbers   Array of phone numbers
  */
 WhatsApi.prototype.requestStatuses = function(numbers){
@@ -670,7 +670,6 @@ WhatsApi.prototype.requestStatuses = function(numbers){
 			'user',
 			{
 				jid : this.createJID(numbers[i]),
-				// t   : common.tstamp().toString() // this seems to break the response
 			}
 		);
 		contacts.push(userNode);
@@ -1271,25 +1270,44 @@ WhatsApi.prototype.processNode = function(node) {
 	// User statuses
 	if (node.isGetStatus()) {
 		var statusNode = node.child('status');
-		var result = [];
+		var statuses = [];
 		
 		for (var i = 0; i < statusNode.children().length; i++) {
-			result.push({
-				jid    : statusNode.child(i).attribute('jid'),
-				status : statusNode.child(i).data().toString('utf8')
+			statuses.push({
+				from   : statusNode.child(i).attribute('jid'),
+				status : statusNode.child(i).data().toString('utf8'),
+				date   : new Date(+statusNode.child(i).attribute('t') * 1000)
 			});
 		};
 		
-		// console.log(result);
-		
-		this.emit('status.get', result);
+		/**
+		 * Is fired when a response to a status request is received
+		 * 
+		 * @event statusReceived
+		 * @type {object}
+		 * @property {Status[]} statuses An array of status responses
+		 */
+		this.emit('statusReceived', statuses);
 		
 		return;
 	}
-	
+	/**
+	 * @typedef Status
+	 * @type {Object}
+	 * @property {String}  from     JID of the users the status belongs to
+	 * @property {String}  status   The status message
+	 * @property {Date}    date     Date of the creation of the status message
+	 */
+
 	// Set new status response
 	if (node.isSendStatus()) {
-		this.emit('status.updated');
+		/**
+		 * Is fired when the status update was successful
+		 * 
+		 * @event statusUpdated
+		 * @type {object}
+		 */
+		this.emit('statusUpdated');
 		return;
 	};
 	
