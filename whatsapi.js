@@ -309,7 +309,7 @@ WhatsApi.prototype.sendAudio = function(to, filepath, msgid) {
 WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid) {
 	this.getMediaFile(filepath, type, function(err, path) {
 		if(err) {
-			this.emit('media.error', err);
+			this.emit('mediaError', err);
 			return;
 		}
 
@@ -333,13 +333,13 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid) {
 WhatsApi.prototype.sendVcard = function(to, filepath, name, msgid) {
 	this.getMediaFile(filepath, MediaType.VCARD, function(err, path) {
 		if(err) {
-			this.emit('media.error', err);
+			this.emit('mediaError', err);
 			return;
 		}
 		
 		fs.readFile(path, function(err, data) {
 			if(err) {
-				this.emit('media.error', err);
+				this.emit('mediaError', err);
 				return;
 			}
 
@@ -838,7 +838,7 @@ WhatsApi.prototype.requestServicePricing = function(language, country) {
  * Set a new profile picture for the active account
  *
  * @param {String} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of approx. 65.000 bytes and that includes the generated thumbnail.
- * @fires media.error
+ * @fires mediaError
  * @example
  * //sets a random image as profile picture. Image is retrieved from lorempixel.com
  * wa.setProfilePicture('http://lorempixel.com/400/400/?.jpg');
@@ -858,11 +858,11 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
 			/**			
 			 * Is fired when an error occured in handling media
 			 *  
-			 * @event media.error
+			 * @event mediaError
 			 * @type {Object}
 			 * @property {Object} err 
 			 */			
-			this.emit('media.error', err);
+			this.emit('mediaError', err);
 			return;
 		}
 		thumbNode = new protocol.Node('picture', {type:'preview'}, null, new Buffer(data, 'base64'));
@@ -871,13 +871,13 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
 
 	this.getMediaFile(filepath, MediaType.IMAGE, function(err, path) {
 		if(err) {
-			this.emit('media.error', err);
+			this.emit('mediaError', err);
 			return;
 		}
 		
 		fs.readFile(path, function(err, data) {
 				if(err) {
-					this.emit('media.error', err);
+					this.emit('mediaError', err);
 					return;
 				}
 				pictureNode = new protocol.Node('picture', null, null, data); 
@@ -1209,7 +1209,7 @@ WhatsApi.prototype.processNode = function(node) {
 	if(node.isMediaReady()) {
 		this.createMediaUploadNode(node, function(err, to, node) {
 			if(err) {
-				this.emit('media.error', err);
+				this.emit('mediaError', err);
 				return;
 			}
 
@@ -1805,7 +1805,7 @@ WhatsApi.prototype.uploadMediaFile = function(queue, destUrl, callback) {
 	});
 
 	tlsStream.on('error', function(err) {
-		this.emit('media.error', 'SSL/TLS error: ' + err);
+		this.emit('mediaError', 'SSL/TLS error: ' + err);
 	}.bind(this));
 
 	var buffers = [];
