@@ -1588,6 +1588,10 @@ WhatsApi.prototype.createReceiptNode = function(node) {
 		id   : node.attribute('id'),
 		t    : common.tstamp().toString()
 	};
+	
+	if (node.attribute('participant')) {
+		attributes['participant'] = node.attribute('participant');
+	}
 
 	return new protocol.Node('receipt', attributes);
 };
