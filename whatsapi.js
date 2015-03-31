@@ -1815,7 +1815,12 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 		});
 
 		res.on('end', function() {
-			var path = __dirname + '/media/media-' + crypto.randomBytes(4).readUInt32LE(0) + ext;
+			var prefix = '/media/media-';
+			if (common.isWindows()) {
+				prefix = '\\media\\media-';
+			}
+			
+			var path = __dirname + prefix + crypto.randomBytes(4).readUInt32LE(0) + ext;
 
 			fs.writeFile(path, Buffer.concat(buffers), function(err) {
 				if(err) {

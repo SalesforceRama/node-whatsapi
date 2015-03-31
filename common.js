@@ -68,8 +68,13 @@ function fetch(target, callback) {
 	});
 }
 
-exports.tstamp  = tstamp;
+function isWindows() {
+	return /^win/.test(process.platform);;
+}
+
+exports.tstamp = tstamp;
 exports.winTimestamp = winTimestamp;
 exports.objSize = objSize;
-exports.extend  = extend;
-exports.fetch   = fetch;
+exports.extend = extend;
+exports.fetch = fetch;
+exports.isWindows = isWindows;
