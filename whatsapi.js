@@ -90,7 +90,7 @@ WhatsApi.prototype.mediaMimeTypes = {};
 
 WhatsApi.prototype.mediaMimeTypes[MediaType.IMAGE] = {
 	size : 5 * 1024 * 1024,
-	mime : ['image/png', 'image/gif', 'image/jpeg']
+	mime : ['image/png', 'image/jpeg']
 };
 
 WhatsApi.prototype.mediaMimeTypes[MediaType.VIDEO] = {
@@ -1942,7 +1942,7 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 				
 				this.quality(50);
 				this.resize(100, 100);
-				this.getBuffer('image/jpeg', function(buffer) {
+				this.getBuffer(mime.lookup(srcPath), function(buffer) {
 					callback(false, buffer.toString('base64'));
 				});
 				this.write(dstPath); // save, just for log
