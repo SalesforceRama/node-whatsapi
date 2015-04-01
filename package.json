@@ -18,8 +18,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "mime": ">= 1.2.11",
-    "imagemagick": ">= 0.1.3"
+    "jimp": "^0.1.4",
+    "mime": ">= 1.2.11"
   },
   "readme": "node-whatsapi\n=============\n\nNode.js version for (https://github.com/venomous0x/WhatsAPI)",
   "bugs": {
