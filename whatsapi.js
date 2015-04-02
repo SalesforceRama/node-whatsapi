@@ -137,15 +137,42 @@ WhatsApi.prototype.init = function() {
 	this.loggedIn    = false;
 	this.mediaQueue  = {};
 	this.selfAddress = this.createJID(this.config.msisdn);
+	
+	// Callbacks
+	this.connectCallback = null;
+	this.loginCallback = null;
+	this.callbacksQueue = [];
 
 	this.processor.setAdapter(this);
+};
+
+WhatsApi.prototype.enqueueCallback = function(id, cb) {
+	this.callbacksQueue.push({ id: id, callback: cb });
+};
+WhatsApi.prototype.dequeueCallback = function(id, args) {
+	if (!Array.isArray(args)) {
+		args = [args];
+	}
+	
+	for (var i = 0; i < this.callbacksQueue.length; i++) {
+		var item = this.callbacksQueue[i];
+		if (item.id == id) {
+			// Call the callback
+			item.callback && item.callback.apply(this, args);
+			// Remove it
+			this.callbacksQueue.splice(i--, 1);
+		}
+	};
 };
 
 /**
  * Connect to the WhatsApp server using the connection parameters specified in the configuration
  */
-WhatsApi.prototype.connect = function() {
+WhatsApi.prototype.connect = function(callback) {
 	this.loggedIn = false;
+	if (callback) {
+		this.connectCallback = callback;
+	}
 	this.transport.connect(this.config.host, this.config.port, this.onTransportConnect, this);
 };
 
@@ -156,7 +183,14 @@ WhatsApi.prototype.disconnect = function() {
 	this.transport.disconnect();
 };
 
-WhatsApi.prototype.login = function() {
+WhatsApi.prototype.login = function(callback) {
+	if (this.loggedIn) {
+		return;
+	}
+	if (callback) {
+		this.loginCallback = callback;
+	}
+	
 	this.reader.setKey(null);
 	this.writer.setKey(null);
 
@@ -793,11 +827,16 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 /**
  * Request WhatsApp server properties
  */
-WhatsApi.prototype.requestServerProperties = function() {
+WhatsApi.prototype.requestServerProperties = function(callback) {
+	var messageId = this.nextMessageId('getproperties');
+	if (callback) {
+		this.enqueueCallback(messageId, callback);
+	}
+	
 	var node = new protocol.Node(
 		'iq',
 		{
-			id    : this.nextMessageId('getproperties'),
+			id    : messageId,
 			type  : 'get',
 			xmlns : 'w',
 			to    : 's.whatsapp.net'
@@ -1082,6 +1121,7 @@ WhatsApi.prototype.processNode = function(node) {
 		this.loggedIn = true;
 		this.flushQueue();
 		this.emit('login');
+		this.loginCallback && this.loginCallback();
 		return;
 	}
 	
@@ -1089,6 +1129,7 @@ WhatsApi.prototype.processNode = function(node) {
 	if(node.isFailure()) {
 		this.loggedIn = false;
 		this.emit('error', node.toXml());
+		this.loginCallback && this.loginCallback(node.toXml());
 		return;
 	}
 	
@@ -1427,6 +1468,7 @@ WhatsApi.prototype.processNode = function(node) {
 		}
 		
 		this.emit('serverProperties', properties);
+		this.dequeueCallback(node.attribute('id'), properties);
 		return;
 	}
 	
@@ -2019,10 +2061,12 @@ WhatsApi.prototype.createJID = function(msisdn) {
 
 WhatsApi.prototype.onTransportConnect = function() {
 	this.emit('connect');
+	this.connectCallback && this.connectCallback();
 	this.connected = true;
 };
 
 WhatsApi.prototype.onTransportError = function(e) {
+	this.connectCallback && this.connectCallback(e);
 	this.emit(this.connected ? 'error' : 'connectError', e);
 };
 
