@@ -265,6 +265,10 @@ Node.prototype.isServicePricing = function() {
 	return this.tag() == 'iq' && this.child('pricing');
 };
 
+Node.prototype.isAccountExtended = function() {
+	return this.tag() == 'iq' && this.child('extend');
+};
+
 Node.prototype.isGetPrivacySettings = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('get_privacy_settings') != -1;
 };

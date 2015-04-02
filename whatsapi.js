@@ -833,6 +833,26 @@ WhatsApi.prototype.requestServicePricing = function(language, country) {
 };
 
 /**
+ * Extend account by one year from now
+ */
+WhatsApi.prototype.requestExtendAccount = function() {	
+	var node = new protocol.Node(
+		'iq',
+		{
+			id    : this.nextMessageId('extend_account_'),
+			xmlns : 'urn:xmpp:whatsapp:account',
+			type  : 'set',
+			to    : 's.whatsapp.net'
+		},
+		[
+			new protocol.Node('extend')
+		]
+	);
+	
+	this.sendNode(node);
+};
+
+/**
  * Set a new profile picture for the active account
  *
  * @param {String} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of approx. 65.000 bytes and that includes the generated thumbnail.
@@ -1404,11 +1424,9 @@ WhatsApi.prototype.processNode = function(node) {
 		var propElements = node.child('props').children();
 		for (var i = 0; i < propElements.length; i++) {
 			properties[propElements[i].attribute('name')] = propElements[i].attribute('value');
-		};
+		}
 		
-		// console.log(properties);
-		
-		this.emit('properties', properties);
+		this.emit('serverProperties', properties);
 		return;
 	}
 	
@@ -1436,9 +1454,7 @@ WhatsApi.prototype.processNode = function(node) {
 			settings[s.attribute('name')] = s.attribute('value');
 		};
 		
-		// console.log(settings);
-		
-		this.emit('privacysettings.get', settings);
+		this.emit('privacySettings', settings);
 		return;
 	}
 	
@@ -1452,9 +1468,22 @@ WhatsApi.prototype.processNode = function(node) {
 			settings[s.attribute('name')] = s.attribute('value');
 		};
 		
-		// console.log(settings);
+		this.emit('privacySettingsUpdated', settings);
+		return;
+	}
+	
+	if (node.isAccountExtended()) {
+		var accountNode = node.child('extend').child('account');
 		
-		this.emit('privacysettings.updated', settings);
+		var accountInfo = {
+			kind: accountNode.attribute('kind'),
+			status: accountNode.attribute('status'),
+			creation: new Date(+accountNode.attribute('creation') * 1000),
+			expiration: new Date(+accountNode.attribute('expiration') * 1000)
+		};
+		
+		this.emit('accountExtended', accountInfo);
+		
 		return;
 	}
 };
@@ -1940,8 +1969,8 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 					this.crop(x1, y1, x2, y2);
 				}
 				
-				this.quality(50);
-				this.resize(100, 100);
+				this.quality(80);
+				this.resize(200, 200);
 				this.getBuffer(mime.lookup(srcPath), function(buffer) {
 					callback(false, buffer.toString('base64'));
 				});
