@@ -804,7 +804,6 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	var node = new protocol.Node(
 		'iq',
 		{
-			to: this.createJID(this.config.msisdn),
 			type: 'get',
 			id: id,
 			xmlns: 'urn:xmpp:whatsapp:sync'
