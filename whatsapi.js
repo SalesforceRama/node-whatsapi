@@ -18,7 +18,6 @@ var processors  = require('./processors');
 var wareg       = require('./whatsapiregistration');
 
 
-
 var MediaType = {
 	IMAGE : 'image',
 	VIDEO : 'video',
@@ -855,11 +854,14 @@ WhatsApi.prototype.requestServerProperties = function(callback) {
  * @param  {String} language    Language code (e.g. 'en')
  * @param  {String} country     Country code (e.g. 'us')
  */
-WhatsApi.prototype.requestServicePricing = function(language, country) {	
+WhatsApi.prototype.requestServicePricing = function(language, country, callback) {	
+	var messageId = this.nextMessageId('get_service_pricing_');
+	this.enqueueCallback(messageId, callback);
+	
 	var node = new protocol.Node(
 		'iq',
 		{
-			id    : this.nextMessageId('get_service_pricing_'),
+			id    : messageId,
 			xmlns : 'urn:xmpp:whatsapp:account',
 			type  : 'get',
 			to    : this.config.server
@@ -1477,13 +1479,15 @@ WhatsApi.prototype.processNode = function(node) {
 	if (node.isServicePricing()) {
 		var pricingNode = node.child('pricing');
 		
-		this.emit(
-			'servicepricing',
-			pricingNode.attribute('price'),
-			pricingNode.attribute('cost'),
-			pricingNode.attribute('currency'),
-			pricingNode.attribute('expiration')
-		);
+		var pricing = {
+			price: pricingNode.attribute('price'),
+			cost: pricingNode.attribute('cost'),
+			currency: pricingNode.attribute('currency'),
+			expiration: pricingNode.attribute('expiration')
+		};
+		
+		this.emit('servicepricing', pricing);
+		this.dequeueCallback(node.attribute('id'), pricing);
 		return;
 	}
 	
