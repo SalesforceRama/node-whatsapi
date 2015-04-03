@@ -287,7 +287,7 @@ WhatsApi.prototype.sendMessage = function(to, message, msgid) {
  */
 WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
 	var attributes = {
-		xmlns     : 'urn:xmpp:whatsapp:mms',
+		encoding  : 'raw',
 		type      : 'location',
 		latitude  : lat.toString(),
 		longitude : lng.toString()
