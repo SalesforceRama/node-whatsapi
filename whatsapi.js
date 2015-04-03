@@ -9,6 +9,7 @@ var https       = require('https');
 var querystring = require('querystring');
 var jimp        = require('jimp');
 var mime        = require('mime');
+var path        = require('path');
 var common      = require('./common');
 var dictionary  = require('./dictionary');
 var protocol    = require('./protocol');
@@ -82,7 +83,7 @@ WhatsApi.prototype.defaultConfig = {
 	device_type    : 'Android',
 	app_version    : '2.11.473',
 	ua             : 'WhatsApp/2.11.473 Android/4.3 Device/GalaxyS3',
-	challenge_file : __dirname + (common.isWindows() ? '\\' : '/') + 'challenge'
+	challenge_file : path.join(__dirname, 'challenge')
 };
 
 WhatsApi.prototype.mediaMimeTypes = {};
@@ -1891,18 +1892,14 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 		});
 
 		res.on('end', function() {
-			var prefix = '/media/media-';
-			if (common.isWindows()) {
-				prefix = '\\media\\media-';
-			}
-			
-			var path = __dirname + prefix + crypto.randomBytes(4).readUInt32LE(0) + ext;
+			var filePath = path.join(__dirname, 'media', 'media-');
+			filePath += crypto.randomBytes(4).readUInt32LE(0) + ext;
 
-			fs.writeFile(path, Buffer.concat(buffers), function(err) {
+			fs.writeFile(filePath, Buffer.concat(buffers), function(err) {
 				if(err) {
 					callback('Error saving downloaded file: ' + err);
 				} else {
-					callback(false, path);
+					callback(null, filePath);
 				}
 			});
 		});
