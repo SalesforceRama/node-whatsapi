@@ -80,8 +80,8 @@ WhatsApi.prototype.defaultConfig = {
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
 	port           : 443,
-	device_type    : 'Android',
-	app_version    : '2.11.473',
+	device_type    : 'iPhone',
+	app_version    : '2.11.16',
 	ua             : 'WhatsApp/2.11.473 Android/4.3 Device/GalaxyS3',
 	challenge_file : path.join(__dirname, 'challenge')
 };
