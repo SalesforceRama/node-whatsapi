@@ -639,7 +639,7 @@ WhatsApi.prototype.setPrivacySettings = function(name, value){
 	);
 
     var attributes = {
-    	to    : 's.whatsapp.net',
+    	to    : this.config.server,
         type  : 'set',
         xmlns : 'privacy',
         id    : this.nextMessageId('send_privacy_settings_')
@@ -655,7 +655,7 @@ WhatsApi.prototype.setPrivacySettings = function(name, value){
  */
 WhatsApi.prototype.requestPrivacySettings = function(){
     var attributes = {
-    	to    : 's.whatsapp.net',
+    	to    : this.config.server,
         type  : 'get',
         xmlns : 'privacy',
         id    : this.nextMessageId('get_privacy_settings_')
@@ -674,7 +674,7 @@ WhatsApi.prototype.setStatus = function(status){
     var child = new protocol.Node('status', null, null, status);
 
     var attributes = {
-    	to    : 's.whatsapp.net',
+    	to    : this.config.server,
         type  : 'set',
         id    : this.nextMessageId('sendstatus'),
         xmlns : 'status'
@@ -714,7 +714,7 @@ WhatsApi.prototype.requestStatuses = function(numbers){
 	}
 
     var attributes = {
-    	to    : 's.whatsapp.net',
+    	to    : this.config.server,
         type  : 'get',
         xmlns : 'status',
         id    : this.nextMessageId('getstatus')
@@ -840,7 +840,7 @@ WhatsApi.prototype.requestServerProperties = function(callback) {
 			id    : messageId,
 			type  : 'get',
 			xmlns : 'w',
-			to    : 's.whatsapp.net'
+			to    : this.config.server
 		},
 		[
 			new protocol.Node('props')
@@ -862,7 +862,7 @@ WhatsApi.prototype.requestServicePricing = function(language, country) {
 			id    : this.nextMessageId('get_service_pricing_'),
 			xmlns : 'urn:xmpp:whatsapp:account',
 			type  : 'get',
-			to    : 's.whatsapp.net'
+			to    : this.config.server
 		},
 		[
 			new protocol.Node('pricing', { lg: language || 'en', lc: country || 'us' })
@@ -882,7 +882,7 @@ WhatsApi.prototype.requestExtendAccount = function() {
 			id    : this.nextMessageId('extend_account_'),
 			xmlns : 'urn:xmpp:whatsapp:account',
 			type  : 'set',
-			to    : 's.whatsapp.net'
+			to    : this.config.server
 		},
 		[
 			new protocol.Node('extend')
@@ -2140,3 +2140,4 @@ function createRegistration(config) {
 
 exports.createAdapter      = createAdapter;
 exports.createRegistration = createRegistration;
+
