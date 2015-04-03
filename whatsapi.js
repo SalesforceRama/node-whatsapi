@@ -83,7 +83,7 @@ WhatsApi.prototype.defaultConfig = {
 	device_type    : 'Android',
 	app_version    : '2.11.473',
 	ua             : 'WhatsApp/2.11.473 Android/4.3 Device/GalaxyS3',
-	challenge_file : __dirname + '/challenge'
+	challenge_file : __dirname + (common.isWindows() ? '\\' : '/') + 'challenge'
 };
 
 WhatsApi.prototype.mediaMimeTypes = {};
