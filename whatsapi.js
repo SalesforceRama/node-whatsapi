@@ -147,6 +147,9 @@ WhatsApi.prototype.init = function() {
 };
 
 WhatsApi.prototype.enqueueCallback = function(id, cb) {
+	if (!cb) {
+		return;
+	}
 	this.callbacksQueue.push({ id: id, callback: cb });
 };
 WhatsApi.prototype.dequeueCallback = function(id, args) {
@@ -829,9 +832,7 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
  */
 WhatsApi.prototype.requestServerProperties = function(callback) {
 	var messageId = this.nextMessageId('getproperties');
-	if (callback) {
-		this.enqueueCallback(messageId, callback);
-	}
+	this.enqueueCallback(messageId, callback);
 	
 	var node = new protocol.Node(
 		'iq',
