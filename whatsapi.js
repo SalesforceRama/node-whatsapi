@@ -836,6 +836,7 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 
 /**
  * Request WhatsApp server properties
+ * @param  {Function} callback Called when the properties are received
  */
 WhatsApi.prototype.requestServerProperties = function(callback) {
 	var messageId = this.nextMessageId('getproperties');
@@ -859,8 +860,9 @@ WhatsApi.prototype.requestServerProperties = function(callback) {
 
 /**
  * Request WhatsApp service pricing
- * @param  {String} language    Language code (e.g. 'en')
- * @param  {String} country     Country code (e.g. 'us')
+ * @param {String}    language    Language code (e.g. 'en')
+ * @param {String}    country     Country code (e.g. 'us')
+ * @param {Function}  callback    Called when the pricing is recived
  */
 WhatsApi.prototype.requestServicePricing = function(language, country, callback) {	
 	var messageId = this.nextMessageId('get_service_pricing_');
@@ -1478,7 +1480,6 @@ WhatsApi.prototype.processNode = function(node) {
 			properties[propElements[i].attribute('name')] = propElements[i].attribute('value');
 		}
 		
-		this.emit('serverProperties', properties);
 		this.dequeueCallback(node.attribute('id'), properties);
 		return;
 	}
@@ -1494,7 +1495,6 @@ WhatsApi.prototype.processNode = function(node) {
 			expiration: pricingNode.attribute('expiration')
 		};
 		
-		this.emit('servicepricing', pricing);
 		this.dequeueCallback(node.attribute('id'), pricing);
 		return;
 	}
