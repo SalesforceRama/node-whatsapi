@@ -752,15 +752,20 @@ WhatsApi.prototype.requestStatuses = function(numbers){
 
 /**
  * Request last seen time for given user
- * @param  {String} who    Phone number
+ * @param {String}   who       Phone number
+ * @param {Function} callback  Called when the last seen time is received
  */
-WhatsApi.prototype.requestLastSeen = function(who) {
+WhatsApi.prototype.requestLastSeen = function(who, callback) {
+	var messageId = this.nextMessageId('lastseen');
+	this.addCallback(messageId, callback);
+	
+	
 	var queryNode = new protocol.Node('query');
 
 	var attributes = {
 		to   : this.createJID(who),
 		type : 'get',
-		id   : this.nextMessageId('lastseen'),
+		id   : messageId,
 		xmlns: 'jabber:iq:last'
 	};
 
@@ -797,9 +802,10 @@ WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
 
 /**
  * Requests contacts sync
- * @param  {Array}   contacts    Array of contacts to be synced; single string phone number is accepted
- * @param  {String}  mode        The sync mode. 'full' or 'delta'
- * @param  {String}  context     The sync context. 'registration' or 'background' (more info in the wiki)
+ * @param {Array}   contacts    Array of contacts to be synced; single string phone number is accepted
+ * @param {String}  mode        The sync mode. 'full' or 'delta'
+ * @param {String}  context     The sync context. 'registration' or 'background' (more info in the wiki)
+ * @param {SyncCallback} callback    Called when sync results are ready
  */
 WhatsApi.prototype.requestContactsSync = function(contacts, mode, context, callback) {
 	if (!util.isArray(contacts)) {
@@ -875,7 +881,7 @@ WhatsApi.prototype.requestServerProperties = function(callback) {
  * Request WhatsApp service pricing
  * @param {String}    language    Language code (e.g. 'en')
  * @param {String}    country     Country code (e.g. 'us')
- * @param {Function}  callback    Called when the pricing is recived
+ * @param {PricingCallback}  callback    Called when the pricing is recived
  */
 WhatsApi.prototype.requestServicePricing = function(language, country, callback) {	
 	var messageId = this.nextMessageId('get_service_pricing_');
@@ -1466,6 +1472,11 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	/**
+	 * @callback SyncCallback
+	 * @param {ContactsSync} result
+	 */
+	
+	/**
 	 * @typedef ContactsSync
 	 * @type {Object}
 	 * @property {Array}  existingUsers       An array of numbers of users that have a WhatsApp account
@@ -1494,12 +1505,23 @@ WhatsApi.prototype.processNode = function(node) {
 			price: pricingNode.attribute('price'),
 			cost: pricingNode.attribute('cost'),
 			currency: pricingNode.attribute('currency'),
-			expiration: pricingNode.attribute('expiration')
+			expiration: new Date(+pricingNode.attribute('expiration') * 1000)
 		};
 		
 		this.executeCallback(node.attribute('id'), pricing);
 		return;
 	}
+	/**
+	 * @callback PricingCallback
+	 * @param {ServicePricing} pricing
+	 */
+	/**
+	 * @typedef {ServicePricing}
+	 * @property {String} price       Price with currency symbol
+	 * @property {String} cost        Price number
+	 * @property {String} currency    Currency as string
+	 * @property {String} expiration  Expiration date of the pricing
+	 */
 	
 	// Get privacy settings
 	if (node.isGetPrivacySettings()) {
