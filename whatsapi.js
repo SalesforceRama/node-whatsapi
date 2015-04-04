@@ -799,9 +799,9 @@ WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
  * Requests contacts sync
  * @param  {Array}   contacts    Array of contacts to be synced; single string phone number is accepted
  * @param  {String}  mode        The sync mode. 'full' or 'delta'
- * @param  {String}  context     The sync context. 'registration' or 'background' (more info in the wiki, later)
+ * @param  {String}  context     The sync context. 'registration' or 'background' (more info in the wiki)
  */
-WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
+WhatsApi.prototype.requestContactsSync = function(contacts, mode, context, callback) {
 	if (!util.isArray(contacts)) {
 		contacts = [contacts];
 	}
@@ -820,6 +820,8 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
 	};
 	
 	var id = this.nextMessageId('sendsync_');
+	this.addCallback(id, callback);
+	
 	var node = new protocol.Node(
 		'iq',
 		{
@@ -1437,40 +1439,29 @@ WhatsApi.prototype.processNode = function(node) {
 		if (existing) {
 			for (var i = 0; i < existing.children().length; i++) {
 				existingUsers.push(existing.child(i).data().toString());
-			};
-		};
+			}
+		}
 		
 		var nonExistingUsers = [];
 		if (nonExisting) {
 			for (var i = 0; i < nonExisting.children().length; i++) {
 				nonExistingUsers.push(nonExisting.child(i).data().toString());
-			};
-		};
+			}
+		}
 		
 		var invalidNumbers = [];
 		if (invalid) {
 			for (var i = 0; i < invalid.children().length; i++) {
 				invalidNumbers.push(invalid.child(i).data().toString());
-			};
-		};
+			}
+		}
 		
-		/**
-		 * emitted when a reply to a contacts sync request is received
-		 * 
-		 * @event contactsSync
-		 * @type {object}
-		 * @property {ContactsSync} contactsSync ContactsSync object
-		 * @example
-		 * wa.on('contactsSync', function(contactsSync){
-		 *   console.log('contactsSync event fired:\n existingUsers: %j\n nonExistingUsers: %j\n invalidNumbers: %j', contactsSync.existingUsers, contactsSync.nonExistingUsers,contactsSync.invalidNumbers );
-		 * });
-		 */
-		
-		this.emit('contactsSync', {
+		var result = {
 			existingUsers    : existingUsers,
 			nonExistingUsers : nonExistingUsers,
 			invalidNumbers   : invalidNumbers
-		});
+		};
+		this.executeCallback(node.attribute('id'), result);
 		
 		return;
 	}
