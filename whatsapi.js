@@ -149,29 +149,40 @@ WhatsApi.prototype.init = function() {
 	// Callbacks
 	this.connectCallback = null;
 	this.loginCallback = null;
-	this.callbacksQueue = [];
+	this.callbacksCollection = [];
 
 	this.processor.setAdapter(this);
 };
 
-WhatsApi.prototype.enqueueCallback = function(id, cb) {
-	if (!cb) {
+/**
+ * Add a new callback to the queue
+ * @param  {String}   id   The id of the message that's being sent
+ * @param  {Function} cb   The callback to be called when a response for the message is received
+ */
+WhatsApi.prototype.addCallback = function(id, cb) {
+	if (!id || !cb) {
 		return;
 	}
-	this.callbacksQueue.push({ id: id, callback: cb });
+	this.callbacksCollection.push({ id: id, callback: cb });
 };
-WhatsApi.prototype.dequeueCallback = function(id, args) {
+
+/**
+ * Execute the callback for the provided message id and remove it from the queue
+ * @param  {String} id    The id of the received message
+ * @param  {Array} args   The parameters to be passed to the called callback
+ */
+WhatsApi.prototype.executeCallback = function(id, args) {
 	if (!Array.isArray(args)) {
 		args = [args];
 	}
 	
-	for (var i = 0; i < this.callbacksQueue.length; i++) {
-		var item = this.callbacksQueue[i];
+	for (var i = 0; i < this.callbacksCollection.length; i++) {
+		var item = this.callbacksCollection[i];
 		if (item.id == id) {
 			// Call the callback
 			item.callback && item.callback.apply(this, args);
 			// Remove it
-			this.callbacksQueue.splice(i--, 1);
+			this.callbacksCollection.splice(i--, 1);
 		}
 	};
 };
@@ -840,7 +851,7 @@ WhatsApi.prototype.requestContactsSync = function(contacts, mode, context) {
  */
 WhatsApi.prototype.requestServerProperties = function(callback) {
 	var messageId = this.nextMessageId('getproperties');
-	this.enqueueCallback(messageId, callback);
+	this.addCallback(messageId, callback);
 	
 	var node = new protocol.Node(
 		'iq',
@@ -866,7 +877,7 @@ WhatsApi.prototype.requestServerProperties = function(callback) {
  */
 WhatsApi.prototype.requestServicePricing = function(language, country, callback) {	
 	var messageId = this.nextMessageId('get_service_pricing_');
-	this.enqueueCallback(messageId, callback);
+	this.addCallback(messageId, callback);
 	
 	var node = new protocol.Node(
 		'iq',
@@ -1480,7 +1491,7 @@ WhatsApi.prototype.processNode = function(node) {
 			properties[propElements[i].attribute('name')] = propElements[i].attribute('value');
 		}
 		
-		this.dequeueCallback(node.attribute('id'), properties);
+		this.executeCallback(node.attribute('id'), properties);
 		return;
 	}
 	
@@ -1495,7 +1506,7 @@ WhatsApi.prototype.processNode = function(node) {
 			expiration: pricingNode.attribute('expiration')
 		};
 		
-		this.dequeueCallback(node.attribute('id'), pricing);
+		this.executeCallback(node.attribute('id'), pricing);
 		return;
 	}
 	
