@@ -1428,9 +1428,9 @@ WhatsApi.prototype.processNode = function(node) {
 		/**
 		 * Emitted when a contact is writing or stopped writing a message
 		 * @event typing
+		 * @param {String} type    'composing' or 'paused'
 		 * @param {String} from    Contact or group JID
 		 * @param {String} author  If `from` is a group, the actual contact JID
-		 * @param {String} type    'composing' or 'paused'
 		 */
 		this.emit('typing', type, from, author);
 		
