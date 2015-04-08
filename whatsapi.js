@@ -254,32 +254,26 @@ WhatsApi.prototype.sendIsOffline = function() {
  * Send composing state to the given user
  * @param  {String} to     Phone number
  */
-WhatsApi.prototype.sendComposing = function(to) {
-	var node = new protocol.Node(
-		'chatstate',
-		{
-			to: this.createJID(to)
-		},
-		[
-			new protocol.Node('composing')
-		]
-	);
-
-	this.sendNode(node);
+WhatsApi.prototype.sendComposingState = function(to) {
+	this.sendChatState(to, 'composing');
 };
 
 /**
  * Send stopped typing/composing to the given user
  * @param  {String} to     Phone number
  */
-WhatsApi.prototype.sendPaused = function(to) {
+WhatsApi.prototype.sendPausedState = function(to) {
+	this.sendChatState(to, 'paused');
+};
+
+WhatsApi.prototype.sendChatState = function(to, state) {
 	var node = new protocol.Node(
 		'chatstate',
 		{
 			to: this.createJID(to)
 		},
 		[
-			new protocol.Node('paused')
+			new protocol.Node(state || 'paused')
 		]
 	);
 
