@@ -1349,7 +1349,9 @@ WhatsApi.prototype.processNode = function(node) {
 		this.emit('profilePictureReceived', {
 				from        : node.attribute('from'), 
 				isPreview   : preview, 
-				pictureData : node.child('picture').data()
+				pictureData : node.child('picture').data(),
+				pictureId   : node.child('picture').attribute('id')
+
 			});
 		return;
 	}
@@ -1359,6 +1361,7 @@ WhatsApi.prototype.processNode = function(node) {
 	 * @property {String}  from        JID of the users the profile picture belongs to
 	 * @property {Boolean} isPreview   Is this a preview (true) or the full picture (false)
 	 * @property {Buffer}  pictureData Raw picture data
+	 * @property {Number}  pictureId   ID from this picture
 	 */
 	
 	// User statuses
