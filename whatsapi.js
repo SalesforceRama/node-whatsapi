@@ -1129,7 +1129,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 
 	// Authentication
-	if(node.isChallenge()) {
+	if (node.isChallenge()) {
 		this.sendNode(this.createAuthResposeNode(node.data()));
 		this.reader.setKey(this.readerKey);
 		this.writer.setKey(this.writerKey);
@@ -1137,7 +1137,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 
 	// Successfully logged in
-	if(node.isSuccess()) {
+	if (node.isSuccess()) {
 		fs.writeFile(this.config.challenge_file, node.data());
 		
 		//this.initKeys(node.data());
@@ -1152,7 +1152,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	
 	// Login failed
-	if(node.isFailure()) {
+	if (node.isFailure()) {
 		this.loggedIn = false;
 		this.emit('error', node.toXml());
 		this.loginCallback && this.loginCallback(node.toXml());
@@ -1171,19 +1171,19 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	
 	// Contact presence update
-	if(node.isPresence() && node.attribute('from') != this.selfAddress) {
+	if (node.isPresence() && node.attribute('from') != this.selfAddress) {
 		var type = node.attribute('type') || 'available';
 		this.emit('presence', node.attribute('from'), type, node.attribute('last'));
 		return;
 	}
 	
-	if(node.isDirtyPresence()) {
+	if (node.isDirtyPresence()) {
 		this.sendNode(this.createClearDirtyNode(node));
 		return;
 	}
 	
 	// Last seen -- found
-	if(node.isLastSeen()) {
+	if (node.isLastSeen()) {
 		var tstamp = Date.now() - (+node.child('query').attribute('seconds')) * 1000;
 		/**
 		 * Is fired when a postive response is received to a "last seen" request
@@ -1212,13 +1212,13 @@ WhatsApi.prototype.processNode = function(node) {
 	* @type {object}
 	* @property {String} from Address of the "last seen" request
 	*/
-	if(node.isNotFound()) {
+	if (node.isNotFound()) {
 		this.emit('lastSeenNotFound', node.attribute('from'));
 		return;
 	}
 	
 	// Ping/pong
-	if(node.isPing()) {
+	if (node.isPing()) {
 		this.sendNode(this.createPongNode(node.attribute('id')));
 		return;
 	}
@@ -1313,7 +1313,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	
 	
-	if(node.isMediaReady()) {
+	if (node.isMediaReady()) {
 		this.createMediaUploadNode(node, function(err, to, node) {
 			if(err) {
 				this.emit('mediaError', err);
@@ -1325,7 +1325,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 
-	if(node.isProfilePicture()) {
+	if (node.isProfilePicture()) {
 		var preview = node.child('picture').attribute('type') === 'preview';
 		
 		/**
@@ -1403,7 +1403,7 @@ WhatsApi.prototype.processNode = function(node) {
 	};
 	
 	// Incoming plain message
-	if(node.isMessage()) {
+	if (node.isMessage()) {
 		// Emit stopped typing
 		if (node.attribute('type') == 'text') {
 			this.emit('typing', 'paused', node.attribute('from'), node.attribute('participant') || '');
@@ -1414,7 +1414,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	
 	// Emit typing (composing or paused)
-	if(node.isTyping()) {
+	if (node.isTyping()) {
 		var from = node.attribute('from');
 		var type = node.child(0).tag();
 		var author = node.attribute('participant') || '';
