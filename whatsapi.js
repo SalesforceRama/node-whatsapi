@@ -1409,7 +1409,7 @@ WhatsApi.prototype.processNode = function(node) {
 	if(node.isMessage()) {
 		// Emit stopped typing
 		if (node.attribute('type') == 'text') {
-			this.emit('typing', node.attribute('from'), node.attribute('participant') || '', 'paused');
+			this.emit('typing', 'paused', node.attribute('from'), node.attribute('participant') || '');
 		}		
 		// Process message
 		this.processor.process(node);
@@ -1425,11 +1425,11 @@ WhatsApi.prototype.processNode = function(node) {
 		/**
 		 * Emitted when a contact is writing or stopped writing a message
 		 * @event typing
-		 * @param {String} from    Contact JID
+		 * @param {String} from    Contact or group JID
 		 * @param {String} author  If `from` is a group, the actual contact JID
 		 * @param {String} type    'composing' or 'paused'
 		 */
-		this.emit('typing', from, author, type);
+		this.emit('typing', type, from, author);
 		
 		return;
 	}
