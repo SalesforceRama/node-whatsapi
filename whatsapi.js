@@ -559,7 +559,7 @@ WhatsApi.prototype.demoteGroupParticipants = function(groupId, numbers) {
 };
 
 /**
- * Do an `action` on the given numbers in the given group
+ * Do an 'action' on the given numbers in the given group
  * @param  {String} groupId   Group ID
  * @param  {Array}  numbers   Array of numbers to be affected by the action
  * @param  {String} action    Action to execute on the numbers
@@ -1085,8 +1085,9 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	
 	/**
-	 * Response error; `null` means success
+	 * Response error; 'null' means success
 	 * @typedef ResponseError
+	 * @type {Object}
 	 * @property {String} code      Error code
 	 * @property {String} message   Error text
 	 */
@@ -1202,7 +1203,7 @@ WhatsApi.prototype.processNode = function(node) {
 	 * @typedef Participant
 	 * @type {Object}
 	 * @property {String} jid      User JID
-	 * @property {Boolean} admin   Whether the user is admin of the group; `undefined` when unknown
+	 * @property {Boolean} admin   Whether the user is admin of the group; 'undefined' when unknown
 	 */
 	
 	// Client received the message
@@ -1332,7 +1333,7 @@ WhatsApi.prototype.processNode = function(node) {
 		 * Is fired when a postive response is received to a "last seen" request
 		 * 
 		 * @event lastSeenFound
-		 * @type {object}
+		 * @type {Object}
 		 * @property {LastSeen} lastSeen lastSeen object
 		 */
 		this.emit('lastSeenFound', {
@@ -1352,7 +1353,7 @@ WhatsApi.prototype.processNode = function(node) {
 	* Is fired when a "last seen" date/time is not available
 	* 
 	* @event lastSeenNotFound
-	* @type {object}
+	* @type {Object}
 	* @property {String} from Address of the "last seen" request
 	*/
 	if (node.isNotFound()) {
@@ -1473,7 +1474,7 @@ WhatsApi.prototype.processNode = function(node) {
 		 * Is fired when a requested profile picture is received
 		 * 
 		 * @event profilePictureReceived
-		 * @type {object}
+		 * @type {Object}
 		 * @property {ProfilePicture} profilePicture ProfilePicture object
 		 * @example
 		 * wa.on('profilePictureReceived', function(profilePicture){
@@ -1516,7 +1517,7 @@ WhatsApi.prototype.processNode = function(node) {
 		 * Is fired when a response to a status request is received
 		 * 
 		 * @event statusReceived
-		 * @type {object}
+		 * @type {Object}
 		 * @property {Status[]} statuses An array of status responses
 		 */
 		this.emit('statusReceived', statuses);
@@ -1537,7 +1538,7 @@ WhatsApi.prototype.processNode = function(node) {
 		 * Is fired when the status update was successful
 		 * 
 		 * @event statusUpdated
-		 * @type {object}
+		 * @type {Object}
 		 */
 		this.emit('statusUpdated');
 		return;
@@ -1565,7 +1566,7 @@ WhatsApi.prototype.processNode = function(node) {
 		 * @event typing
 		 * @param {String} type    'composing' or 'paused'
 		 * @param {String} from    Contact or group JID
-		 * @param {String} author  If `from` is a group, the actual contact JID
+		 * @param {String} author  If 'from' is a group, the actual contact JID
 		 */
 		this.emit('typing', type, from, author);
 		
@@ -1656,7 +1657,8 @@ WhatsApi.prototype.processNode = function(node) {
 	 * @param {ServicePricing} pricing
 	 */
 	/**
-	 * @typedef {ServicePricing}
+	 * @typedef ServicePricing
+	 * $type {Object}
 	 * @property {String} price       Price with currency symbol
 	 * @property {String} cost        Price number
 	 * @property {String} currency    Currency as string
