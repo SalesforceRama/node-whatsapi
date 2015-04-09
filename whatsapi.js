@@ -1233,7 +1233,7 @@ WhatsApi.prototype.processNode = function(node) {
 				id: id,
 				from: from,
 				type: type,
-				date: time
+				time: time
 			};
 			/**
 			 * 
