@@ -1086,7 +1086,7 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	/**
 	 * Response error; `null` means success
-	 * @typedef {ResponseError}
+	 * @typedef ResponseError
 	 * @property {String} code      Error code
 	 * @property {String} message   Error text
 	 */
@@ -1178,7 +1178,7 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	/**
 	 * Group object
-	 * @typedef {Group}
+	 * @typedef Group
 	 * @type {Object}
 	 * @property {String} id            Group ID
 	 * @property {String} creator       JID of the creator. Equal to s.whatsapp.net when the creator is self
@@ -1189,7 +1189,7 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	/**
 	 * Information about a change in group participants
-	 * @typedef {ParticipantsChanged}
+	 * @typedef ParticipantsChanged
 	 * @type {Object}
 	 * @property {String} groupId      Group ID
 	 * @property {String} action       Action performed: 'add', 'remove', 'promote'(, 'demote')
@@ -1199,7 +1199,7 @@ WhatsApi.prototype.processNode = function(node) {
 	 */
 	
 	/**
-	 * @typedef {Participant}
+	 * @typedef Participant
 	 * @type {Object}
 	 * @property {String} jid      User JID
 	 * @property {Boolean} admin   Whether the user is admin of the group; `undefined` when unknown
@@ -1248,10 +1248,11 @@ WhatsApi.prototype.processNode = function(node) {
 		}
 		
 		return;
-	}	
+	}
+	
 	/**
 	 * Client received the message (receipt)
-	 * @typedef {ClientReceived}
+	 * @typedef ClientReceived
 	 * @type {Object}
 	 * @property {String} id      ID of the involved message
 	 * @property {String} from    JID of the user who received the message
