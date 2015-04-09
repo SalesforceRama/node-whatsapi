@@ -171,11 +171,17 @@ WhatsApi.prototype.addCallback = function(id, cb) {
  * @param  {String} id    The id of the received message
  * @param  {Array} args   The parameters to be passed to the called callback
  */
-WhatsApi.prototype.executeCallback = function(id, args) {
+WhatsApi.prototype.executeCallback = function(id, args, isError) {
 	if (!Array.isArray(args)) {
 		args = [args];
 	}
 	
+	// No error --> first parameter should be null
+	if (!isError) {
+		args.unshift(null);
+	}
+	
+	// Find the callbacks associated with the id
 	for (var i = 0; i < this.callbacksCollection.length; i++) {
 		var item = this.callbacksCollection[i];
 		if (item.id == id) {
@@ -1046,9 +1052,16 @@ WhatsApi.prototype.send = function(buffer) {
  * @private
  */
 WhatsApi.prototype.processNode = function(node) {
+	var nodeId = node.attribute('id');
+	
 	if (node.isError()) {
-		var error = node.child('error');
-		this.emit('responseError', error.attribute('code'), error.attribute('text'));
+		var errorNode = node.child('error');
+		var error = {
+			code: errorNode.attribute('code'),
+			message: errorNode.attribute('text')
+		};
+		
+		this.executeCallback(nodeId, error, true);
 		
 		return;
 	}
@@ -1066,7 +1079,6 @@ WhatsApi.prototype.processNode = function(node) {
 		if (node.attribute('type') == 'w:gp2') {
 			var childNode = node.child(0);
 			
-			var id = node.attribute('id');
 			var time = new Date(+node.attribute('t') * 1000);
 			
 			var tag = childNode.tag();
@@ -1093,7 +1105,7 @@ WhatsApi.prototype.processNode = function(node) {
 				 * @param {Group} group      Information about the group
 				 * @param {String} id        Notification message ID
 				 */
-				this.emit('notificationGroupCreated', group, id);
+				this.emit('notificationGroupCreated', group, nodeId);
 			}
 			// Actions on participants
 			else if (tag == 'add' || tag == 'remove' || tag == 'promote' || tag == 'demote') {
@@ -1115,7 +1127,7 @@ WhatsApi.prototype.processNode = function(node) {
 				 * @param {ParticipantsChanged} args
 				 * @param {String} id Notification message ID
 				 */
-				this.emit('notificationGroupParticipantsChanged', args, id);
+				this.emit('notificationGroupParticipantsChanged', args, nodeId);
 			}
 			// Subject changed
 			else if (tag == 'subject') {
@@ -1132,7 +1144,7 @@ WhatsApi.prototype.processNode = function(node) {
 				 * @param {SubjectChanged} args
 				 * @param {String} id Notification message ID
 				 */
-				this.emit('notificationGroupSubjectChanged', args, id);
+				this.emit('notificationGroupSubjectChanged', args, nodeId);
 			}
 		}
 		
@@ -1180,8 +1192,7 @@ WhatsApi.prototype.processNode = function(node) {
 		var messageIds = [];
 		
 		// Main ID
-		var id = node.attribute('id');
-		messageIds.push(id);
+		messageIds.push(nodeId);
 		
 		// Other IDs
 		if (node.child('list')) {
@@ -1260,8 +1271,11 @@ WhatsApi.prototype.processNode = function(node) {
 	// Login failed
 	if (node.isFailure()) {
 		this.loggedIn = false;
-		this.emit('error', node.toXml());
-		this.loginCallback && this.loginCallback(node.toXml());
+		
+		var xml = node.toXml();
+		this.emit('error', xml);
+		this.loginCallback && this.loginCallback(xml);
+		
 		return;
 	}
 	
@@ -1325,7 +1339,7 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	// Ping/pong
 	if (node.isPing()) {
-		this.sendNode(this.createPongNode(node.attribute('id')));
+		this.sendNode(this.createPongNode(nodeId));
 		return;
 	}
 
@@ -1387,7 +1401,6 @@ WhatsApi.prototype.processNode = function(node) {
 				error : p.attribute('error') || ''
 			}
 		});
-		var messageId = node.attribute('id');
 		
 		/**
 		 * Emitted when group participants have changed
@@ -1396,7 +1409,7 @@ WhatsApi.prototype.processNode = function(node) {
 		 * @param {Array}  who        Array of objects containing JID and eventual error
 		 * @param {String} messageId
 		 */
-		this.emit('groupChangedParticipants', action, who, messageId);
+		this.emit('groupChangedParticipants', action, who, nodeId);
 		
 		return;
 	}
@@ -1405,7 +1418,6 @@ WhatsApi.prototype.processNode = function(node) {
 		var jids = node.child(0).children().map(function(g) {
 			return g.attribute('id')
 		});
-		var messageId = node.attribute('id');
 		
 		/**
 		 * Emitted when you left a group
@@ -1413,7 +1425,7 @@ WhatsApi.prototype.processNode = function(node) {
 		 * @param {Array}  jids        Array of group JIDs you left
 		 * @param {String} messageId
 		 */
-		this.emit('groupLeave', jids, messageId);
+		this.emit('groupLeave', jids, nodeId);
 		
 		return;
 	}
@@ -1596,7 +1608,7 @@ WhatsApi.prototype.processNode = function(node) {
 			properties[propElements[i].attribute('name')] = propElements[i].attribute('value');
 		}
 		
-		this.executeCallback(node.attribute('id'), properties);
+		this.executeCallback(nodeId, properties);
 		return;
 	}
 	
@@ -1611,7 +1623,7 @@ WhatsApi.prototype.processNode = function(node) {
 			expiration: new Date(+pricingNode.attribute('expiration') * 1000)
 		};
 		
-		this.executeCallback(node.attribute('id'), pricing);
+		this.executeCallback(nodeId, pricing);
 		return;
 	}
 	/**
