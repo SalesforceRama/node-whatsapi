@@ -14,7 +14,7 @@ For usage read the [wiki](https://github.com/hidespb/node-whatsapi/wiki/).
 Feel free to report issues or ask questions using the [issue tracker](https://github.com/hidespb/node-whatsapi/issues).
 
 ## Credits
-- [hidespb](https://github.com/hidespb) - founder
+- [hidespb](https://github.com/hidespb) - founder of the project
 - Collaborators
   - [matteocontrini](https://github.com/matteocontrini)
   - [tvandergeer](https://github.com/tvandergeer)
