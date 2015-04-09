@@ -321,9 +321,10 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid, callback) {
 
 /**
  * Send a text message
- * @param  {String} to      Recipient number or JID
- * @param  {String} message Message text content
- * @param  {String} msgid   Message ID (optional)
+ * @param  {String} to              Recipient number or JID
+ * @param  {String} message         Message text content
+ * @param  {Function} callback      Called when the server receives the message
+ * @param  {String} msgid           Message ID (optional)
  * @fires clientReceived
  */
 WhatsApi.prototype.sendMessage = function(to, message, callback, msgid) {
