@@ -324,6 +324,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid, callback) {
  * @param  {String} to      Recipient number or JID
  * @param  {String} message Message text content
  * @param  {String} msgid   Message ID (optional)
+ * @fires clientReceived
  */
 WhatsApi.prototype.sendMessage = function(to, message, callback, msgid) {
 	var bodyNode = new protocol.Node('body', null, null, message);
@@ -1210,7 +1211,7 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		var type = node.attribute('type') || 'received';
 		var from = node.attribute('from');
-		var time = node.attribute('time');
+		var time = new Date(+node.attribute('time') * 1000);
 		
 		var messageIds = [];
 		
@@ -1227,22 +1228,34 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		for (var i = 0; i < messageIds.length; i++) {
 			var id = messageIds[i];
+			
+			var args = {
+				id: id,
+				from: from,
+				type: type,
+				date: time
+			};
 			/**
 			 * 
 			 * Emitted when a client received your message
 			 * 
 			 * @event clientReceived
-			 * @type  {Object}
-			 * @param {String} from    The JID of the user who received the message
-			 * @param {String} id      The ID of the received message
-			 * @param {String} type    Event type: 'received' or 'read'
-			 * @param {Number} time    The event UNIX timestamp
+			 * @type {Object}
+			 * @param {ClientReceived} args    Information about the event
 			 */
-			this.emit('clientReceived', from, id, type, time);
+			this.emit('clientReceived', args);
 		}
 		
 		return;
-	}
+	}	
+	/**
+	 * @typedef {ClientReceived}
+	 * @property {String} id      ID of the involved message
+	 * @property {String} from    JID of the user who received the message
+	 * @property {String} type    Event type: 'received' or 'read'
+	 * @property {Date}   time    Date of the event
+	 */
+	
 	
 	// Server received the message
 	if (node.isAck()) {
