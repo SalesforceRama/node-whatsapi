@@ -2186,7 +2186,7 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 					}
 					
 					this.quality(80);
-					this.resize(200, 200);
+					this.resize(96, 96);
 					this.getBuffer(mime.lookup(srcPath), function(buffer) {
 						callback(false, buffer.toString('base64'));
 					});
@@ -2213,9 +2213,9 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 			gm(srcPath)
 				.options(options)
 				.quality(80)
-				.resize(200, 200, '^')
+				.resize(96, 96, '^')
 				.gravity('Center')
-				.crop(200, 200)
+				.crop(96, 96)
 				.toBuffer(function(err, buffer) {
 					if (err) callback(err);
 					callback(false, buffer.toString('base64'));
