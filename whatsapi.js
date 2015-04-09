@@ -1066,6 +1066,13 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	
+	/**
+	 * Response error; `null` means success
+	 * @typedef {ResponseError}
+	 * @property {String} code      Error code
+	 * @property {String} message   Error text
+	 */
+	
 	// Got new message, send a 'receipt' node
 	if (node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
 		this.sendNode(this.createReceiptNode(node));
@@ -1588,6 +1595,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	/**
 	 * @callback SyncCallback
+	 * @param {ResponseError} err
 	 * @param {ContactsSync} result
 	 */
 	
@@ -1628,6 +1636,7 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	/**
 	 * @callback PricingCallback
+	 * @param {ResponseError} err
 	 * @param {ServicePricing} pricing
 	 */
 	/**
