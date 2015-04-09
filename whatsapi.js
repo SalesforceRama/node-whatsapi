@@ -181,6 +181,9 @@ WhatsApi.prototype.executeCallback = function(id, args, isError) {
 		args.unshift(null);
 	}
 	
+	// Add ID as last parameter
+	args.push(id);
+	
 	// Find the callbacks associated with the id
 	for (var i = 0; i < this.callbacksCollection.length; i++) {
 		var item = this.callbacksCollection[i];
@@ -286,14 +289,45 @@ WhatsApi.prototype.sendChatState = function(to, state) {
 	this.sendNode(node);
 };
 
+/*
+ *
+ * SENDING MESSAGES
+ * 
+ */
+
+/**
+ * @private
+ */
+WhatsApi.prototype.sendMessageNode = function(to, node, msgid, callback) {
+	if (!this.loggedIn) {
+		this.queue.push({to : to, node : node});
+		return;
+	}
+	
+	var messageId = msgid || this.nextMessageId('message');
+	this.addCallback(messageId, callback);
+
+	var attributes = {
+		to   : this.createJID(to),
+		type : (node.tag() === 'body' ? 'text' : 'media'),
+		id   : messageId,
+		t    : common.tstamp().toString()
+	};
+
+	var messageNode = new protocol.Node('message', attributes, [node]);
+
+	this.sendNode(messageNode);
+};
+
 /**
  * Send a text message
  * @param  {String} to      Recipient number or JID
  * @param  {String} message Message text content
  * @param  {String} msgid   Message ID (optional)
  */
-WhatsApi.prototype.sendMessage = function(to, message, msgid) {
-	this.sendMessageNode(to, new protocol.Node('body', null, null, message), msgid);
+WhatsApi.prototype.sendMessage = function(to, message, callback, msgid) {
+	var bodyNode = new protocol.Node('body', null, null, message);
+	this.sendMessageNode(to, bodyNode, msgid, callback);
 };
 
 /**
@@ -1011,24 +1045,6 @@ WhatsApi.prototype.requestProfilePicture = function(target, small) {
 	this.sendNode(new protocol.Node('iq', attributes, [pictureNode]));
 };
 
-WhatsApi.prototype.sendMessageNode = function(to, node, msgid) {
-	if(!this.loggedIn) {
-		this.queue.push({to : to, node : node});
-		return;
-	}
-
-	var attributes = {
-		to   : this.createJID(to),
-		type : (node.tag() === 'body' ? 'text' : 'media'),
-		id   : msgid || this.nextMessageId('message'),
-		t    : common.tstamp().toString()
-	};
-
-	var messageNode = new protocol.Node('message', attributes, [node]);
-
-	this.sendNode(messageNode);
-};
-
 WhatsApi.prototype.flushQueue = function() {
 	var queue  = this.queue;
 	this.queue = [];
@@ -1230,24 +1246,7 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	// Server received the message
 	if (node.isAck()) {
-		/**
-		 * 
-		 * Emitted when the server received your sent message
-		 * 
-		 * @event serverReceived
-		 * @type {Object}
-		 * @param {String} from      The JID of the recipient
-		 * @param {String} id        The message ID
-		 * @param {String} class
-		 * @param {Number} time      The event UNIX timestamp
-		 * 
-		 */
-		this.emit('serverReceived',
-			node.attribute('from'),
-			node.attribute('id'),
-			node.attribute('class'),
-			node.attribute('t')
-		);
+		this.executeCallback(id, []);
 		
 		return;
 	}
