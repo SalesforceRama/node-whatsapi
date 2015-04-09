@@ -1250,7 +1250,9 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}	
 	/**
+	 * Client received the message (receipt)
 	 * @typedef {ClientReceived}
+	 * @type {Object}
 	 * @property {String} id      ID of the involved message
 	 * @property {String} from    JID of the user who received the message
 	 * @property {String} type    Event type: 'received' or 'read'
