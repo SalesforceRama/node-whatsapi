@@ -16,14 +16,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/"
+    "url": "git://github.com/hidespb/node-whatsapi.git"
   },
   "license": "MIT",
   "dependencies": {
     "gm": "^1.17.0",
     "jimp": "^0.1.4",
-    "mime": ">= 1.2.11",
-    "jsdoc-to-markdown": "75lb/jsdoc-to-markdown#next"
+    "mime": ">= 1.2.11"
+  },
+  "devDependencies": {
+    "jsdoc-to-markdown": "^0.6.4"
   },
   "bugs": {
     "url": "https://github.com/hidespb/node-whatsapi/issues"
