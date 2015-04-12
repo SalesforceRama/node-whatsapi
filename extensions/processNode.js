@@ -263,9 +263,36 @@ WhatsApi.processNode = function(node) {
 	// Contact presence update
 	if (node.isPresence() && node.attribute('from') != this.selfAddress) {
 		var type = node.attribute('type') || 'available';
-		this.emit('presence', node.attribute('from'), type, node.attribute('last'));
+		var who = node.attribute('from');
+		if (node.attribute('last') == 'deny') {
+			var date = null;
+		}
+		else {
+			var date = new Date(+node.attribute('last') * 1000);
+		}
+		
+		var presence = {
+			from: who,
+			type: type,
+			date: date
+		}
+		
+		/**
+		 * Emitted when a presence update node is received
+		 * 
+		 * @event presence
+		 * @param {Presence} presence
+		 */
+		this.emit('presence', presence);
 		return;
 	}
+	/**
+	 * @typedef {Presence}
+	 * @type {Object}
+	 * @param {String} from    JID of the user
+	 * @param {String} type    'available' or 'unavailable'
+	 * @param {Date}   date    Last seen date. 'null' if denied
+	 */
 	
 	if (node.isDirtyPresence()) {
 		this.sendNode(this.createClearDirtyNode(node));
