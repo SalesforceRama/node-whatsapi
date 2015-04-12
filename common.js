@@ -72,9 +72,14 @@ function isWindows() {
 	return /^win/.test(process.platform);;
 }
 
+function getRandomInt(min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 exports.tstamp = tstamp;
 exports.winTimestamp = winTimestamp;
 exports.objSize = objSize;
 exports.extend = extend;
 exports.fetch = fetch;
 exports.isWindows = isWindows;
+exports.getRandomInt = getRandomInt;
