@@ -99,8 +99,10 @@ WhatsApi.sendLocation = function(to, lat, lng, name, url, msgid, callback) {
 		longitude : lng.toString()
 	};
 	
-	if (name) attributes['name'] = name;
-	if (url) attributes['url'] = url;
+	if (name && url) {
+		attributes['name'] = name;
+		attributes['url'] = url;
+	}
 	
 	var node = new protocol.Node('media', attributes);
 
