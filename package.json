@@ -31,6 +31,6 @@
     "url": "https://github.com/hidespb/node-whatsapi/issues"
   },
   "scripts": {
-    "docs": "jsdoc2md --example-lang js *.js > api.md"
+    "docs": "jsdoc2md --example-lang js *.js extensions/*.js > api.md"
   }
 }
