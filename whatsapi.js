@@ -92,7 +92,7 @@ WhatsApi.prototype.defaultConfig = {
 	port           : 443,
 	device_type    : 'iPhone',
 	app_version    : '2.11.16',
-	ua             : 'WhatsApp/2.11.473 Android/4.3 Device/GalaxyS3',
+	ua             : 'WhatsApp/2.11.16 iPhone_OS/8.3 Device/iPhone_6',
 	challenge_file : path.join(__dirname, 'challenge'),
 	imageTool      : ImageTools.JIMP
 };
