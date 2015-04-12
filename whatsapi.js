@@ -86,7 +86,7 @@ WhatsApi.prototype.defaultConfig = {
 	password       : '',
 	ccode          : '',
 	reconnect      : true,
-	host           : 'c.whatsapp.net',
+	host           : 'e{0}.whatsapp.net',
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
 	port           : 443,
@@ -171,6 +171,7 @@ WhatsApi.prototype.executeCallback = function(id, args, isError) {
 WhatsApi.prototype.connect = function(callback) {
 	this.loggedIn = false;
 	this.connectCallback = callback ? callback : null;
+	this.config.host = this.config.host.replace('{0}', common.getRandomInt(1, 16));
 	this.transport.connect(this.config.host, this.config.port, this.onTransportConnect, this);
 };
 
