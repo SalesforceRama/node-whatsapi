@@ -1,6 +1,7 @@
 // Accounts submodule
 // Includes functions for account actions
 
+var protocol = require('../protocol.js');
 var WhatsApi = module.exports;
 
 /**
@@ -165,13 +166,12 @@ WhatsApi.requestStatuses = function(numbers){
 /**
  * Request last seen time for given user
  * @param {String}   who       Phone number
- * @param {Function} callback  Called when the last seen time is received
+ * @param {LastSeenCallback} callback  Called when the last seen time is received
  */
 WhatsApi.requestLastSeen = function(who, callback) {
 	var messageId = this.nextMessageId('lastseen');
 	this.addCallback(messageId, callback);
-	
-	
+		
 	var queryNode = new protocol.Node('query');
 
 	var attributes = {

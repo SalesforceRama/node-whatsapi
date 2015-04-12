@@ -272,40 +272,36 @@ WhatsApi.processNode = function(node) {
 		return;
 	}
 	
-	// Last seen -- found
+	// Last seen
 	if (node.isLastSeen()) {
-		var tstamp = Date.now() - (+node.child('query').attribute('seconds')) * 1000;
-		/**
-		 * Is fired when a postive response is received to a "last seen" request
-		 * 
-		 * @event lastSeenFound
-		 * @type {Object}
-		 * @property {LastSeen} lastSeen lastSeen object
-		 */
-		this.emit('lastSeenFound', {
-				from : node.attribute('from'), 
-				date : new Date(tstamp)
-			});
+		var secondsAgo = +node.child('query').attribute('seconds');
+		var millisecondsAgo = millisecondsAgo * 1000;
+		var timestamp = Date.now() - millisecondsAgo;
+		var date = new Date(timestamp);
+		var who = node.attribute('from');
+		
+		var lastSeen = {
+			from: who,
+			date: date,
+			secondsAgo: secondsAgo / 1000
+		}
+		
+		this.executeCallback(nodeId, lastSeen);
 		return;
 	}
+	/**
+	 * @typedef {LastSeenCallback}
+	 * @type {Function}
+	 * @param {ResponseError} err
+	 * @param {LastSeen} response
+	 */
 	/**
 	 * @typedef LastSeen
 	 * @type {Object}
-	 * @property {String} from       Address of the "last seen" request
-	 * @property {Date}   date       Last seen date/time
+	 * @property {String} from       User JID
+	 * @property {Date}   date       Last seen Date object
+	 * @property {Number} secondsAgo
 	 */
-
-	/**
-	* Is fired when a "last seen" date/time is not available
-	* 
-	* @event lastSeenNotFound
-	* @type {Object}
-	* @property {String} from Address of the "last seen" request
-	*/
-	if (node.isNotFound()) {
-		this.emit('lastSeenNotFound', node.attribute('from'));
-		return;
-	}
 	
 	// Ping/pong
 	if (node.isPing()) {
@@ -562,6 +558,7 @@ WhatsApi.processNode = function(node) {
 	}
 	/**
 	 * @callback SyncCallback
+	 * @type {Function}
 	 * @param {ResponseError} err
 	 * @param {ContactsSync} result
 	 */

@@ -231,11 +231,6 @@ Node.prototype.isLastSeen = function() {
 	return this.child('query') && this.child('query').attribute('seconds');
 };
 
-Node.prototype.isNotFound = function() {
-	return this.tag() === 'iq' && this.child('error') &&
-		   this.child('error').attribute('code') == '405';
-};
-
 Node.prototype.isFailure = function() {
 	return this.tag() === 'failure';
 };
