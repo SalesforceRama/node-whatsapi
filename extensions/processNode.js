@@ -602,7 +602,7 @@ WhatsApi.processNode = function(node) {
 	 */
 	/**
 	 * @typedef ServicePricing
-	 * $type {Object}
+	 * @type {Object}
 	 * @property {String} price       Price with currency symbol
 	 * @property {String} cost        Price number
 	 * @property {String} currency    Currency as string

@@ -389,6 +389,16 @@ WhatsApiDebug.prototype.sendNode = function(node) {
 	return WhatsApiDebug.super_.prototype.sendNode.apply(this, arguments);
 };
 
+/**
+ * Create a new instance of the WhatsApi class
+ * @param  {WhatsApiConfig} config    Configuration object
+ * @param  {Boolean}        debug     Enable debug mode, which outputs all the nodes
+ * @param  {Reader}         reader
+ * @param  {Writer}         writer
+ * @param  {Object}         processor
+ * @param  {Object}         transport
+ * @return {WhatsApi}       Created WhatsApi instance
+ */
 function createAdapter(config, debug, reader, writer, processor, transport) {
 	reader    = reader    || new protocol.Reader(dictionary);
 	writer    = writer    || new protocol.Writer(dictionary);
@@ -402,6 +412,7 @@ function createAdapter(config, debug, reader, writer, processor, transport) {
 
 /**
  * Not working, old implementation
+ * @private
  * @return {WhatsApiRegistration}
  */
 function createRegistration(config) {
