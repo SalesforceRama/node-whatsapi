@@ -2,10 +2,14 @@
 // Includes functions for managing WhatsApp chat state and presence
 
 var protocol = require('../protocol.js');
+/**
+ * @alias WhatsApi
+ */
 var WhatsApi = module.exports;
 
 /**
  * Send online presence for the current user
+ * @instance
  */
 WhatsApi.sendIsOnline = function() {
 	var attributes = {
@@ -17,6 +21,7 @@ WhatsApi.sendIsOnline = function() {
 
 /**
  * Send offline presence for the current user
+ * @instance
  */
 WhatsApi.sendIsOffline = function() {
 	var attributes = {
@@ -30,6 +35,7 @@ WhatsApi.sendIsOffline = function() {
 /**
  * Send composing state to the given user
  * @param  {String} to     Phone number
+ * @instance
  */
 WhatsApi.sendComposingState = function(to) {
 	this.sendChatState(to, 'composing');
@@ -38,11 +44,15 @@ WhatsApi.sendComposingState = function(to) {
 /**
  * Send stopped typing/composing to the given user
  * @param  {String} to     Phone number
+ * @instance
  */
 WhatsApi.sendPausedState = function(to) {
 	this.sendChatState(to, 'paused');
 };
 
+/**
+ * @private
+ */
 WhatsApi.sendChatState = function(to, state) {
 	var node = new protocol.Node(
 		'chatstate',
@@ -60,6 +70,8 @@ WhatsApi.sendChatState = function(to, state) {
 /**
  * Request subscription to presence of the given user
  * @param  {String} who    Phone number
+ * @fires presence
+ * @instance
  */
 WhatsApi.sendPresenceSubscription = function(who) {
 	var attributes = {
@@ -74,6 +86,8 @@ WhatsApi.sendPresenceSubscription = function(who) {
 /**
  * Requst unsubscription to presence for the given user
  * @param  {String} who    Phone number
+ * @fires presence
+ * @instance
  */
 WhatsApi.sendPresenceUnsubscription = function(who) {
 	var attributes = {

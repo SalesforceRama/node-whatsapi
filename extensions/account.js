@@ -2,6 +2,9 @@
 // Includes functions for account actions
 
 var protocol = require('../protocol.js');
+/**
+ * @alias WhatsApi
+ */
 var WhatsApi = module.exports;
 
 /**
@@ -10,6 +13,7 @@ var WhatsApi = module.exports;
  * @param {String}  mode        The sync mode. 'full' or 'delta'
  * @param {String}  context     The sync context. 'registration' or 'background' (more info in the wiki)
  * @param {SyncCallback} callback    Called when sync results are ready
+ * @instance
  */
 WhatsApi.requestContactsSync = function(contacts, mode, context, callback) {
 	if (!util.isArray(contacts)) {
@@ -61,6 +65,7 @@ WhatsApi.requestContactsSync = function(contacts, mode, context, callback) {
  * Update privacy settings
  * @param {String} name  The name of the setting to update: 'last' for last seen, 'status', 'profile' for profile picture
  * @param {String} value The new value for the setting: 'all', 'contacts', 'none'
+ * @instance
  */
 WhatsApi.setPrivacySettings = function(name, value){
 	var node = new protocol.Node('category', 
@@ -84,6 +89,7 @@ WhatsApi.setPrivacySettings = function(name, value){
 
 /**
  * Request privacy settings for the current user
+ * @instance
  */
 WhatsApi.requestPrivacySettings = function(){
     var attributes = {
@@ -101,6 +107,7 @@ WhatsApi.requestPrivacySettings = function(){
 /**
  * Set current logged in user status
  * @param {String} status The new status message
+ * @instance
  */
 WhatsApi.setStatus = function(status){
     var child = new protocol.Node('status', null, null, status);
@@ -118,6 +125,7 @@ WhatsApi.setStatus = function(status){
 /**
  * Request status for the given number
  * @param  {String} number Phone number
+ * @instance
  */
 WhatsApi.requestStatus = function(number) {
 	this.requestStatuses([number]);
@@ -126,6 +134,7 @@ WhatsApi.requestStatus = function(number) {
 /**
  * Request statuses for the given array of phone numbers
  * @param {Array} numbers   Array of phone numbers
+ * @instance
  */
 WhatsApi.requestStatuses = function(numbers){
 	// String to Array, just in case
@@ -167,6 +176,7 @@ WhatsApi.requestStatuses = function(numbers){
  * Request last seen time for given user
  * @param {String}   who       Phone number
  * @param {LastSeenCallback} callback  Called when the last seen time is received
+ * @instance
  */
 WhatsApi.requestLastSeen = function(who, callback) {
 	var messageId = this.nextMessageId('lastseen');
@@ -191,6 +201,7 @@ WhatsApi.requestLastSeen = function(who, callback) {
  * @example
  * //sets a random image as profile picture. Image is retrieved from lorempixel.com
  * wa.setProfilePicture('http://lorempixel.com/400/400/?.jpg');
+ * @instance
  */
 WhatsApi.setProfilePicture = function(filepath, callback) {
 	var pictureNode, thumbNode;
@@ -259,6 +270,7 @@ WhatsApi.setProfilePicture = function(filepath, callback) {
  * wa.on('profile.picture', function(from,isPreview,pictureData){
  *   fs.writeFile('whatsapi/media/profilepic-'+from+'.jpg', pictureData); 
  * });
+ * @instance
  */
 WhatsApi.requestProfilePicture = function(target, small) {
 	var picAttributes = {
@@ -283,6 +295,7 @@ WhatsApi.requestProfilePicture = function(target, small) {
 
 /**
  * Extend account by one year from now
+ * @instance
  */
 WhatsApi.requestExtendAccount = function() {	
 	var node = new protocol.Node(
