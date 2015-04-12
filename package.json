@@ -24,7 +24,13 @@
     "jimp": "^0.1.4",
     "mime": ">= 1.2.11"
   },
+  "devDependencies": {
+    "jsdoc-to-markdown": "^0.6.4"
+  },
   "bugs": {
     "url": "https://github.com/hidespb/node-whatsapi/issues"
+  },
+  "scripts": {
+    "docs": "jsdoc2md --example-lang js *.js > api.md"
   }
 }
