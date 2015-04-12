@@ -68,6 +68,8 @@ WhatsApi.processNode = function(node) {
 				
 				/**
 				 * Fired when a new group has been created
+				 * @event notificationGroupCreated
+				 * @type {Object}
 				 * @param {Group} group      Information about the group
 				 * @param {String} id        Notification message ID
 				 */
@@ -90,6 +92,8 @@ WhatsApi.processNode = function(node) {
 				
 				/**
 				 * Fired when a notification about participants is received
+				 * @event notificationGroupParticipantsChanged
+				 * @type {Object}
 				 * @param {ParticipantsChanged} args
 				 * @param {String} id Notification message ID
 				 */
@@ -107,6 +111,8 @@ WhatsApi.processNode = function(node) {
 				
 				/**
 				 * Fired when group subject has changed
+				 * @event notificationGroupSubjectChanged
+				 * @type {Object}
 				 * @param {SubjectChanged} args
 				 * @param {String} id Notification message ID
 				 */
