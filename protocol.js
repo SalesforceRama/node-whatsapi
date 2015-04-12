@@ -143,7 +143,6 @@ Node.prototype.data = function() {
 	return this.contents.data;
 };
 
-// TODO this needs to be checked with all the message kinds
 Node.prototype.shouldBeReplied = function() {
 	return this.tag() === 'message' && this.attribute('notify');
 };
@@ -243,6 +242,10 @@ Node.prototype.isFailure = function() {
 
 Node.prototype.isProfilePicture = function() {
 	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length >0;
+};
+
+Node.prototype.isProfilePictureAck = function() {
+	return this.tag() == 'iq' && this.attribute('type') == 'result' && this.child(0).tag() == 'picture';
 };
 
 Node.prototype.isGetStatus = function() {

@@ -321,27 +321,66 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid, callback) {
 
 /**
  * Send a text message
- * @param  {String} to              Recipient number or JID
- * @param  {String} message         Message text content
- * @param  {Function} callback      Called when the server receives the message
- * @param  {String} msgid           Message ID (optional)
+ * @param {String} to              Recipient number or JID
+ * @param {String} message         Message text content
+ * @param {String} msgid           Message ID (optional)
+ * @param {Function} callback      Called when the server receives the message
  * @fires clientReceived
  */
-WhatsApi.prototype.sendMessage = function(to, message, callback, msgid) {
+WhatsApi.prototype.sendMessage = function(to, message, msgid, callback) {
+	// Convert arguments to array
+	var args = [];
+	for (var i = 0; i < arguments.length; i++) {
+		args.push(arguments[i]);
+	}
+	
+	// Remove first 2 required arguments
+	args.splice(0, 2);
+	
+	// Get last argument
+	callback = args.pop();
+	
+	// Get optional msgid
+	if (args.length > 0) {
+		msgid = args.shift();
+	}
+	else {
+		msgid = null;
+	}
+	
 	var bodyNode = new protocol.Node('body', null, null, message);
 	this.sendMessageNode(to, bodyNode, msgid, callback);
 };
 
 /**
  * Send a location message
- * @param  {String} to    Recipient number or JID
- * @param  {Number} lat   Latitude
- * @param  {Number} lng   Longitude
- * @param  {String} name  Place name (optional)
- * @param  {String} url   Place URL (optional)
- * @param  {String} msgid Message ID (optional)
+ * @param  {String}   to        Recipient number or JID
+ * @param  {Number}   lat       Latitude
+ * @param  {Number}   lng       Longitude
+ * @param  {String}   name      Place name (optional)
+ * @param  {String}   url       Place URL (optional)
+ * @param  {String}   msgid     Message ID (optional)
+ * @param  {Function} callback  Called when the server receives the message
+ * @fires clientReceived
  */
-WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
+WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid, callback) {
+	// Convert arguments to array
+	var args = [];
+	for (var i = 0; i < arguments.length; i++) {
+		args.push(arguments[i]);
+	}
+	
+	// Remove first 3 required arguments
+	args.splice(0, 3);
+	
+	// Get last argument
+	callback = args.pop();
+	
+	// Get optional name, url, msgid
+	name  = args.length > 0 ? args.shift() : null;
+	url   = args.length > 0 ? args.shift() : null;
+	msgid = args.length > 0 ? args.shift() : null;
+	
 	var attributes = {
 		encoding  : 'raw',
 		type      : 'location',
@@ -354,92 +393,179 @@ WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid) {
 	
 	var node = new protocol.Node('media', attributes);
 
-	this.sendMessageNode(to, node, msgid);
+	this.sendMessageNode(to, node, msgid, callback);
 };
 
 
 /**
  * Send an image to the specified destination. An optional caption an message ID can be specified.
  * 
- * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
- * @param  {String} filepath file path or URL of the image to send
- * @param  {String} caption  (optional) caption to display together with the image
- * @param  {String} msgid    (optional) message ID
+ * @param  {String} to              Destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {String} filepath        File path or URL of the image to send
+ * @param  {String} caption         (optional) caption to display together with the image
+ * @param  {String} msgid           (optional) message ID
+ * @param  {Function} callback      Called when the server receives the message
+ * @fires clientReceived
  * @example
  * wa.sendImage('491234567890', 'http://lorempixel.com/800/600/?.jpg', 'This is a caption');
  */
-WhatsApi.prototype.sendImage = function(to, filepath, caption, msgid) {
-	this.sendMedia(to, filepath, MediaType.IMAGE, caption, msgid);
+WhatsApi.prototype.sendImage = function(to, filepath, caption, msgid, callback) {
+	// Convert arguments to array
+	var args = [];
+	for (var i = 0; i < arguments.length; i++) {
+		args.push(arguments[i]);
+	}
+	
+	// Remove first 2 required arguments
+	args.splice(0, 2);
+	
+	// Get last argument
+	callback = args.pop();
+	
+	// Get optional caption and msgid
+	caption = args.length > 0 ? args.shift() : null;
+	msgid = args.length > 0 ? args.shift() : null;
+	
+	this.sendMedia(to, filepath, MediaType.IMAGE, caption, msgid, callback);
 };
 
 /**
 * Send a video to the specified destination. An optional caption an message ID can be specified.
 * 
-* @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
-* @param  {String} filepath file path or URL of the video to send
-* @param  {String} caption  (optional) caption to display together with the video
-* @param  {String} msgid    (optional) message ID
+* @param  {String} to           Destination phone number in international format, without '+'. E.g. 491234567890
+* @param  {String} filepath     File path or URL of the video to send
+* @param  {String} caption      (optional) caption to display together with the video
+* @param  {String} msgid        (optional) message ID
+* @param  {Function} callback   Called when the server receives the messages
+* @fires clientReceived
 * @example
 * wa.sendVideo('491234567890','http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4', 'Big Buck Bunny');
 */
-WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid) {
-	this.sendMedia(to, filepath, MediaType.VIDEO, caption, msgid);
+WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid, callback) {
+	// Convert arguments to array
+	var args = [];
+	for (var i = 0; i < arguments.length; i++) {
+		args.push(arguments[i]);
+	}
+	
+	// Remove first 2 required arguments
+	args.splice(0, 2);
+	
+	// Get last argument
+	callback = args.pop();
+	
+	// Get optional caption and msgid
+	caption = args.length > 0 ? args.shift() : null;
+	msgid = args.length > 0 ? args.shift() : null;
+	
+	this.sendMedia(to, filepath, MediaType.VIDEO, caption, msgid, callback);
 };
 
 /**
  * Send an audio file to the specified destination.
  * 
- * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
- * @param  {String} filepath file path or URL of the audio file to send
- * @param  {String} msgid    (optional) message ID
+ * @param  {String} to            Destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {String} filepath      File path or URL of the audio file to send
+ * @param  {String} msgid         (optional) message ID
+ * @param  {Function} callback    Called when the server receives the messages
+ * @fires clientReceived
  * @example
  * wa.sendAudio('491234567890', 'http://archive.org/download/Exodus1KJV/02001_Exodus_1.mp3');
  */
-WhatsApi.prototype.sendAudio = function(to, filepath, msgid) {
-	this.sendMedia(to, filepath, MediaType.AUDIO, null, msgid);
+WhatsApi.prototype.sendAudio = function(to, filepath, msgid, callback) {
+	// Convert arguments to array
+	var args = [];
+	for (var i = 0; i < arguments.length; i++) {
+		args.push(arguments[i]);
+	}
+	
+	// Remove first 2 required arguments
+	args.splice(0, 2);
+	
+	// Get last argument
+	callback = args.pop();
+	
+	// Get optional msgid
+	msgid = args.length > 0 ? args.shift() : null;
+	
+	this.sendMedia(to, filepath, MediaType.AUDIO, null, msgid, callback);
 };
 
-WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid) {
+WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid, callback) {
 	this.getMediaFile(filepath, type, function(err, path) {
-		if(err) {
-			this.emit('mediaError', err);
+		if (err) {
+			var errorObj = {
+				code: 100,
+				message: err
+			}
+			callback(errorObj);
 			return;
 		}
 
 		var stat = fs.statSync(path);
-		var hash = crypto.createHash('sha256').update(fs.readFileSync(path)).digest('base64');
+		var mediaContent = fs.readFileSync(path);
+		var hash = crypto.createHash('sha256').update(mediaContent).digest('base64');
+		
+		// An upload node will be generated
+		// And the image data added to the media queue
+		var uploadNode = this.createRequestMediaUploadNode(hash, type, stat.size, path, to, caption, msgid, callback);
 
-		this.sendNode(this.createRequestMediaUploadNode(hash, type, stat.size, path, to, caption, msgid));
+		this.sendNode(uploadNode);
 	}.bind(this));
 };
 
 /**
  * Send a vCard file to the specified destination.
  * 
- * @param  {String} to       destination phone number in international format, without '+'. E.g. 491234567890
- * @param  {String} filepath file path or URL of the vCard file to send
- * @param  {String} name     name of the person in the vcard
- * @param  {String} msgid    (optional) message ID
+ * @param  {String} to           Destination phone number in international format, without '+'. E.g. 491234567890
+ * @param  {String} filepath     File path or URL of the vCard file to send
+ * @param  {String} name         Name of the person in the vcard
+ * @param  {String} msgid        (optional) message ID
+ * @param  {Function} callback   Called when the server receives the messages
+ * @fires clientReceived
  * @example
  * wa.sendVcard('491234567890', 'http://www.w3.org/2002/12/cal/vcard-examples/john-doe.vcf', 'John Doe');
  */
-WhatsApi.prototype.sendVcard = function(to, filepath, name, msgid) {
+WhatsApi.prototype.sendVcard = function(to, filepath, name, msgid, callback) {
+	// Convert arguments to array
+	var args = [];
+	for (var i = 0; i < arguments.length; i++) {
+		args.push(arguments[i]);
+	}
+	
+	// Remove first 3 required arguments
+	args.splice(0, 3);
+	
+	// Get last argument
+	callback = args.pop();
+	
+	// Get optional msgid
+	msgid = args.length > 0 ? args.shift() : null;
+	
 	this.getMediaFile(filepath, MediaType.VCARD, function(err, path) {
-		if(err) {
-			this.emit('mediaError', err);
+		if (err) {
+			var errorObj = {
+				code: 100,
+				message: err
+			};
+			callback(errorObj);
 			return;
 		}
 		
 		fs.readFile(path, function(err, data) {
-			if(err) {
-				this.emit('mediaError', err);
+			if (err) {
+				var errorObj = {
+					code: 100,
+					message: 'Error reading downloaded file: ' + JSON.stringify(err)
+				};
+				callback(errorObj);
 				return;
 			}
 
-			var vcardNode = new protocol.Node('vcard', {name: name}, null, data);
-			var mediaNode = new protocol.Node('media', {type: 'vcard'}, [vcardNode], null);
+			var vcardNode = new protocol.Node('vcard', { name: name }, null, data);
+			var mediaNode = new protocol.Node('media', { type: 'vcard' }, [vcardNode]);
 			
-			this.sendMessageNode(to, mediaNode, msgid);
+			this.sendMessageNode(to, mediaNode, msgid, callback);
 			
 		}.bind(this));
 	}.bind(this));
@@ -962,13 +1088,12 @@ WhatsApi.prototype.requestExtendAccount = function() {
 /**
  * Set a new profile picture for the active account
  *
- * @param {String} filepath - Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of approx. 65.000 bytes and that includes the generated thumbnail.
- * @fires mediaError
+ * @param {String} filepath   Path or URL to a valid JPEG image. Do not use a large image because we can only send a max of approx. 65.000 bytes and that includes the generated thumbnail.
  * @example
  * //sets a random image as profile picture. Image is retrieved from lorempixel.com
  * wa.setProfilePicture('http://lorempixel.com/400/400/?.jpg');
  */
-WhatsApi.prototype.setProfilePicture = function(filepath) {
+WhatsApi.prototype.setProfilePicture = function(filepath, callback) {
 	var pictureNode, thumbNode;
 	var attributes = {
 		id: this.nextMessageId('setphoto'),
@@ -978,33 +1103,43 @@ WhatsApi.prototype.setProfilePicture = function(filepath) {
 	};
 
 	var onThumbReady = function(err, data) {
-		//data is returned as a base64 string
-		if(err) {
-			/**			
-			 * Is fired when an error occured in handling media
-			 *  
-			 * @event mediaError
-			 * @type {Object}
-			 * @property {Object} err 
-			 */			
-			this.emit('mediaError', err);
+		// 'data' is returned as a base64 string
+		if (err) {
+			var errorObj = {
+				code: 100,
+				message: err
+			};
+			callback(errorObj);
 			return;
 		}
 		thumbNode = new protocol.Node('picture', {type:'preview'}, null, new Buffer(data, 'base64'));
-		this.sendNode(new protocol.Node('iq', attributes, [pictureNode, thumbNode]));
+		var iqNode = new protocol.Node('iq', attributes, [pictureNode, thumbNode]);
+		
+		this.addCallback(attributes.id, callback);
+		
+		this.sendNode(iqNode);
 	}.bind(this);
 
 	this.getMediaFile(filepath, MediaType.IMAGE, function(err, path) {
-		if(err) {
-			this.emit('mediaError', err);
+		if (err) {
+			var errorObj = {
+				code: 100,
+				message: err
+			};
+			callback(errorObj);
 			return;
 		}
 		
 		fs.readFile(path, function(err, data) {
-				if(err) {
-					this.emit('mediaError', err);
+				if (err) {
+					var errorObj = {
+						code: 100,
+						message: 'Error reading downloaded file: ' + JSON.stringify(err)
+					};
+					callback(errorObj);
 					return;
 				}
+				
 				pictureNode = new protocol.Node('picture', null, null, data); 
 				this.createImageThumbnail(path, onThumbReady);
 		}.bind(this));
@@ -1262,8 +1397,8 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	
 	// Server received the message
-	if (node.isAck()) {
-		this.executeCallback(id, []);
+	if (node.isAck() || node.isProfilePictureAck()) {
+		this.executeCallback(nodeId, []);
 		
 		return;
 	}
@@ -1455,13 +1590,17 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	
 	if (node.isMediaReady()) {
-		this.createMediaUploadNode(node, function(err, to, node) {
-			if(err) {
-				this.emit('mediaError', err);
+		this.createMediaUploadNode(node, function(err, ackCallback, to, node) {
+			if (err) {
+				var errObj = {
+					code: 100,
+					message: err
+				};
+				callback(errObj);
 				return;
 			}
-
-			this.sendMessageNode(to, node);
+			
+			this.sendMessageNode(to, node, null, ackCallback); // null message ID
 		}.bind(this));
 		return;
 	}
@@ -1891,7 +2030,7 @@ WhatsApi.prototype.createAckNode = function(node) {
 	return node;
 };
 
-WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to, caption, msgid) {
+WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, filesize, filepath, to, caption, msgid, callback) {
 	var attributes = {
 		hash  : filehash,
 		type  : filetype,
@@ -1911,7 +2050,8 @@ WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, f
 		filepath : filepath,
 		filesize : filesize,
 		to       : to,
-		from     : this.config.msisdn
+		from     : this.config.msisdn,
+		callback : callback
 	};
 	if(caption && caption.length) this.mediaQueue[iqAttributes.id].caption = caption;
 
@@ -1921,49 +2061,52 @@ WhatsApi.prototype.createRequestMediaUploadNode = function(filehash, filetype, f
 WhatsApi.prototype.createMediaUploadNode = function(node, callback) {
 	var id = node.attribute('id');
 
-	if(!this.mediaQueue.hasOwnProperty(id)) {
+	if (!this.mediaQueue.hasOwnProperty(id)) {
 		return;
 	}
-
+	
 	var queued = this.mediaQueue[id];
 	delete this.mediaQueue[id];
-
+	
 	var attributes = {
 		xmlns : 'urn:xmpp:whatsapp:mms'
 	};
 	if (queued.caption) attributes.caption = queued.caption;
-
+	
+	var ackCallback = queued.callback;
+	
 	var onAttributesReady = function(url, type, size, file) {
 		attributes.url  = url;
 		attributes.type = type;
 		attributes.size = size;
 		attributes.file = file;
 
-		var onThumbReady = function(err, data) {
-			if(err) {
-				callback(err);
+		var onThumbReady = function(err, data) {			
+			if (err) {
+				callback(err, ackCallback);
 				return;
 			}
 
-			callback(false, queued.to, new protocol.Node('media', attributes, null, data));
+			callback(null, ackCallback, queued.to, new protocol.Node('media', attributes, null, data));
 		};
 
-		if(type === MediaType.IMAGE) {
+		if (type === MediaType.IMAGE) {
 			this.createImageThumbnail(queued.filepath, onThumbReady);
 			return;
 		}
 
-		if(type === MediaType.VIDEO) {
+		if (type === MediaType.VIDEO) {
 			this.createVideoThumbnail(queued.filepath, onThumbReady);
 			return;
 		}
 
-		onThumbReady(false, '');
+		// No thumbnail needed for other media types
+		onThumbReady(null, '');
 	}.bind(this);
 
 	var duplicate = node.child('duplicate');
 
-	if(duplicate) {
+	if (duplicate) {
 		onAttributesReady(
 			duplicate.attribute('url'),
 			duplicate.attribute('type'),
@@ -1972,8 +2115,8 @@ WhatsApi.prototype.createMediaUploadNode = function(node, callback) {
 		);
 	} else {
 		this.uploadMediaFile(queued, node.child('media').attribute('url'), function(err, response) {
-			if(err) {
-				callback(err);
+			if (err) {
+				callback(err, ackCallback);
 				return;
 			}
 
@@ -2000,11 +2143,11 @@ WhatsApi.prototype.getMediaFile = function(filepath, filetype, callback) {
 		var maxSize  = this.mediaMimeTypes[filetype].size;
 
 		if(maxSize < fileSize) {
-			callback('Media file too big (max size is ' + maxSize + ' file size is ' + fileSize + ')');
+			callback('Media file too big (max size is ' + maxSize + '; file size is ' + fileSize + ')');
 			return;
 		}
 
-		callback(false, path);
+		callback(null, path);
 	}.bind(this);
 
 	fs.exists(filepath, function(result) {
@@ -2016,7 +2159,7 @@ WhatsApi.prototype.getMediaFile = function(filepath, filetype, callback) {
 		var parsed = url.parse(filepath);
 
 		if(!parsed.host) {
-			callback('Filepath is nor url neither path to existing file');
+			callback('Given path is neither an existing file nor a valid URL');
 			return;
 		}
 
@@ -2044,7 +2187,7 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 			if( res.statusCode == 302 && res.headers && res.headers.location){
 				return this.downloadMediaFile( res.headers.location, callback);
 			}
-			callback('HTTP 200 or 302 reponse expected, but received: ' + res.statusCode);
+			callback('Error downloading the file. HTTP 200 or 302 reponse expected, but received: ' + res.statusCode);
 		}
 		
 		var buffers = [];
@@ -2057,7 +2200,7 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 		});
 		
 		res.on('close', function(had_error){
-			if(had_error){
+			if (had_error){
 				callback('Error occured while downloading data');
 			}
 		});
@@ -2067,7 +2210,7 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 			filePath += crypto.randomBytes(4).readUInt32LE(0) + ext;
 
 			fs.writeFile(filePath, Buffer.concat(buffers), function(err) {
-				if(err) {
+				if (err) {
 					callback('Error saving downloaded file: ' + err);
 				} else {
 					callback(null, filePath);
@@ -2075,7 +2218,7 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 			});
 		});
 	}.bind(this)).on('error', function(e) {
-		callback('HTTP error: ' + e.message);
+		callback('Error downloading the file. HTTP error: ' + e.message);
 	});
 };
 
@@ -2140,7 +2283,7 @@ WhatsApi.prototype.uploadMediaFile = function(queue, destUrl, callback) {
 	});
 
 	tlsStream.on('error', function(err) {
-		this.emit('mediaError', 'SSL/TLS error: ' + err);
+		callback('SSL/TLS error: ' + err);
 	}.bind(this));
 
 	var buffers = [];
@@ -2153,7 +2296,7 @@ WhatsApi.prototype.uploadMediaFile = function(queue, destUrl, callback) {
 		var result = Buffer.concat(buffers).toString();
 
 		try {
-			callback(false, JSON.parse(result.split('\r\n\r\n').pop()));
+			callback(null, JSON.parse(result.split('\r\n\r\n').pop()));
 		} catch(e) {
 			callback('Unexpected upload response: ' + result);
 		}
@@ -2188,12 +2331,12 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 					this.quality(80);
 					this.resize(96, 96);
 					this.getBuffer(mime.lookup(srcPath), function(buffer) {
-						callback(false, buffer.toString('base64'));
+						callback(null, buffer.toString('base64'));
 					});
 					this.write(dstPath); // save, just for log
 				}
 				catch (e) {
-					callback(e.message);
+					callback('Error occured while generating thumbnail, using Jimp. ' + e.message);
 				}
 			});
 		}
@@ -2205,7 +2348,7 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 				var options = { imageMagick: false };
 			}
 			else {
-				callback('Invalid image tool');
+				callback('Invalid image tool chosen for generating thumbnail');
 				return;
 			}
 			
@@ -2217,18 +2360,18 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 				.gravity('Center')
 				.crop(96, 96)
 				.toBuffer(function(err, buffer) {
-					if (err) callback(err);
-					callback(false, buffer.toString('base64'));
+					if (err) callback('Error occured while generating thumbnail, using GM. ' + JSON.stringify(err));
+					callback(null, buffer.toString('base64'));
 				})
 				.write(dstPath, function() {});
 		}
 	} catch(e) {
-		callback(e.message);
+		callback('Unexpected error while generating thumbnail: ' + e.message);
 	}
 };
 
 WhatsApi.prototype.createVideoThumbnail = function(srcPath, callback) {
-	callback(false, '/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMpaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjAtYzA2MCA2MS4xMzQ3NzcsIDIwMTAvMDIvMTItMTc6MzI6MDAgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzUgV2luZG93cyIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo2MTQyRUVCOEI3MDgxMUUyQjNGQkY1OEU5M0U2MDE1MyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo2MTQyRUVCOUI3MDgxMUUyQjNGQkY1OEU5M0U2MDE1MyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjYxNDJFRUI2QjcwODExRTJCM0ZCRjU4RTkzRTYwMTUzIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjYxNDJFRUI3QjcwODExRTJCM0ZCRjU4RTkzRTYwMTUzIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+/+4ADkFkb2JlAGTAAAAAAf/bAIQAAgICAgICAgICAgMCAgIDBAMCAgME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');
+	callback(null, '/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMpaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjAtYzA2MCA2MS4xMzQ3NzcsIDIwMTAvMDIvMTItMTc6MzI6MDAgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzUgV2luZG93cyIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo2MTQyRUVCOEI3MDgxMUUyQjNGQkY1OEU5M0U2MDE1MyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo2MTQyRUVCOUI3MDgxMUUyQjNGQkY1OEU5M0U2MDE1MyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjYxNDJFRUI2QjcwODExRTJCM0ZCRjU4RTkzRTYwMTUzIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjYxNDJFRUI3QjcwODExRTJCM0ZCRjU4RTkzRTYwMTUzIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+/+4ADkFkb2JlAGTAAAAAAf/bAIQAAgICAgICAgICAgMCAgIDBAMCAgME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');
 };
 
 /**
