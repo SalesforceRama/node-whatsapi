@@ -2,16 +2,12 @@
 // Includes the function for processing the incoming nodes
 
 var fs = require('fs');
-/**
- * @alias WhatsApi
- */
 var WhatsApi = module.exports;
 
 /**
  * Process incoming node
  * @param  {Node} node    Node to parse
  * @private
- * @instance
  */
 WhatsApi.processNode = function(node) {
 	var nodeId = node.attribute('id');

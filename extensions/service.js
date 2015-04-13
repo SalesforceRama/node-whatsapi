@@ -3,15 +3,8 @@
 
 var common = require('../common.js');
 var protocol = require('../protocol.js');
-/**
- * @alias WhatsApi
- */
 var WhatsApi = module.exports;
 
-/**
- * @private
- * @instance
- */
 WhatsApi.createClearDirtyNode = function(node) {
 	var categories = [];
 
@@ -40,7 +33,6 @@ WhatsApi.createClearDirtyNode = function(node) {
  * Create a pong node, to be sent in response to ping
  * @param  {String} messageId    The ping message ID
  * @return {Node}       Created node
- * @instance
  */
 WhatsApi.createPongNode = function(messageId) {
 	var attributes = {
@@ -56,7 +48,6 @@ WhatsApi.createPongNode = function(messageId) {
  * Create a 'receipt' node, to be sent when a new message is received/read
  * @param  {Node} node    The received message node
  * @return {Node}         Created node
- * @instance
  */
 WhatsApi.createReceiptNode = function(node) {
 	var attributes = {
@@ -77,7 +68,6 @@ WhatsApi.createReceiptNode = function(node) {
  * Create a 'ack' node, to be sent when a new notification is received
  * @param  {Node} node    The notification node
  * @return {Node}         Created node
- * @instance
  */
 WhatsApi.createNotificationAckNode = function(node) {
 	var attributes = {
@@ -100,7 +90,6 @@ WhatsApi.createNotificationAckNode = function(node) {
  * Create a 'ack' node, to be sent when a 'receipt' node is received
  * @param  {Node} node     The 'receipt' node
  * @return {Node}          Created node
- * @instance
  */
 WhatsApi.createAckNode = function(node) {
 	var attributes = {
@@ -125,7 +114,6 @@ WhatsApi.createAckNode = function(node) {
 /**
  * Request WhatsApp server properties
  * @param  {Function} callback Called when the properties are received
- * @instance
  */
 WhatsApi.requestServerProperties = function(callback) {
 	var messageId = this.nextMessageId('getproperties');
@@ -152,7 +140,6 @@ WhatsApi.requestServerProperties = function(callback) {
  * @param {String}    language    Language code (e.g. 'en')
  * @param {String}    country     Country code (e.g. 'us')
  * @param {PricingCallback}  callback    Called when the pricing is recived
- * @instance
  */
 WhatsApi.requestServicePricing = function(language, country, callback) {	
 	var messageId = this.nextMessageId('get_service_pricing_');

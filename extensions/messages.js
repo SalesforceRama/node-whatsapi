@@ -4,14 +4,10 @@
 var MediaType = require('../MediaType.js');
 var protocol = require('../protocol.js');
 var common = require('../common.js');
-/**
- * @alias WhatsApi
- */
 var WhatsApi = module.exports;
 
 /**
  * @private
- * @instance
  */
 WhatsApi.sendMessageNode = function(to, node, msgid, callback) {
 	if (!this.loggedIn) {
@@ -41,7 +37,6 @@ WhatsApi.sendMessageNode = function(to, node, msgid, callback) {
  * @param {String} msgid           Message ID (optional)
  * @param {Function} callback      Called when the server receives the message
  * @fires clientReceived
- * @instance
  */
 WhatsApi.sendMessage = function(to, message, msgid, callback) {
 	// Convert arguments to array
@@ -78,7 +73,6 @@ WhatsApi.sendMessage = function(to, message, msgid, callback) {
  * @param  {String}   msgid     Message ID (optional)
  * @param  {Function} callback  Called when the server receives the message
  * @fires clientReceived
- * @instance
  */
 WhatsApi.sendLocation = function(to, lat, lng, name, url, msgid, callback) {
 	// Convert arguments to array
@@ -127,7 +121,6 @@ WhatsApi.sendLocation = function(to, lat, lng, name, url, msgid, callback) {
  * @fires clientReceived
  * @example
  * wa.sendImage('491234567890', 'http://lorempixel.com/800/600/?.jpg', 'This is a caption');
- * @instance
  */
 WhatsApi.sendImage = function(to, filepath, caption, msgid, callback) {
 	// Convert arguments to array
@@ -160,7 +153,6 @@ WhatsApi.sendImage = function(to, filepath, caption, msgid, callback) {
 * @fires clientReceived
 * @example
 * wa.sendVideo('491234567890','http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4', 'Big Buck Bunny');
-* @instance
 */
 WhatsApi.sendVideo = function(to, filepath, caption, msgid, callback) {
 	// Convert arguments to array
@@ -192,7 +184,6 @@ WhatsApi.sendVideo = function(to, filepath, caption, msgid, callback) {
  * @fires clientReceived
  * @example
  * wa.sendAudio('491234567890', 'http://archive.org/download/Exodus1KJV/02001_Exodus_1.mp3');
- * @instance
  */
 WhatsApi.sendAudio = function(to, filepath, msgid, callback) {
 	// Convert arguments to array
@@ -213,10 +204,6 @@ WhatsApi.sendAudio = function(to, filepath, msgid, callback) {
 	this.sendMedia(to, filepath, MediaType.AUDIO, null, msgid, callback);
 };
 
-/**
- * @private
- * @instance
- */
 WhatsApi.sendMedia = function(to, filepath, type, caption, msgid, callback) {
 	this.getMediaFile(filepath, type, function(err, path) {
 		if (err) {
@@ -251,7 +238,6 @@ WhatsApi.sendMedia = function(to, filepath, type, caption, msgid, callback) {
  * @fires clientReceived
  * @example
  * wa.sendVcard('491234567890', 'http://www.w3.org/2002/12/cal/vcard-examples/john-doe.vcf', 'John Doe');
- * @instance
  */
 WhatsApi.sendVcard = function(to, filepath, name, msgid, callback) {
 	// Convert arguments to array

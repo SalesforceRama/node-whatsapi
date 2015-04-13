@@ -2,15 +2,8 @@
 // Includes media types definitions
 
 var MediaType = require('../MediaType.js');
-/**
- * @alias WhatsApi
- */
 var WhatsApi = module.exports;
 
-/**
- * @private
- * @instance
- */
 WhatsApi.mediaMimeTypes = {};
 
 WhatsApi.mediaMimeTypes[MediaType.IMAGE] = {
