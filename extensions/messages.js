@@ -4,6 +4,8 @@
 var MediaType = require('../MediaType.js');
 var protocol = require('../protocol.js');
 var common = require('../common.js');
+var fs = require('fs');
+var crypto = require('crypto');
 var WhatsApi = module.exports = function() {};
 
 /**

@@ -4,6 +4,14 @@
 var MediaType = require('../MediaType.js');
 var ImageTools = require('../ImageTools.js');
 var protocol = require('../protocol.js');
+var path = require('path');
+var crypto = require('crypto');
+var http = require('http');
+var https = require('https');
+var tls = require('tls');
+var jimp = require('jimp');
+var gm = require('gm');
+
 var WhatsApi = module.exports = function() {};
 
 /* @private */
