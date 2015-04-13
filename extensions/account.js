@@ -2,6 +2,7 @@
 // Includes functions for account actions
 
 var protocol = require('../protocol.js');
+var util = require('util');
 var WhatsApi = module.exports = function() {};
 
 /**
