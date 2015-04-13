@@ -2,21 +2,21 @@
 // Includes media types definitions
 
 var MediaType = require('../MediaType.js');
-var WhatsApi = module.exports;
+var WhatsApi = module.exports = function() {};
 
-WhatsApi.mediaMimeTypes = {};
+WhatsApi.prototype.mediaMimeTypes = {};
 
-WhatsApi.mediaMimeTypes[MediaType.IMAGE] = {
+WhatsApi.prototype.mediaMimeTypes[MediaType.IMAGE] = {
 	size : 5 * 1024 * 1024,
 	mime : ['image/png', 'image/jpeg']
 };
 
-WhatsApi.mediaMimeTypes[MediaType.VIDEO] = {
+WhatsApi.prototype.mediaMimeTypes[MediaType.VIDEO] = {
 	size : 20 * 1024 * 1024,
 	mime : ['video/mp4', 'video/quicktime', 'video/x-msvideo']
 };
 
-WhatsApi.mediaMimeTypes[MediaType.AUDIO] = {
+WhatsApi.prototype.mediaMimeTypes[MediaType.AUDIO] = {
 	size : 10 * 1024 * 1024,
 	mime : [
 		'video/3gpp',
@@ -30,7 +30,7 @@ WhatsApi.mediaMimeTypes[MediaType.AUDIO] = {
 	]
 };
 
-WhatsApi.mediaMimeTypes[MediaType.VCARD] = {
+WhatsApi.prototype.mediaMimeTypes[MediaType.VCARD] = {
 	size : 10 * 1024 * 1024,
 	mime : [
 	'text/x-vcard',

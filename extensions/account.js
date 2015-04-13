@@ -2,7 +2,7 @@
 // Includes functions for account actions
 
 var protocol = require('../protocol.js');
-var WhatsApi = module.exports;
+var WhatsApi = module.exports = function() {};
 
 /**
  * Requests contacts sync
@@ -11,7 +11,7 @@ var WhatsApi = module.exports;
  * @param {String}  context     The sync context. 'registration' or 'background' (more info in the wiki)
  * @param {SyncCallback} callback    Called when sync results are ready
  */
-WhatsApi.requestContactsSync = function(contacts, mode, context, callback) {
+WhatsApi.prototype.requestContactsSync = function(contacts, mode, context, callback) {
 	if (!util.isArray(contacts)) {
 		contacts = [contacts];
 	}
@@ -62,7 +62,7 @@ WhatsApi.requestContactsSync = function(contacts, mode, context, callback) {
  * @param {String} name  The name of the setting to update: 'last' for last seen, 'status', 'profile' for profile picture
  * @param {String} value The new value for the setting: 'all', 'contacts', 'none'
  */
-WhatsApi.setPrivacySettings = function(name, value){
+WhatsApi.prototype.setPrivacySettings = function(name, value){
 	var node = new protocol.Node('category', 
 		{
 			name  : name,
@@ -85,7 +85,7 @@ WhatsApi.setPrivacySettings = function(name, value){
 /**
  * Request privacy settings for the current user
  */
-WhatsApi.requestPrivacySettings = function(){
+WhatsApi.prototype.requestPrivacySettings = function(){
     var attributes = {
     	to    : this.config.server,
         type  : 'get',
@@ -102,7 +102,7 @@ WhatsApi.requestPrivacySettings = function(){
  * Set current logged in user status
  * @param {String} status The new status message
  */
-WhatsApi.setStatus = function(status){
+WhatsApi.prototype.setStatus = function(status){
     var child = new protocol.Node('status', null, null, status);
 
     var attributes = {
@@ -119,7 +119,7 @@ WhatsApi.setStatus = function(status){
  * Request status for the given number
  * @param  {String} number Phone number
  */
-WhatsApi.requestStatus = function(number) {
+WhatsApi.prototype.requestStatus = function(number) {
 	this.requestStatuses([number]);
 };
 
@@ -127,7 +127,7 @@ WhatsApi.requestStatus = function(number) {
  * Request statuses for the given array of phone numbers
  * @param {Array} numbers   Array of phone numbers
  */
-WhatsApi.requestStatuses = function(numbers){
+WhatsApi.prototype.requestStatuses = function(numbers){
 	// String to Array, just in case
 	if (!util.isArray(numbers)) {
 		numbers = [numbers];
@@ -168,7 +168,7 @@ WhatsApi.requestStatuses = function(numbers){
  * @param {String}   who       Phone number
  * @param {LastSeenCallback} callback  Called when the last seen time is received
  */
-WhatsApi.requestLastSeen = function(who, callback) {
+WhatsApi.prototype.requestLastSeen = function(who, callback) {
 	var messageId = this.nextMessageId('lastseen');
 	this.addCallback(messageId, callback);
 		
@@ -192,7 +192,7 @@ WhatsApi.requestLastSeen = function(who, callback) {
  * //sets a random image as profile picture. Image is retrieved from lorempixel.com
  * wa.setProfilePicture('http://lorempixel.com/400/400/?.jpg');
  */
-WhatsApi.setProfilePicture = function(filepath, callback) {
+WhatsApi.prototype.setProfilePicture = function(filepath, callback) {
 	var pictureNode, thumbNode;
 	var attributes = {
 		id: this.nextMessageId('setphoto'),
@@ -260,7 +260,7 @@ WhatsApi.setProfilePicture = function(filepath, callback) {
  *   fs.writeFile('whatsapi/media/profilepic-'+from+'.jpg', pictureData); 
  * });
  */
-WhatsApi.requestProfilePicture = function(target, small) {
+WhatsApi.prototype.requestProfilePicture = function(target, small) {
 	var picAttributes = {
 		type  : 'image'
 	};
@@ -284,7 +284,7 @@ WhatsApi.requestProfilePicture = function(target, small) {
 /**
  * Extend account by one year from now
  */
-WhatsApi.requestExtendAccount = function() {	
+WhatsApi.prototype.requestExtendAccount = function() {	
 	var node = new protocol.Node(
 		'iq',
 		{

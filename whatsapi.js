@@ -52,9 +52,11 @@ for (var i = 0; i < files.length; i++) {
 	var file = files[i];
 	if (file.match(/.*\.js/i)) {
 		var mod = require('./extensions/' + file);
-		for (var functionName in mod) {
+		var proto = mod.prototype;
+		// Merge prototypes
+		for (var functionName in proto) {
 			// Conflate the function
-			WhatsApi.prototype[functionName] = mod[functionName];
+			WhatsApi.prototype[functionName] = proto[functionName];
 		}
 	}
 }

@@ -2,12 +2,12 @@
 // Includes functions for managing WhatsApp chat state and presence
 
 var protocol = require('../protocol.js');
-var WhatsApi = module.exports;
+var WhatsApi = module.exports = function() {};
 
 /**
  * Send online presence for the current user
  */
-WhatsApi.sendIsOnline = function() {
+WhatsApi.prototype.sendIsOnline = function() {
 	var attributes = {
 		name : this.config.username
 	};
@@ -18,7 +18,7 @@ WhatsApi.sendIsOnline = function() {
 /**
  * Send offline presence for the current user
  */
-WhatsApi.sendIsOffline = function() {
+WhatsApi.prototype.sendIsOffline = function() {
 	var attributes = {
 		type : 'unavailable',
 		name : this.config.username
@@ -31,7 +31,7 @@ WhatsApi.sendIsOffline = function() {
  * Send composing state to the given user
  * @param  {String} to     Phone number
  */
-WhatsApi.sendComposingState = function(to) {
+WhatsApi.prototype.sendComposingState = function(to) {
 	this.sendChatState(to, 'composing');
 };
 
@@ -39,11 +39,11 @@ WhatsApi.sendComposingState = function(to) {
  * Send stopped typing/composing to the given user
  * @param  {String} to     Phone number
  */
-WhatsApi.sendPausedState = function(to) {
+WhatsApi.prototype.sendPausedState = function(to) {
 	this.sendChatState(to, 'paused');
 };
 
-WhatsApi.sendChatState = function(to, state) {
+WhatsApi.prototype.sendChatState = function(to, state) {
 	var node = new protocol.Node(
 		'chatstate',
 		{
@@ -61,7 +61,7 @@ WhatsApi.sendChatState = function(to, state) {
  * Request subscription to presence of the given user
  * @param  {String} who    Phone number
  */
-WhatsApi.sendPresenceSubscription = function(who) {
+WhatsApi.prototype.sendPresenceSubscription = function(who) {
 	var attributes = {
 		type : 'subscribe',
 		to : this.createJID(who)
@@ -75,7 +75,7 @@ WhatsApi.sendPresenceSubscription = function(who) {
  * Requst unsubscription to presence for the given user
  * @param  {String} who    Phone number
  */
-WhatsApi.sendPresenceUnsubscription = function(who) {
+WhatsApi.prototype.sendPresenceUnsubscription = function(who) {
 	var attributes = {
 		type : 'unsubscribe',
 		to : this.createJID(who)

@@ -4,12 +4,12 @@
 var MediaType = require('../MediaType.js');
 var protocol = require('../protocol.js');
 var common = require('../common.js');
-var WhatsApi = module.exports;
+var WhatsApi = module.exports = function() {};
 
 /**
  * @private
  */
-WhatsApi.sendMessageNode = function(to, node, msgid, callback) {
+WhatsApi.prototype.sendMessageNode = function(to, node, msgid, callback) {
 	if (!this.loggedIn) {
 		this.queue.push({to : to, node : node});
 		return;
@@ -38,7 +38,7 @@ WhatsApi.sendMessageNode = function(to, node, msgid, callback) {
  * @param {Function} callback      Called when the server receives the message
  * @fires clientReceived
  */
-WhatsApi.sendMessage = function(to, message, msgid, callback) {
+WhatsApi.prototype.sendMessage = function(to, message, msgid, callback) {
 	// Convert arguments to array
 	var args = [];
 	for (var i = 0; i < arguments.length; i++) {
@@ -74,7 +74,7 @@ WhatsApi.sendMessage = function(to, message, msgid, callback) {
  * @param  {Function} callback  Called when the server receives the message
  * @fires clientReceived
  */
-WhatsApi.sendLocation = function(to, lat, lng, name, url, msgid, callback) {
+WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid, callback) {
 	// Convert arguments to array
 	var args = [];
 	for (var i = 0; i < arguments.length; i++) {
@@ -122,7 +122,7 @@ WhatsApi.sendLocation = function(to, lat, lng, name, url, msgid, callback) {
  * @example
  * wa.sendImage('491234567890', 'http://lorempixel.com/800/600/?.jpg', 'This is a caption');
  */
-WhatsApi.sendImage = function(to, filepath, caption, msgid, callback) {
+WhatsApi.prototype.sendImage = function(to, filepath, caption, msgid, callback) {
 	// Convert arguments to array
 	var args = [];
 	for (var i = 0; i < arguments.length; i++) {
@@ -154,7 +154,7 @@ WhatsApi.sendImage = function(to, filepath, caption, msgid, callback) {
 * @example
 * wa.sendVideo('491234567890','http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4', 'Big Buck Bunny');
 */
-WhatsApi.sendVideo = function(to, filepath, caption, msgid, callback) {
+WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid, callback) {
 	// Convert arguments to array
 	var args = [];
 	for (var i = 0; i < arguments.length; i++) {
@@ -185,7 +185,7 @@ WhatsApi.sendVideo = function(to, filepath, caption, msgid, callback) {
  * @example
  * wa.sendAudio('491234567890', 'http://archive.org/download/Exodus1KJV/02001_Exodus_1.mp3');
  */
-WhatsApi.sendAudio = function(to, filepath, msgid, callback) {
+WhatsApi.prototype.sendAudio = function(to, filepath, msgid, callback) {
 	// Convert arguments to array
 	var args = [];
 	for (var i = 0; i < arguments.length; i++) {
@@ -204,7 +204,7 @@ WhatsApi.sendAudio = function(to, filepath, msgid, callback) {
 	this.sendMedia(to, filepath, MediaType.AUDIO, null, msgid, callback);
 };
 
-WhatsApi.sendMedia = function(to, filepath, type, caption, msgid, callback) {
+WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid, callback) {
 	this.getMediaFile(filepath, type, function(err, path) {
 		if (err) {
 			var errorObj = {
@@ -239,7 +239,7 @@ WhatsApi.sendMedia = function(to, filepath, type, caption, msgid, callback) {
  * @example
  * wa.sendVcard('491234567890', 'http://www.w3.org/2002/12/cal/vcard-examples/john-doe.vcf', 'John Doe');
  */
-WhatsApi.sendVcard = function(to, filepath, name, msgid, callback) {
+WhatsApi.prototype.sendVcard = function(to, filepath, name, msgid, callback) {
 	// Convert arguments to array
 	var args = [];
 	for (var i = 0; i < arguments.length; i++) {

@@ -2,7 +2,7 @@
 // Includes functions for groups management
 
 var protocol = require('../protocol.js');
-var WhatsApi = module.exports;
+var WhatsApi = module.exports = function() {};
 
 /**
  * Request a filtered list of groups
@@ -13,7 +13,7 @@ var WhatsApi = module.exports;
  * 	// every object in list has groupId, subject, creationTime properties
  * });
  */
-WhatsApi.requestGroupList = function(type) {
+WhatsApi.prototype.requestGroupList = function(type) {
 	type = type || 'participating';
 
 	var listNode = new protocol.Node(type);
@@ -37,7 +37,7 @@ WhatsApi.requestGroupList = function(type) {
  * // or
  * wa.createGroup('Group name', ['39xxxxxxxxxx', '31xxxxxxxxxx']);
  */
-WhatsApi.createGroup = function(subject, contacts) {
+WhatsApi.prototype.createGroup = function(subject, contacts) {
 	if (!util.isArray(contacts)) {
 		contacts = [contacts];
 	};
@@ -80,7 +80,7 @@ WhatsApi.createGroup = function(subject, contacts) {
  * @param {String} groupId  Group ID
  * @param {Array}  numbers  Array of participants numbers to add
  */
-WhatsApi.addGroupParticipants = function(groupId, numbers) {
+WhatsApi.prototype.addGroupParticipants = function(groupId, numbers) {
 	this.changeGroupParticipants(groupId, numbers, 'add');
 };
 
@@ -89,7 +89,7 @@ WhatsApi.addGroupParticipants = function(groupId, numbers) {
  * @param {String} groupId  Group ID
  * @param {Array}  numbers  Array of participants numbers to remove
  */
-WhatsApi.removeGroupParticipants = function(groupId, numbers) {
+WhatsApi.prototype.removeGroupParticipants = function(groupId, numbers) {
 	this.changeGroupParticipants(groupId, numbers, 'remove');
 };
 
@@ -98,7 +98,7 @@ WhatsApi.removeGroupParticipants = function(groupId, numbers) {
  * @param {String} groupId  Group ID
  * @param {Array}  numbers  Array of participants numbers to promote
  */
-WhatsApi.promoteGroupParticipants = function(groupId, numbers) {
+WhatsApi.prototype.promoteGroupParticipants = function(groupId, numbers) {
 	this.changeGroupParticipants(groupId, numbers, 'promote');
 };
 
@@ -107,7 +107,7 @@ WhatsApi.promoteGroupParticipants = function(groupId, numbers) {
  * @param {String} groupId  Group ID
  * @param {Array}  numbers  Array of participants numbers to demote
  */
-WhatsApi.demoteGroupParticipants = function(groupId, numbers) {
+WhatsApi.prototype.demoteGroupParticipants = function(groupId, numbers) {
 	this.changeGroupParticipants(groupId, numbers, 'demote');
 };
 
@@ -118,7 +118,7 @@ WhatsApi.demoteGroupParticipants = function(groupId, numbers) {
  * @param  {String} action    Action to execute on the numbers
  * @private
  */
-WhatsApi.changeGroupParticipants = function(groupId, numbers, action) {
+WhatsApi.prototype.changeGroupParticipants = function(groupId, numbers, action) {
 	if (!util.isArray(numbers)) {
 		numbers = [numbers];
 	}
@@ -156,7 +156,7 @@ WhatsApi.changeGroupParticipants = function(groupId, numbers, action) {
  * Request to leave groups
  * @param  {Array} groupIds    Group IDs you want to leave from the group
  */
-WhatsApi.requestGroupsLeave = function(groupIds) {
+WhatsApi.prototype.requestGroupsLeave = function(groupIds) {
 	if (!util.isArray(groupIds)) {
 		groupIds = [groupIds];
 	}
@@ -183,7 +183,7 @@ WhatsApi.requestGroupsLeave = function(groupIds) {
  * Request info for a group
  * @param  {String}    groupId The ID of the group to request info for
  */
-WhatsApi.requestGroupInfo = function(groupId) {
+WhatsApi.prototype.requestGroupInfo = function(groupId) {
 	var node = new protocol.Node(
 		'iq',
 		{
@@ -210,7 +210,7 @@ WhatsApi.requestGroupInfo = function(groupId) {
  * @param {String} groupId    The ID of the group you want to change the subject for
  * @param {String} subject    The new subject/topic text
  */
-WhatsApi.setGroupSubject = function(groupId, subject) {
+WhatsApi.prototype.setGroupSubject = function(groupId, subject) {
 	var node = new protocol.Node(
 		'iq',
 		{

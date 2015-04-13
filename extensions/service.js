@@ -3,9 +3,9 @@
 
 var common = require('../common.js');
 var protocol = require('../protocol.js');
-var WhatsApi = module.exports;
+var WhatsApi = module.exports = function() {};
 
-WhatsApi.createClearDirtyNode = function(node) {
+WhatsApi.prototype.createClearDirtyNode = function(node) {
 	var categories = [];
 
 	var children = node.children();
@@ -34,7 +34,7 @@ WhatsApi.createClearDirtyNode = function(node) {
  * @param  {String} messageId    The ping message ID
  * @return {Node}       Created node
  */
-WhatsApi.createPongNode = function(messageId) {
+WhatsApi.prototype.createPongNode = function(messageId) {
 	var attributes = {
 		to   : this.config.server,
 		id   : messageId,
@@ -49,7 +49,7 @@ WhatsApi.createPongNode = function(messageId) {
  * @param  {Node} node    The received message node
  * @return {Node}         Created node
  */
-WhatsApi.createReceiptNode = function(node) {
+WhatsApi.prototype.createReceiptNode = function(node) {
 	var attributes = {
 		to   : node.attribute('from'),
 		type : 'read',
@@ -69,7 +69,7 @@ WhatsApi.createReceiptNode = function(node) {
  * @param  {Node} node    The notification node
  * @return {Node}         Created node
  */
-WhatsApi.createNotificationAckNode = function(node) {
+WhatsApi.prototype.createNotificationAckNode = function(node) {
 	var attributes = {
 		to    : node.attribute('from'),
 		class : 'notification',
@@ -91,7 +91,7 @@ WhatsApi.createNotificationAckNode = function(node) {
  * @param  {Node} node     The 'receipt' node
  * @return {Node}          Created node
  */
-WhatsApi.createAckNode = function(node) {
+WhatsApi.prototype.createAckNode = function(node) {
 	var attributes = {
 		to   : node.attribute('from'),
 		id   : node.attribute('id'),
@@ -115,7 +115,7 @@ WhatsApi.createAckNode = function(node) {
  * Request WhatsApp server properties
  * @param  {Function} callback Called when the properties are received
  */
-WhatsApi.requestServerProperties = function(callback) {
+WhatsApi.prototype.requestServerProperties = function(callback) {
 	var messageId = this.nextMessageId('getproperties');
 	this.addCallback(messageId, callback);
 	
@@ -141,7 +141,7 @@ WhatsApi.requestServerProperties = function(callback) {
  * @param {String}    country     Country code (e.g. 'us')
  * @param {PricingCallback}  callback    Called when the pricing is recived
  */
-WhatsApi.requestServicePricing = function(language, country, callback) {	
+WhatsApi.prototype.requestServicePricing = function(language, country, callback) {	
 	var messageId = this.nextMessageId('get_service_pricing_');
 	this.addCallback(messageId, callback);
 	
