@@ -734,6 +734,10 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 };
 
+/**
+ * Convert a group JID to ID only
+ * @param {String} jid
+ */
 WhatsApi.prototype.JIDtoId = function(jid) {
 	return jid.split('@')[0];
 };
