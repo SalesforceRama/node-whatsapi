@@ -12,6 +12,7 @@ var tls = require('tls');
 var jimp = require('jimp');
 var gm = require('gm');
 var url = require('url');
+var mime = require('mime');
 
 var WhatsApi = module.exports = function() {};
 
