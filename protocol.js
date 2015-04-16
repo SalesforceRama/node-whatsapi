@@ -195,7 +195,7 @@ Node.prototype.isMediaReady = function() {
 /*
  * GROUPS
  */
-Node.prototype.isGroupList = function() {
+Node.prototype.isGroupsList = function() {
 	return this.tag() === 'iq' && this.attribute('type') === 'result'
 		&& this.child('groups');
 };
@@ -205,7 +205,7 @@ Node.prototype.isGroupInfo = function() {
 		&& this.child('group') && this.child('group').attribute('id');
 };
 
-Node.prototype.isGroupAdd = function() {
+Node.prototype.isGroupCreated = function() {
 	return this.tag() === 'iq' && this.attribute('id').indexOf('creategroup') != -1
 		&& this.child('group') && this.child('group').attribute('id');
 };
@@ -217,6 +217,10 @@ Node.prototype.isChangeGroupParticipants = function() {
 Node.prototype.isLeaveGroup = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('leavegroups') != -1
 		&& this.child('leave');
+};
+
+Node.prototype.isGroupSubjectChanged = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('set_group_subject') != -1;
 };
 
 /*
@@ -240,7 +244,7 @@ Node.prototype.isProfilePicture = function() {
 };
 
 Node.prototype.isProfilePictureAck = function() {
-	return this.tag() == 'iq' && this.attribute('type') == 'result' && this.child(0).tag() == 'picture';
+	return this.tag() == 'iq' && this.attribute('type') == 'result' && this.child(0) && this.child(0).tag() == 'picture';
 };
 
 Node.prototype.isGetStatus = function() {

@@ -78,7 +78,7 @@ WhatsApi.prototype.processNode = function(node) {
 			// Actions on participants
 			else if (tag == 'add' || tag == 'remove' || tag == 'promote' || tag == 'demote') {
 				var args = {
-					groupId: node.attribute('from'),
+					groupId: this.JIDtoId(node.attribute('from')),
 					action: tag,
 					by: node.attribute('participant'),
 					time: time,
@@ -102,7 +102,7 @@ WhatsApi.prototype.processNode = function(node) {
 			// Subject changed
 			else if (tag == 'subject') {
 				var args = {
-					groupId : node.attribute('from'),
+					groupId : this.JIDtoId(node.attribute('from')),
 					action: 'subject',
 					by: node.attribute('participant'),
 					time: time,
@@ -336,42 +336,58 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 
-	// Groups query list response
-	if (node.isGroupList()) {
-		var groupList = [];
-		var groupsNode = node.child('groups');
-		for (var i = 0; i < groupsNode.children().length; i++) {
-			groupList.push({
-				groupId      : groupsNode.child(i).attribute('id'),
-				subject      : groupsNode.child(i).attribute('subject'),
-				creationTime : groupsNode.child(i).attribute('creation')
-			});
-		};
-
-		this.emit('groupList', groupList);
-		return;
-	}
-	
-	// New group created
-	if (node.isGroupAdd()) {
-		var groupId = node.child('group').attribute('id');
-		var subject = node.child('group').attribute('subject');
-		var creationTs = node.child('group').attribute('creation');
+	// Groups list response
+	if (node.isGroupsList()) {
+		var nodes = node.child('groups').children();
+				
+		var groupsList = nodes.map(function(n) {
+			var date = new Date(+n.attribute('creation') * 1000);
+			return {
+				groupId : n.attribute('id'),
+				subject : n.attribute('subject'),
+				creationDate : date,
+				creator : n.attribute('creator'),
+				participants : n.children().map(function(p) {
+					return {
+						admin : p.attribute('type') == 'admin' ? true : false,
+						jid   : p.attribute('jid')
+					}
+				})
+			};
+		});
 		
-		this.emit('groupCreated', { groupId: groupId, subject: subject, creationTime: creationTs });
+		this.executeCallback(nodeId, [groupsList]);
 		
 		return;
 	}
+	/**
+	 * @typedef {GroupsListCallback}
+	 * @type {Function}
+	 * @param {ResponseError} err
+	 * @param {Array<Group>} groupsList
+	 */
 	
-	// Group info + participants
-	if (node.isGroupInfo()) {
+	/**
+	 * @typedef {Group}
+	 * @type {Object}
+	 * @property {String} groupId     Group ID (not JID)
+	 * @property {String} subject     Group subject (name)
+	 * @property {Date} creationDate  When the group was created
+	 * @property {String} creator     JID of the group creator
+	 * @property {Array<Participant>} participants    Collection of group participants
+	 */
+	
+	// Group info or group created
+	if (node.isGroupInfo() || node.isGroupCreated()) {
 		var groupNode = node.child('group');
 		
+		var date = new Date(+groupNode.attribute('creation') * 1000);
+		
 		var group = {
-			id       : groupNode.attribute('id'),
-			creator  : groupNode.attribute('creator'),
-			creation : groupNode.attribute('creation'),
-			subject  : groupNode.attribute('subject'),
+			groupId : groupNode.attribute('id'),
+			creator : groupNode.attribute('creator'),
+			creationDate : date,
+			subject : groupNode.attribute('subject'),
 			participants : groupNode.children().map(function(p) {
 				return {
 					admin : p.attribute('type') == 'admin' ? true : false,
@@ -380,49 +396,80 @@ WhatsApi.prototype.processNode = function(node) {
 			})
 		};
 		
-		this.emit('groupInfo', group);
+		this.executeCallback(nodeId, group);
 		
 		return;
 	}
+	
+	/**
+	 * @typedef {GroupInfoCallback}
+	 * @type {Function}
+	 * @param {ResponseError} err
+	 * @param {Group} group
+	 */
+	
+	/**
+	 * @typedef {GroupCreatedCallback}
+	 * @type {Function}
+	 * @param {ResponseError} err
+	 * @param {Group} group
+	 */
 	
 	// Added/removed/promoted/demoted group participants
 	if (node.isChangeGroupParticipants()) {
-		var action = node.child(0).tag();
-		var who = node.child(0).children().map(function(p) {
+		var child = node.child(0);
+		
+		var action = child.tag();
+		
+		var change = child.children().map(function(p) {
 			return {
 				jid   : p.attribute('jid'),
-				error : p.attribute('error') || ''
+				error : p.attribute('error') || null
 			}
 		});
 		
-		/**
-		 * Emitted when group participants have changed
-		 * @event changedGroupParticipants
-		 * @param {String} action     Action performed ('add', 'remove', 'promote', 'demote')
-		 * @param {Array}  who        Array of objects containing JID and eventual error
-		 * @param {String} messageId
-		 */
-		this.emit('groupChangedParticipants', action, who, nodeId);
+		var groupId = this.JIDtoId(node.attribute('from'));
+		
+		this.executeCallback(nodeId, [action, change, groupId]);
 		
 		return;
 	}
+	/**
+	 * @typedef {GroupParticipantsCallback}
+	 * @type {Function}
+	 * @param {ResponseError} err
+	 * @param {String} action     Action performed (add, remove, promote, demote)
+	 * @param {Array<GroupParticipantChange>} change
+	 * @param {String} groupId
+	 */
+	
+	/**
+	 * @typedef {GroupParticipantChange}
+	 * @property {String} jid     JID of the user
+	 * @property {String} error   If something went wrong with the change, the error code; otherwise null
+	 */
 	
 	if (node.isLeaveGroup()) {
-		var jids = node.child(0).children().map(function(g) {
-			return g.attribute('id')
-		});
-		
-		/**
-		 * Emitted when you left a group
-		 * @event groupLeave
-		 * @param {Array}  jids        Array of group JIDs you left
-		 * @param {String} messageId
-		 */
-		this.emit('groupLeave', jids, nodeId);
+		this.executeCallback(nodeId, []);
 		
 		return;
 	}
+	/**
+	 * @typedef {GroupLeaveCallback}
+	 * @type {Function}
+	 * @param {ResponseError} err
+	 */
 	
+	if (node.isGroupSubjectChanged()) {
+		this.executeCallback(nodeId, []);
+		
+		return;
+	}
+	/**
+	 * @typedef {GroupSubjectCallback}
+	 * @type {Function}
+	 * @param {ResponseError} err
+	 */
 	
 	if (node.isMediaReady()) {
 		this.createMediaUploadNode(node, function(err, ackCallback, to, node) {
@@ -521,8 +568,12 @@ WhatsApi.prototype.processNode = function(node) {
 	if (node.isMessage()) {
 		// Emit stopped typing
 		if (node.attribute('type') == 'text') {
-			this.emit('typing', 'paused', node.attribute('from'), node.attribute('participant') || '');
-		}		
+			var type = 'paused';
+			var from = node.attribute('from');
+			var author = node.attribute('participant') || '';
+			this.emit('typing', type, from, author);
+		}
+		
 		// Process message
 		this.processor.process(node);
 		return;
@@ -681,4 +732,8 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		return;
 	}
+};
+
+WhatsApi.prototype.JIDtoId = function(jid) {
+	return jid.split('@')[0];
 };

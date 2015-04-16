@@ -3,6 +3,7 @@
 
 var protocol = require('../protocol.js');
 var util = require('util');
+var common = require('../common.js');
 var WhatsApi = module.exports = function() {};
 
 /**
