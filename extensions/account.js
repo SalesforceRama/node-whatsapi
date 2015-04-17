@@ -2,8 +2,10 @@
 // Includes functions for account actions
 
 var protocol = require('../protocol.js');
-var util = require('util');
 var common = require('../common.js');
+var MediaType = require('../MediaType.js');
+var util = require('util');
+
 var WhatsApi = module.exports = function() {};
 
 /**

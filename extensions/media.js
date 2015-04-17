@@ -13,6 +13,7 @@ var jimp = require('jimp');
 var gm = require('gm');
 var url = require('url');
 var mime = require('mime');
+var fs = require('fs');
 
 var WhatsApi = module.exports = function() {};
 
