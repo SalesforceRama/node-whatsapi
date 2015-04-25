@@ -105,14 +105,19 @@ WhatsApi.prototype.requestPrivacySettings = function(){
 /**
  * Set current logged in user status
  * @param {String} status The new status message
+ * @param {Function} callback
  */
-WhatsApi.prototype.setStatus = function(status){
+WhatsApi.prototype.setStatus = function(status, callback) {
+	var messageId = this.nextMessageId('sendstatus');
+	
+	this.addCallback(messageId, callback);
+	
     var child = new protocol.Node('status', null, null, status);
 
     var attributes = {
     	to    : this.config.server,
         type  : 'set',
-        id    : this.nextMessageId('sendstatus'),
+        id    : messageId,
         xmlns : 'status'
     };
 
@@ -121,19 +126,21 @@ WhatsApi.prototype.setStatus = function(status){
 
 /**
  * Request status for the given number
- * @param  {String} number Phone number
+ * @param {String} number Phone number
+ * @param {StatusCallback} callback
  */
-WhatsApi.prototype.requestStatus = function(number) {
-	this.requestStatuses([number]);
+WhatsApi.prototype.getStatus = function(number, callback) {
+	this.getStatuses(number, callback);
 };
 
 /**
  * Request statuses for the given array of phone numbers
  * @param {Array} numbers   Array of phone numbers
+ * @param {StatusCallback} callback
  */
-WhatsApi.prototype.requestStatuses = function(numbers){
+WhatsApi.prototype.getStatuses = function(numbers, callback) {
 	// String to Array, just in case
-	if (!util.isArray(numbers)) {
+	if (!Array.isArray(numbers)) {
 		numbers = [numbers];
 	}
 	
@@ -148,12 +155,16 @@ WhatsApi.prototype.requestStatuses = function(numbers){
 		);
 		contacts.push(userNode);
 	}
+	
+	var messageId = this.nextMessageId('getstatus');
+	
+	this.addCallback(messageId, callback);
 
     var attributes = {
     	to    : this.config.server,
         type  : 'get',
         xmlns : 'status',
-        id    : this.nextMessageId('getstatus')
+        id    : messageId
     };
 
     var node = new protocol.Node(

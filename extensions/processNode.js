@@ -209,7 +209,8 @@ WhatsApi.prototype.processNode = function(node) {
 	
 	
 	// Server received the message
-	if (node.isAck() || node.isProfilePictureAck()) {
+	// And general ack callbacks
+	if (node.isAck() || node.isProfilePictureAck() || node.isSetStatusAck()) {
 		this.executeCallback(nodeId, []);
 		
 		return;
@@ -523,46 +524,35 @@ WhatsApi.prototype.processNode = function(node) {
 	// User statuses
 	if (node.isGetStatus()) {
 		var statusNode = node.child('status');
-		var statuses = [];
 		
-		for (var i = 0; i < statusNode.children().length; i++) {
-			statuses.push({
-				from   : statusNode.child(i).attribute('jid'),
-				status : statusNode.child(i).data().toString('utf8'),
-				date   : new Date(+statusNode.child(i).attribute('t') * 1000)
-			});
-		};
+		var statuses = statusNode.children().map(function(s) {
+			var date = new Date(+s.attribute('t') * 1000);
+			
+			return {
+				jid : s.attribute('jid'),
+				status : s.data().toString('utf8'),
+				date : date
+			};
+		});
 		
-		/**
-		 * Is fired when a response to a status request is received
-		 * 
-		 * @event statusReceived
-		 * @type {Object}
-		 * @property {Status[]} statuses An array of status responses
-		 */
-		this.emit('statusReceived', statuses);
+		this.executeCallback(nodeId, [statuses]);
 		
 		return;
 	}
 	/**
+	 * @typedef {StatusCallback}
+	 * @type {Function}
+	 * @param {ResponseError} err
+	 * @param {Array<Status>} statuses    Array of Status objects
+	 */
+	
+	/**
 	 * @typedef Status
 	 * @type {Object}
-	 * @property {String}  from     JID of the users the status belongs to
-	 * @property {String}  status   The status message
-	 * @property {Date}    date     Date of the creation of the status message
+	 * @property {String}  jid      JID of the users the status belongs to
+	 * @property {String}  status   Status message (UTF-8)
+	 * @property {Date}    date     When the status was set
 	 */
-
-	// Set new status response
-	if (node.isSendStatus()) {
-		/**
-		 * Is fired when the status update was successful
-		 * 
-		 * @event statusUpdated
-		 * @type {Object}
-		 */
-		this.emit('statusUpdated');
-		return;
-	};
 	
 	// Incoming plain message
 	if (node.isMessage()) {

@@ -251,7 +251,7 @@ Node.prototype.isGetStatus = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('getstatus') != -1 && this.child('status');
 };
 
-Node.prototype.isSendStatus = function() {
+Node.prototype.isSetStatusAck = function() {
 	return this.tag() == 'iq' && this.attribute('id').indexOf('sendstatus') != -1;
 };
 
