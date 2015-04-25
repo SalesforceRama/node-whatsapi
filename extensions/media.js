@@ -194,7 +194,7 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 		});
 
 		res.on('end', function() {
-			var filePath = path.join(__dirname, 'media', 'media-');
+			var filePath = path.join(__dirname, '../media', 'media-');
 			filePath += crypto.randomBytes(4).readUInt32LE(0) + ext;
 
 			fs.writeFile(filePath, Buffer.concat(buffers), function(err) {

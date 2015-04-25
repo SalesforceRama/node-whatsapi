@@ -5,6 +5,7 @@ var protocol = require('../protocol.js');
 var common = require('../common.js');
 var MediaType = require('../MediaType.js');
 var util = require('util');
+var fs = require('fs');
 
 var WhatsApi = module.exports = function() {};
 
@@ -262,32 +263,36 @@ WhatsApi.prototype.setProfilePicture = function(filepath, callback) {
 };
 
 /**
- * requestProfilePicture - Send a request for the profile picture for the specified account
+ * Send a request for the profile picture for the specified account
  * 
  * When received from server a profile.picture event is fired
  * When profile picture can not be retrieved an error 404 item-not-found is returned
  * @param {String} target - Phonenumber of the account to request profile picture from
  * @param {Boolean} small - true for thumbnail, false for full size profile picture
+ * @param {ProfilePictureCallback} callback
  * @example
- * //request full size profile picture from 49xxxxxxxx
- * wa.requestProfilePicture('49xxxxxxxx', false);
- * wa.on('profile.picture', function(from,isPreview,pictureData){
- *   fs.writeFile('whatsapi/media/profilepic-'+from+'.jpg', pictureData); 
+ * // Request full size profile picture from 49xxxxxxxx
+ * wa.requestProfilePicture('49xxxxxxxx', false, function(res) {
+ *   fs.writeFile('whatsapi/media/profilepic-'+res.from+(res.isPreview?'-preview':'-full')+'.jpg', res.pictureData); 
  * });
  */
-WhatsApi.prototype.requestProfilePicture = function(target, small) {
+WhatsApi.prototype.getProfilePicture = function(target, small, callback) {
+	var messageId = this.nextMessageId('profilepicture');
+	
+	this.addCallback(messageId, callback);
+	
 	var picAttributes = {
 		type  : 'image'
 	};
 
-	if(small) {
+	if (small) {
 		picAttributes['type'] = 'preview';
 	}
 
 	var pictureNode = new protocol.Node('picture', picAttributes);
 
 	var attributes = {
-		id   : this.nextMessageId('profilepicture'),
+		id   : messageId,
 		type : 'get',
 		to   : this.createJID(target),
 		xmlns : 'w:profile:picture'

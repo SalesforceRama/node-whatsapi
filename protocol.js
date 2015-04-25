@@ -240,11 +240,13 @@ Node.prototype.isFailure = function() {
 };
 
 Node.prototype.isProfilePicture = function() {
-	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length >0;
+	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length > 0;
 };
 
 Node.prototype.isProfilePictureAck = function() {
-	return this.tag() == 'iq' && this.attribute('type') == 'result' && this.child(0) && this.child(0).tag() == 'picture';
+	return this.tag() == 'iq' && this.attribute('type') == 'result'
+		&& this.attribute('id').indexOf('setphoto') != -1
+		&& this.child(0) && this.child(0).tag() == 'picture';
 };
 
 Node.prototype.isGetStatus = function() {
