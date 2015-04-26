@@ -35,6 +35,7 @@ WhatsApi.prototype.processNode = function(node) {
 	// Got new message, send a 'receipt' node
 	if (node.shouldBeReplied() && node.attribute('from') !== this.selfAddress) {
 		this.sendNode(this.createReceiptNode(node));
+		this.sendNode(this.createReceiptNode(node, 'read'));
 	}
 	
 	// Notification node

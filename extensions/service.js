@@ -49,13 +49,16 @@ WhatsApi.prototype.createPongNode = function(messageId) {
  * @param  {Node} node    The received message node
  * @return {Node}         Created node
  */
-WhatsApi.prototype.createReceiptNode = function(node) {
+WhatsApi.prototype.createReceiptNode = function(node, type) {
 	var attributes = {
 		to   : node.attribute('from'),
-		type : 'read',
 		id   : node.attribute('id'),
 		t    : common.tstamp().toString()
 	};
+	
+	if (type) {
+		attributes['type'] = type;
+	}
 	
 	if (node.attribute('participant')) {
 		attributes['participant'] = node.attribute('participant');
