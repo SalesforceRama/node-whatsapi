@@ -277,7 +277,7 @@ WhatsApi.prototype.createAuthResposeNode = function(challenge) {
 	//console.log(arr.toString('hex'));
 	var data = this.writerKey.encodeMessage(arr, 0,4,arr.length -4);
   //console.log(data.toString('hex'));
-	return new protocol.Node('response', {xmlns : 'urn:ietf:params:xml:ns:xmpp-sasl'}, null, data);
+	return new protocol.Node('response', null, null, data);
 };
 
 WhatsApi.prototype.generateKeys = function(password, nonce) {
