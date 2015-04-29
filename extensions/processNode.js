@@ -296,8 +296,8 @@ WhatsApi.prototype.processNode = function(node) {
 	 * @param {Date}   date    Last seen date. 'null' if denied
 	 */
 	
-	if (node.isDirtyPresence()) {
-		this.sendNode(this.createClearDirtyNode(node));
+	if (node.isDirty()) {
+		this.sendNode(this.createCleanDirtyNode(node));
 		return;
 	}
 	

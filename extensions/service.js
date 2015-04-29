@@ -5,28 +5,19 @@ var common = require('../common.js');
 var protocol = require('../protocol.js');
 var WhatsApi = module.exports = function() {};
 
-WhatsApi.prototype.createClearDirtyNode = function(node) {
-	var categories = [];
-
-	var children = node.children();
-	if(children.length) {
-		for (var i = 0; i < children.length; i++) {
-			var child = node.child(i);
-			if(child.tag() === 'category') {
-				categories.push(new protocol.Node('category', {name : child.attribute('name')}));
-			}
-		};
-	}
-
-	var cleanNode = new protocol.Node('clean', {xmlns : 'urn:xmpp:whatsapp:dirty'}, categories);
+WhatsApi.prototype.createCleanDirtyNode = function(node) {
+	var cleanNodes = node.children().map(function(c) {
+		return new protocol.Node('clean', { type: c.attribute('type') });
+	});
 
 	var attributes = {
-		id   : this.nextMessageId('cleardirty'),
+		id: this.nextMessageId('cleandirty'),
 		type : 'set',
-		to   : this.config.server
+		to: this.config.server,
+		xmlns: 'urn:xmpp:whatsapp:dirty'
 	};
 
-	return new protocol.Node('iq', attributes, [cleanNode]);
+	return new protocol.Node('iq', attributes, cleanNodes);
 };
 
 /**

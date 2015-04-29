@@ -183,8 +183,8 @@ Node.prototype.isPresence = function() {
 	return this.tag() == 'presence' && this.attribute('from').indexOf('@') != -1;
 }
 
-Node.prototype.isDirtyPresence = function() {
-	return this.tag() === 'presence' && this.attribute('status') === 'dirty';
+Node.prototype.isDirty = function() {
+	return this.tag() === 'ib' && this.child(0).tag() == 'dirty';
 };
 
 Node.prototype.isMediaReady = function() {
