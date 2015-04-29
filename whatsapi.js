@@ -88,7 +88,8 @@ WhatsApi.prototype.defaultConfig = {
 	app_version    : '2.11.16',
 	ua             : 'WhatsApp/2.11.16 iPhone_OS/8.3 Device/iPhone_6',
 	challenge_file : path.join(__dirname, 'challenge'),
-	imageTool      : ImageTools.JIMP
+	imageTool      : ImageTools.JIMP,
+	sendReceipt    : 2 // 0 for none, 1 for standard receipts, 2 for read receipts
 };
 
 /**
