@@ -17,6 +17,7 @@ or
 ```
 npm install whatsapi --save
 ```
+[![NPM](https://nodei.co/npm/whatsapi.png?compact=true)](https://www.npmjs.com/package/whatsapi)
 
 ## Usage
 [Read the wiki](https://github.com/hidespb/node-whatsapi/wiki/) for API guide (with getting started) and reference.
