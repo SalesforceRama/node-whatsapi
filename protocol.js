@@ -2,12 +2,20 @@ var util   = require('util');
 var buffer = require('buffer');
 var common = require('./common');
 
+/**
+ * @class Buffer
+ */
 function Buffer() {
 	Buffer.super_.apply(this, arguments);
 }
 
 util.inherits(Buffer, buffer.Buffer);
 
+/**
+ * @param {array} buffers - Array of buffers to concatenate
+ * @param {integer} len - (optional) length of the buffer
+ * @returns {Buffer} - New buffer
+ */
 Buffer.concat = function(buffers, len) {
 	if(!len) {
 		len = 0;
@@ -83,6 +91,13 @@ Buffer.prototype.toString = function(enconding, start, len) {
 	return '[WhatsApp Buffer]';
 };
 
+/**
+ * @class Node
+ * @param {string} tag
+ * @param {array} attributes
+ * @param {array} children
+ * @param {string} data
+ */
 function Node(tag, attributes, children, data) {
 	this.contents = {
 		tag        : tag,
@@ -129,8 +144,19 @@ Node.prototype.data = function() {
 };
 
 Node.prototype.shouldBeReplied = function() {
-	return this.tag() === 'message'
-		&& (this.child('notify') || this.child('received') || this.child('request'));
+	return this.tag() === 'message' && this.attribute('notify');
+};
+
+Node.prototype.isNotification = function() {
+	return this.tag() == 'notification';
+};
+
+Node.prototype.isReceipt = function() {
+	return this.tag() == 'receipt';
+};
+
+Node.prototype.isAck = function() {
+	return this.tag() == 'ack';
 };
 
 Node.prototype.isChallenge = function() {
@@ -142,24 +168,23 @@ Node.prototype.isSuccess = function() {
 };
 
 Node.prototype.isTyping = function() {
-	return this.tag() === 'message' && (this.contents.children[0].contents.tag === 'composing' || this.contents.children[0].contents.tag === 'paused');
+	return this.tag() == 'chatstate' && (this.child(0).tag() == 'composing' || this.child(0).tag() == 'paused');
 };
 
 Node.prototype.isMessage = function() {
-	return this.tag() === 'message' && this.child('notify') &&
-		   this.child('notify').attribute('name') !== null;
+	return this.tag() === 'message' && this.attribute('notify');
 };
 
 Node.prototype.isPing = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'get' && this.child(0).tag() === 'ping';
+	return this.tag() === 'iq' && this.attribute('type') === 'get' && this.attribute('xmlns') === 'urn:xmpp:ping';
 };
 
-Node.prototype.isAvailable = function() {
-	return this.tag() === 'presence' && (this.attribute('type') === 'available' || this.attribute('type') === 'unavailable');
+Node.prototype.isPresence = function() {
+	return this.tag() == 'presence' && this.attribute('from').indexOf('@') != -1;
 }
 
-Node.prototype.isDirtyPresence = function() {
-	return this.tag() === 'presence' && this.attribute('status') === 'dirty';
+Node.prototype.isDirty = function() {
+	return this.tag() === 'ib' && this.child(0).tag() == 'dirty';
 };
 
 Node.prototype.isMediaReady = function() {
@@ -167,51 +192,97 @@ Node.prototype.isMediaReady = function() {
 		   this.child(0) && ['media', 'duplicate'].indexOf(this.child(0).tag()) !== -1;
 };
 
-Node.prototype.isGroupList = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('group');
+/*
+ * GROUPS
+ */
+Node.prototype.isGroupsList = function() {
+	return this.tag() === 'iq' && this.attribute('type') === 'result'
+		&& this.child('groups');
 };
 
-Node.prototype.isGroupAdd = function() {
-	return this.tag() === 'message' && this.attribute('type') === 'subject' && this.child('body') &&
-		   this.child('body').attribute('event') === 'add';
+Node.prototype.isGroupInfo = function() {
+	return this.tag() === 'iq' && this.attribute('id').indexOf('get_groupv2_info') != -1
+		&& this.child('group') && this.child('group').attribute('id');
 };
 
-Node.prototype.isGroupTopic = function() {
-	return this.tag() === 'message' && this.attribute('type') === 'subject' && this.child('body');
+Node.prototype.isGroupCreated = function() {
+	return this.tag() === 'iq' && this.attribute('id').indexOf('creategroup') != -1
+		&& this.child('group') && this.child('group').attribute('id');
 };
 
-Node.prototype.isGroupMembers = function() {
-	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child(0)
-		&& this.child(0).tag() === 'participant' && this.child(0).attribute('xmlns') === 'w:g';
+Node.prototype.isChangeGroupParticipants = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('_group_participants_') != -1;
 };
 
-Node.prototype.isGroupNewcomer = function() {
-	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('add');
+Node.prototype.isLeaveGroup = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('leavegroups') != -1
+		&& this.child('leave');
 };
 
-Node.prototype.isGroupOutcomer = function() {
-	return this.tag() === 'presence' && this.attribute('xmlns') === 'w' && this.attribute('remove');
+Node.prototype.isGroupSubjectChanged = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('set_group_subject') != -1;
+};
+
+/*
+ * END GROUPS
+ */
+
+Node.prototype.isError = function() {
+	return this.child('error');
 };
 
 Node.prototype.isLastSeen = function() {
-	return this.child('query') && this.child('query').attribute('xmlns') === 'jabber:iq:last';
-};
-
-Node.prototype.isNotFound = function() {
-	return this.tag() === 'iq' && this.child('error') &&
-		   this.child('error').attribute('code') === '405';
+	return this.child('query') && this.child('query').attribute('seconds');
 };
 
 Node.prototype.isFailure = function() {
 	return this.tag() === 'failure';
 };
 
-Node.prototype.isReceived = function() {
-	return this.tag() === 'message' && (this.child('received') || this.child('x'));
+Node.prototype.isProfilePicture = function() {
+	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length > 0;
 };
 
-Node.prototype.isProfilePicture = function() {
-	return this.tag() === 'iq' && this.child(0) && this.child(0).tag() === 'picture' && this.child('picture').data() && this.child(0).data().length >0;
+Node.prototype.isProfilePictureAck = function() {
+	return this.tag() == 'iq' && this.attribute('type') == 'result'
+		&& this.attribute('id').indexOf('setphoto') != -1
+		&& this.child(0) && this.child(0).tag() == 'picture';
+};
+
+Node.prototype.isGetStatus = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('getstatus') != -1 && this.child('status');
+};
+
+Node.prototype.isSetStatusAck = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('sendstatus') != -1;
+};
+
+Node.prototype.isSync = function() {
+	return this.tag() === 'iq' && this.child('sync');
+};
+
+Node.prototype.isProperties = function() {
+	return this.tag() == 'iq' && this.child('props');
+};
+
+Node.prototype.isServicePricing = function() {
+	return this.tag() == 'iq' && this.child('pricing');
+};
+
+Node.prototype.isAccountExtended = function() {
+	return this.tag() == 'iq' && this.child('extend');
+};
+
+Node.prototype.isGetPrivacySettings = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('get_privacy_settings') != -1;
+};
+
+Node.prototype.isSendPrivacySettings = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('send_privacy_settings') != -1;
+};
+
+Node.prototype.isOfflineCount = function() {
+	return this.tag() == 'ib' && this.child('offline') && this.child('offline').attribute('count');
 };
 
 Node.prototype.toXml = function(prefix) {
@@ -232,7 +303,7 @@ Node.prototype.toXml = function(prefix) {
 	xml += '>';
 
 	if(this.contents.data) {
-		xml += this.contents.data;
+		xml += this.contents.data.length + ' data length';//this.contents.data;
 	}
 
 	if(this.contents.children.length) {
@@ -248,6 +319,10 @@ Node.prototype.toXml = function(prefix) {
 	return xml;
 };
 
+/**
+ * @class Reader
+ * @param {dictionary} dictionary
+ */
 function Reader(dictionary) {
 	this.dictionary = dictionary;
 	this.setKey(null);
@@ -259,6 +334,7 @@ Reader.prototype.setKey = function(key) {
 };
 
 Reader.prototype.appendInput = function(input) {
+	//console.log("appending input: %s", input.toString('hex'));
 	input = Buffer.fromBuffer(input);
 
 	this.input = buffer.Buffer.isBuffer(this.input)
@@ -267,14 +343,18 @@ Reader.prototype.appendInput = function(input) {
 };
 
 Reader.prototype.nextNode = function() {
-	if(!this.input || !this.input.length) {
+	if(!this.input || !this.input.length || this.input.length == 1) {
 		return false;
 	}
-
-	var encrypted = ((this.peekInt8() & 0xF0) >> 4) & 8;
-	var dataSize  = this.peekInt16(1);
+	
+	// console.log(this.input.length);
+	//console.log("processing in nextNode: %s", this.input.toString('hex'));
+	var firstByte = this.peekInt8();
+	var encrypted = ((firstByte & 0xF0) >> 4) & 8;
+	var dataSize  = this.peekInt16(1) | ((firstByte & 0x0F) << 16);
 
 	if(dataSize > this.input.length) {
+		//console.log("too big %d %d", dataSize, this.input.length);
 		return false;
 	}
 
@@ -290,8 +370,10 @@ Reader.prototype.nextNode = function() {
 		this.input.copy(encoded, 0, 0, dataSize);
 
 		var remaining = this.input.slice(dataSize);
-		var decoded   = this.key.decode(encoded);
-
+		//if(remaining.length) console.log("remaining: %s",remaining.toString('hex'));
+		var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
+		//console.log("decoded: %s",decoded.toString('hex'));
+		//console.log("sizes: decoded: %d data: %d",decoded.length, dataSize);
 		this.input = Buffer.concat([decoded, remaining]);
 	}
 
@@ -301,6 +383,7 @@ Reader.prototype.nextNode = function() {
 Reader.prototype.readNode = function() {
 	var listSize = this.readListSize(this.readInt8());
 	var token    = this.readInt8();
+	//console.log ("listSize: %d token: %d, %s", listSize, token, (token >2)? this.readString(token) : '');
 
 	if(token === 1) {
 		return new Node('start', this.readAttributes(listSize));
@@ -322,14 +405,24 @@ Reader.prototype.readNode = function() {
 	var children;
 	var data;
 
-	this.isListToken(token) ? children = this.readList(token) : data = this.readString(token, true);
+	if (this.isListToken(token)) {
+		children = this.readList(token)
+	}
+	else {
+		data = this.readString(token, true);
+	};
 
 	return new Node(tag, attributes, children, data);
 };
 
 Reader.prototype.getToken = function(token) {
-	if(this.dictionary.hasOwnProperty(token)) {
+	if(token < 0xEC && this.dictionary.hasOwnProperty(token)) {
 		return this.dictionary[token];
+	}else{
+		//retrieve from "secondary" dictionary. But since we only have one large dictionary we use an offset of 236 (0xEC)
+		var retryToken = 0xEC + this.readInt8();
+		if(this.dictionary.hasOwnProperty(retryToken))
+			return this.dictionary[retryToken];
 	}
 
 	throw 'Unexpected token: ' + token;
@@ -340,15 +433,15 @@ Reader.prototype.readString = function(token, raw) {
 		throw 'Invalid token';
 	}
 
-	if(token > 4 && token < 0xF5) {
+	if(token > 2 && token < 0xF5) { // 245
 		return this.getToken(token);
 	}
-
-	if(token === 0xFC) {
+	
+	if(token == 0xFC) { // 252
 		return this.fillArray(this.readInt8(), raw);
 	}
 
-	if(token === 0xFD) {
+	if(token == 0xFD) {
 		return this.fillArray(this.readInt24(), raw);
 	}
 
@@ -362,8 +455,36 @@ Reader.prototype.readString = function(token, raw) {
 
 		return user.length ? user + '@' + server : server;
 	}
+	
+	if(token === 0xFF) {
+		return this.readNibble();
+	}
 
 	return '';
+};
+
+Reader.prototype.readNibble = function() {
+	var string = '';
+	var byte = this.readInt8();
+	var ignoreLastNibble = (byte & 0x80) ? 1:0;
+	
+	var size = (byte & 0x7f);
+	var nrOfNibbles = size * 2 - ignoreLastNibble;
+	
+	var data = this.fillArray(size, true);
+	
+	for(var i=0; i< nrOfNibbles; i++){
+		byte = data[Math.floor(i/2)];
+		var shift = 4 * (1- i %2);
+		var decimal = (byte & (15 << shift)) >> shift;
+		if (decimal>=0 && decimal <=9)
+			string+=decimal;
+		else if (decimal ==10)
+			string+= '-';
+		else if (decimal ==11)
+			string+='.';
+	}
+	return string;
 };
 
 Reader.prototype.readAttributes = function(size) {
@@ -371,28 +492,34 @@ Reader.prototype.readAttributes = function(size) {
 	var attributes = {};
 
 	while(len--) {
-		var key = this.readString(this.readInt8());
-
-		attributes[key] = this.readString(this.readInt8());
+		var keytoken = this.readInt8();
+		var key = this.readString(keytoken);
+		var valtoken = this.readInt8();
+		attributes[key] = this.readString(valtoken);
+		//console.log('  key (%d): %s value (%d): %s', keytoken, key, valtoken, attributes[key]);
 	}
 
 	return attributes;
 };
 
 Reader.prototype.isListToken = function(token) {
-	return [0, 0xF8, 0xF9].indexOf(token) !== -1;
+	return [0xF8, 0, 0xF9].indexOf(token) !== -1;
 };
 
 Reader.prototype.readListSize = function(token) {
-	if(token === 0xF8) {
+	if (token == 0) {
+		return 0;
+	};
+	
+	if (token == 0xF8) { // 248
 		return this.readInt8();
 	}
 
-	if(token === 0xF9) {
+	if (token == 0xF9) { // 249
 		return this.readInt16();
 	}
 
-	throw 'Invalid token: ' + token;
+	throw 'Invalid list size in readListSize: token: ' + token;
 };
 
 Reader.prototype.readList = function(token) {
@@ -409,7 +536,7 @@ Reader.prototype.readList = function(token) {
 Reader.prototype.fillArray = function(len, raw) {
 	try {
 		return raw ? this.input.slice(0, len).toBuffer() : this.input.toString(null, 0, len);
-	} finally {
+	}finally {
 		this.input = this.input.slice(len);
 	}
 };
@@ -456,6 +583,10 @@ Reader.prototype.readInt24 = function() {
 	}
 };
 
+/**
+ * @class Writer
+ * @param {dictionary} dictionary
+ */
 function Writer(dictionary) {
 	this.dictionary = {};
 
@@ -480,7 +611,7 @@ Writer.prototype.stream = function(to, resource) {
 
 	header.write('WA');
 	header.writeUInt8(1, 2);
-	header.writeUInt8(2, 3);
+	header.writeUInt8(5, 3);
 
 	var attributes = {to : to, resource : resource};
 
@@ -506,17 +637,24 @@ Writer.prototype.node = function(node) {
 	return this.flush().toBuffer();
 };
 
+
+
 Writer.prototype.flush = function() {
 	var output = this.output.toBuffer();
-
-	if(this.key !== null) {
-		output = this.key.encode(output);
-	}
-
+	//console.log('sending: %s',output.toString('hex'));
 	var header = new Buffer(3);
-
-	header.writeUInt8(this.key === null ? 0x00 : 0x10, 0);
-	header.writeUInt16BE(output.length, 1);
+	
+	if(this.key !== null) {
+		var size = output.length + 4;
+		output = this.key.encodeMessage(output,output.length,0,output.length);
+		header.writeUInt8( ((8 << 4) | (size & 16711680) >> 16)%256 , 0);
+		header.writeUInt8( ((size & 65280) >> 8)%256, 1);
+		header.writeUInt8( (size & 255)%256, 2);
+		
+	}else{
+		header.writeUInt8(this.key === null ? 0x00 : 0x10, 0);
+		header.writeUInt16BE(output.length, 1);
+	}
 
 	try {
 		return Buffer.concat([header, output], header.length + output.length);
@@ -585,8 +723,18 @@ Writer.prototype.writeAttributes = function(attributes) {
 };
 
 Writer.prototype.writeString = function(string) {
+	//console.log('writeString: %s', string);
 	if(this.dictionary.hasOwnProperty(string)) {
-		return this.writeToken(this.dictionary[string]);
+		var token = this.dictionary[string];
+		//see if it comens from the "secondary" dictionary
+		if(token >= 0xEC){
+			//console.log('@@@@ token > 0xEC: %d', token);
+			//if so, write an extra token 0xEC (236) to indicate it came from the secondary dictionary and compensate the offset
+			this.writeInt8(0xEC);
+			token -= 0xEC;
+			//console.log('@@@@ new token: %d', token)
+		} 
+		return this.writeToken(token);
 	}
 
 	var index = string.indexOf('@');

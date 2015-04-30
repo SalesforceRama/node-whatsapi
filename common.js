@@ -3,7 +3,12 @@ var http  = require('http');
 var https = require('https');
 
 function tstamp() {
-	return Math.floor(Date.now() / 1000);
+	return Math.round(Date.now() / 1000);
+}
+
+function winTimestamp() {
+	var unixtimestamp = tstamp();
+	return ((unixtimestamp + 11644477200) * 10000000);
 }
 
 function objSize(obj) {
@@ -63,7 +68,18 @@ function fetch(target, callback) {
 	});
 }
 
-exports.tstamp  = tstamp;
+function isWindows() {
+	return /^win/.test(process.platform);;
+}
+
+function getRandomInt(min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+exports.tstamp = tstamp;
+exports.winTimestamp = winTimestamp;
 exports.objSize = objSize;
-exports.extend  = extend;
-exports.fetch   = fetch;
+exports.extend = extend;
+exports.fetch = fetch;
+exports.isWindows = isWindows;
+exports.getRandomInt = getRandomInt;
