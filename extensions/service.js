@@ -87,15 +87,11 @@ WhatsApi.prototype.createNotificationAckNode = function(node) {
  */
 WhatsApi.prototype.createAckNode = function(node) {
 	var attributes = {
-		to   : node.attribute('from'),
-		id   : node.attribute('id'),
-		t    : common.tstamp().toString()
+		to: node.attribute('from'),
+		class: 'receipt',
+		id: node.attribute('id'),
+		type: node.attribute('type') || 'delivery'
 	};
-	
-	// Ack type --> nothing or 'read'
-	if (node.attribute('type')) {
-		attributes['type'] = node.attribute('type');
-	}
 	
 	var node = new protocol.Node(
 		'ack',
