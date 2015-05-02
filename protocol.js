@@ -83,8 +83,8 @@ Buffer.prototype.toBuffer = function() {
 	return nodebuffer;
 };
 
-Buffer.prototype.toString = function(enconding, start, len) {
-	if(enconding || start || len) {
+Buffer.prototype.toString = function(encoding, start, len) {
+	if (encoding || start || len) {
 		return Buffer.super_.prototype.toString.apply(this, arguments);
 	}
 
@@ -303,7 +303,7 @@ Node.prototype.toXml = function(prefix) {
 	xml += '>';
 
 	if(this.contents.data) {
-		xml += this.contents.data.length + ' data length';//this.contents.data;
+		xml += this.contents.data;
 	}
 
 	if(this.contents.children.length) {
@@ -608,7 +608,8 @@ Writer.prototype.initBuffer = function(len) {
 
 Writer.prototype.stream = function(to, resource) {
 	var header = new Buffer(4);
-
+	
+	// WA15 protocol version
 	header.write('WA');
 	header.writeUInt8(1, 2);
 	header.writeUInt8(5, 3);
@@ -626,7 +627,7 @@ Writer.prototype.stream = function(to, resource) {
 };
 
 Writer.prototype.node = function(node) {
-	if(node === null) {
+	if (node === null) {
 		this.initBuffer(1);
 		this.writeInt8(0x00);
 	} else {
@@ -641,17 +642,17 @@ Writer.prototype.node = function(node) {
 
 Writer.prototype.flush = function() {
 	var output = this.output.toBuffer();
-	//console.log('sending: %s',output.toString('hex'));
 	var header = new Buffer(3);
 	
-	if(this.key !== null) {
+	if (this.key !== null) {
 		var size = output.length + 4;
 		output = this.key.encodeMessage(output,output.length,0,output.length);
 		header.writeUInt8( ((8 << 4) | (size & 16711680) >> 16)%256 , 0);
 		header.writeUInt8( ((size & 65280) >> 8)%256, 1);
 		header.writeUInt8( (size & 255)%256, 2);
 		
-	}else{
+	}
+	else{
 		header.writeUInt8(this.key === null ? 0x00 : 0x10, 0);
 		header.writeUInt16BE(output.length, 1);
 	}
@@ -666,15 +667,15 @@ Writer.prototype.flush = function() {
 Writer.prototype.writeNode = function(node) {
 	var len = 1;
 
-	if(node.attributes() !== null) {
+	if (node.attributes() !== null) {
 		len += common.objSize(node.attributes()) * 2;
 	}
 
-	if(node.children().length) {
+	if (node.children().length) {
 		++len;
 	}
 
-	if(node.data().length) {
+	if (node.data().length) {
 		++len;
 	}
 
@@ -682,11 +683,11 @@ Writer.prototype.writeNode = function(node) {
 	this.writeString(node.tag());
 	this.writeAttributes(node.attributes());
 
-	if(node.data().length) {
+	if (node.data().length > 0) {
 		this.writeBytes(node.data());
 	}
 
-	if(node.children().length) {
+	if (node.children().length > 0) {
 		this.writeListStart(node.children().length);
 
 		node.children().forEach(function(node) {
@@ -697,105 +698,108 @@ Writer.prototype.writeNode = function(node) {
 
 Writer.prototype.writeListStart = function(len) {
 	if (len === 0) {
-		this.writeInt8(0x00);
+		this.writeInt8(0x00); // 0
 	}
 	else if (len < 0x100) { // 256
-		this.writeInt8(0xF8);
+		this.writeInt8(0xF8); // 248
 		this.writeInt8(len);
 	}
 	else { // >= 256
-		this.writeInt8(0xF9);
+		this.writeInt8(0xF9); // 249
 		this.writeInt16(len);
 	}
 };
 
 Writer.prototype.writeAttributes = function(attributes) {
-	if(attributes === null) {
+	if (!attributes) {
 		return;
 	}
 
-	for(var key in attributes) {
-		if(attributes.hasOwnProperty(key)) {
-			this.writeString(key);
-			this.writeString(attributes[key]);
+	for (var key in attributes) {
+		if (attributes.hasOwnProperty(key)) {
+			this.writeString(key); // write the key
+			this.writeString(attributes[key]); // write the value
 		}
 	}
 };
 
 Writer.prototype.writeString = function(string) {
-	//console.log('writeString: %s', string);
-	if(this.dictionary.hasOwnProperty(string)) {
+	if (this.dictionary.hasOwnProperty(string)) {
 		var token = this.dictionary[string];
-		//see if it comens from the "secondary" dictionary
-		if(token >= 0xEC){
-			//console.log('@@@@ token > 0xEC: %d', token);
-			//if so, write an extra token 0xEC (236) to indicate it came from the secondary dictionary and compensate the offset
+		// check if it comes from the 'secondary' dictionary
+		if (token >= 0xEC){
+			// if so, write an extra token 0xEC (236)
+			// to indicate it came from the secondary dictionary and compensate the offset
 			this.writeInt8(0xEC);
 			token -= 0xEC;
-			//console.log('@@@@ new token: %d', token)
 		} 
-		return this.writeToken(token);
+		
+		this.writeToken(token);
+		return;
 	}
 
 	var index = string.indexOf('@');
 
-	if(index !== -1) {
-		var user   = string.slice(0, index);
+	if (index > -1) {
+		var user = string.slice(0, index);
 		var server = string.slice(index + 1);
-		return this.writeJid(user, server);
+		this.writeJid(user, server);
+		return;
 	}
 
-	return this.writeBytes(string);
+	this.writeBytes(string);
 };
 
 Writer.prototype.writeToken = function(token) {
-	if(token < 0xF5) {
-		return this.writeInt8(token);
+	if (token < 0xF5) { // 245 first dictionary
+		this.writeInt8(token);
+		return;
 	}
 
-	if(token < 0x1F5) {
-		this.writeInt8(0xFE);
-		this.writeInt8(token - 0xF5);
+	if (token < 0x1F5) { // 501 second dictionary
+		this.writeInt8(0xFE); // 254
+		this.writeInt8(token - 0xF5); // remove offset
+		return;
 	}
-
-	return true;
 };
 
 Writer.prototype.writeJid = function(user, server) {
-	this.writeInt8(0xFA);
+	this.writeInt8(0xFA); // 250
 
-	if(user.length) {
+	// write the jid
+	if (user.length > 0) {
 		this.writeString(user);
 	} else {
 		this.writeToken(0);
 	}
-
+	
+	// write the server
 	this.writeString(server);
 };
 
 Writer.prototype.writeBytes = function(bytes) {
 	var len;
 	
-	if (typeof bytes == 'string')
-		len = buffer.Buffer.byteLength(bytes,'utf8')
-	else
-		len = bytes.length;
-
-	if(len >= 0x100) {
-		this.writeInt8(0xFD);
+	if (typeof bytes == 'string') {
+		var bytes = new buffer.Buffer(bytes);
+	}
+	
+	len = bytes.length;
+	
+	// write the length
+	if(len >= 0x100) { // 256
+		this.writeInt8(0xFD); // 253
 		this.writeInt24(len);
 	} else {
-		this.writeInt8(0xFC);
+		this.writeInt8(0xFC); // 252
 		this.writeInt8(len);
 	}
+	
+	//console.log('bytes: ' + bytes);
+	//console.log('length: ' + len);
 
-	if(bytes instanceof buffer.Buffer) {
-		bytes.copy(this.output, this.offset);
-	} else {
-		this.output.write(bytes, this.offset);
-	}
-
-
+	bytes.copy(this.output, this.offset, 0, len);
+	
 	this.offset += len;
 };
 
