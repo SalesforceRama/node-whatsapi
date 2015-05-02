@@ -696,17 +696,17 @@ Writer.prototype.writeNode = function(node) {
 };
 
 Writer.prototype.writeListStart = function(len) {
-	if(len === 0) {
+	if (len === 0) {
 		this.writeInt8(0x00);
 	}
-
-	if(len < 0x100) {
+	else if (len < 0x100) { // 256
 		this.writeInt8(0xF8);
-	} else {
-		this.writeInt8(0xF9);
+		this.writeInt8(len);
 	}
-
-	this.writeInt8(len);
+	else { // >= 256
+		this.writeInt8(0xF9);
+		this.writeInt16(len);
+	}
 };
 
 Writer.prototype.writeAttributes = function(attributes) {
