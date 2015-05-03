@@ -318,7 +318,11 @@ WhatsApi.prototype.createImageThumbnail = function(srcPath, callback) {
 					
 					this.quality(80);
 					this.resize(96, 96);
-					this.getBuffer(mime.lookup(srcPath), function(buffer) {
+					this.getBuffer(mime.lookup(srcPath), function(err, buffer) {
+						if (err) {
+							callback('Error occured while generating thumbnail, using Jimp. ' + err.message);
+							return;
+						}
 						callback(null, buffer.toString('base64'));
 					});
 					this.write(dstPath); // save, just for log
