@@ -66,10 +66,12 @@ for (var i = 0; i < files.length; i++) {
 * @property {String} server - server URI (not used for connecting)
 * @property {String} gserver - group server URI (not used for connecting)
 * @property {Number} port - port number to connect to WhatsApp server
-* @property {String} device_type
+* @property {String} device_type - name of the device, used when logging in
 * @property {String} app_version - version of the WhatsApp App to use in communication
 * @property {String} ua - user agent string to use in communication
 * @property {String} challenge_file - path to challenge file
+* @property {ImageTools} imageTool - image tool to be used when generating thumbnails
+* @property {Number} sendReceipt - 0 for none, 1 for standard receipts, 2 for read receipts
 */
 
 /** @type {WhatsApiConfig} */
@@ -89,7 +91,7 @@ WhatsApi.prototype.defaultConfig = {
 	ua             : 'WhatsApp/2.11.16 iPhone_OS/8.3 Device/iPhone_6',
 	challenge_file : path.join(__dirname, 'challenge'),
 	imageTool      : ImageTools.JIMP,
-	sendReceipt    : 2 // 0 for none, 1 for standard receipts, 2 for read receipts
+	sendReceipt    : 2
 };
 
 /**
