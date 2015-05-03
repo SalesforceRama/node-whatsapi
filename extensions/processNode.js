@@ -325,8 +325,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	/**
-	 * @typedef {LastSeenCallback}
-	 * @type {Function}
+	 * @callback LastSeenCallback
 	 * @param {ResponseError} err
 	 * @param {LastSeen} response
 	 */
@@ -369,8 +368,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	/**
-	 * @typedef {GroupsListCallback}
-	 * @type {Function}
+	 * @callback GroupsListCallback
 	 * @param {ResponseError} err
 	 * @param {Array<Group>} groupsList
 	 */
@@ -410,15 +408,13 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	
 	/**
-	 * @typedef {GroupInfoCallback}
-	 * @type {Function}
+	 * @callback GroupInfoCallback
 	 * @param {ResponseError} err
 	 * @param {Group} group
 	 */
 	
 	/**
-	 * @typedef {GroupCreatedCallback}
-	 * @type {Function}
+	 * @callback GroupCreatedCallback
 	 * @param {ResponseError} err
 	 * @param {Group} group
 	 */
@@ -443,8 +439,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	/**
-	 * @typedef {GroupParticipantsCallback}
-	 * @type {Function}
+	 * @callback GroupParticipantsCallback
 	 * @param {ResponseError} err
 	 * @param {String} action     Action performed (add, remove, promote, demote)
 	 * @param {Array<GroupParticipantChange>} change
@@ -463,8 +458,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	/**
-	 * @typedef {GroupLeaveCallback}
-	 * @type {Function}
+	 * @callback GroupLeaveCallback
 	 * @param {ResponseError} err
 	 */
 	
@@ -474,8 +468,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	/**
-	 * @typedef {GroupSubjectCallback}
-	 * @type {Function}
+	 * @callback GroupSubjectCallback
 	 * @param {ResponseError} err
 	 */
 	
@@ -486,7 +479,7 @@ WhatsApi.prototype.processNode = function(node) {
 					code: 100,
 					message: err
 				};
-				callback(errObj);
+				ackCallback(errObj);
 				return;
 			}
 			
@@ -510,8 +503,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	/**
-	 * @typedef {ProfilePictureCallback}
-	 * @type {Function}
+	 * @callback ProfilePictureCallback
 	 * @param {ResponseError} err
 	 * @param {ProfilePicture} profilePicture
 	 */
@@ -544,8 +536,7 @@ WhatsApi.prototype.processNode = function(node) {
 		return;
 	}
 	/**
-	 * @typedef {StatusCallback}
-	 * @type {Function}
+	 * @callback StatusCallback
 	 * @param {ResponseError} err
 	 * @param {Array<Status>} statuses    Array of Status objects
 	 */
@@ -630,7 +621,6 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 	/**
 	 * @callback SyncCallback
-	 * @type {Function}
 	 * @param {ResponseError} err
 	 * @param {ContactsSync} result
 	 */
