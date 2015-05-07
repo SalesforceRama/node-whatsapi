@@ -27,9 +27,7 @@ npm install whatsapi --save
 - Collaborators
   - [matteocontrini](https://github.com/matteocontrini)
   - [tvandergeer](https://github.com/tvandergeer)
-- PHP WhatsAPI collaborators
-  - [shirioko](https://github.com/shirioko)
-  - [mgp25](https://github.com/mgp25)
+- [WhatsAPI](https://github.com/venomous0x/WhatsAPI) and [Chat-API](https://github.com/mgp25/Chat-API)
 - Everyone who contributes reporting issues and publishing pull requests!
 
 ## We do not support bulk messages / spam.
