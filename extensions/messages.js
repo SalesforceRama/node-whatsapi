@@ -22,7 +22,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid, callback) {
 
 	var attributes = {
 		to   : this.createJID(to),
-		type : (node.tag() === 'body' ? 'text' : 'media'),
+		type : ( (node.tag() === 'body' || node.tag() === 'enc') ? 'text' : 'media'),
 		id   : messageId,
 		t    : common.tstamp().toString()
 	};
@@ -61,8 +61,38 @@ WhatsApi.prototype.sendMessage = function(to, message, msgid, callback) {
 		msgid = null;
 	}
 	
-	var bodyNode = new protocol.Node('body', null, null, message);
-	this.sendMessageNode(to, bodyNode, msgid, callback);
+	var jid = this.createJID(to);
+	
+	if(!this.pendingMessages[jid] || !this.pendingMessages[jid].isArray()) this.pendingMessages[jid] = [];
+	
+	this.pendingMessages[jid].push( {
+		message:  message, 
+		msgid:    msgid, 
+		callback: callback});
+	
+	this.processPendingMessages(jid);
+};
+
+WhatsApi.prototype.processPendingMessages = function( jid ) {
+	if(this.pendingMessages[jid] === undefined){
+		//no messages to process
+		return;
+	}
+	
+	if( this.skipEncJids[jid] || this.sessions[jid] !== undefined){
+		this.pendingMessages[jid].forEach( function(pendingMessage){
+			if( this.skipEncJids[jid] ){
+				var bodyNode = new protocol.Node('body', null, null, pendingMessage.message);
+				this.sendMessageNode(jid, bodyNode, pendingMessage.msgid, pendingMessage.callback);		
+			}else if( this.sessions[jid] !== undefined ){
+				this.sendEncryptedMessage(jid, pendingMessage.message, pendingMessage.msgid, pendingMessage.callback)
+			}
+		}.bind(this));
+		delete this.pendingMessages[jid];
+	}else{
+		this.getKeys(jid);
+	}
+ 
 };
 
 /**

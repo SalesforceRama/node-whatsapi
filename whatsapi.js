@@ -3,6 +3,7 @@ var events      = require('events');
 var fs          = require('fs');
 var querystring = require('querystring');
 var path        = require('path');
+var osenv       = require('osenv');
 var common      = require('./common');
 var dictionary  = require('./dictionary');
 var protocol    = require('./protocol');
@@ -86,9 +87,9 @@ WhatsApi.prototype.defaultConfig = {
 	server         : 's.whatsapp.net',
 	gserver        : 'g.us',
 	port           : 443,
-	device_type    : 'iPhone',
-	app_version    : '2.11.16',
-	ua             : 'WhatsApp/2.11.16 iPhone_OS/8.3 Device/iPhone_6',
+	device_type    : 'Android',
+	app_version    : '2.12.30',
+	ua             : 'WhatsApp/2.11.473 Android/4.3 Device/GalaxyS3',
 	challenge_file : path.join(__dirname, 'challenge'),
 	imageTool      : ImageTools.JIMP,
 	sendReceipt    : 2
@@ -115,6 +116,16 @@ WhatsApi.prototype.init = function() {
 	this.connectCallback = null;
 	this.loginCallback = null;
 	this.callbacksCollection = [];
+	
+	this.sessions = [];
+	this.pendingGetKeyRequests = {};
+	this.skipEncJids = []; //contains a list of jids that don't support encoding
+	this.pendingMessages = [];
+	this.nodeWhatsApiDir = path.join(osenv.home(), '.node-whatsapi');
+	try {
+    fs.mkdirSync(this.nodeWhatsApiDir);
+  } catch(e) {}
+	this.dbFilePath = path.join(this.nodeWhatsApiDir , this.config.msisdn + '.db');
 
 	this.processor.setAdapter(this);
 };

@@ -172,7 +172,7 @@ Node.prototype.isTyping = function() {
 };
 
 Node.prototype.isMessage = function() {
-	return this.tag() === 'message' && this.attribute('notify');
+	return this.tag() === 'message' && this.attribute('notify') && !this.child('enc');
 };
 
 Node.prototype.isPing = function() {
@@ -283,6 +283,14 @@ Node.prototype.isSendPrivacySettings = function() {
 
 Node.prototype.isOfflineCount = function() {
 	return this.tag() == 'ib' && this.child('offline') && this.child('offline').attribute('count');
+};
+
+Node.prototype.isGetKeysResponse = function() {
+	return this.tag() === 'iq' && this.attribute('type') === 'result' && this.child('list'); 
+};
+
+Node.prototype.isEncryptedMessage = function() {
+	return this.tag() === 'message' && this.attribute('notify') && this.child('enc') && this.child('enc').attribute('type') && this.child('enc').attribute('type') === 'pkmsg';
 };
 
 Node.prototype.toXml = function(prefix) {

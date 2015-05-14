@@ -33,6 +33,24 @@ function toArray(iterable) {
 	return arr;
 }
 
+var toBuffer = function(arrayBuffer) {
+    var buffer = new Buffer(arrayBuffer.byteLength);
+    var view = new Uint8Array(arrayBuffer);
+    for (var i = 0; i < buffer.length; ++i) {
+        buffer[i] = view[i];
+    }
+    return buffer;
+};
+
+var toArrayBuffer = function(buffer) {
+    var ab = new ArrayBuffer(buffer.length);
+    var view = new Uint8Array(ab);
+    for (var i = 0; i < buffer.length; ++i) {
+        view[i] = buffer[i];
+    }
+    return ab;
+};
+
 function extend(dest) {
 	var args   = toArray(arguments),
 		target = args.shift();
@@ -79,6 +97,8 @@ function getRandomInt(min, max) {
 exports.tstamp = tstamp;
 exports.winTimestamp = winTimestamp;
 exports.objSize = objSize;
+exports.toBuffer = toBuffer;
+exports.toArrayBuffer = toArrayBuffer;
 exports.extend = extend;
 exports.fetch = fetch;
 exports.isWindows = isWindows;

@@ -639,6 +639,16 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		return;
 	}
+	
+	if(node.isGetKeysResponse()){
+		this.processGetKeysResponse(node);
+		return;
+	}
+	
+	if(node.isEncryptedMessage()){
+		this.processEncryptedMessage(node);
+	}
+	
 };
 
 WhatsApi.prototype.processNotification = function(node) {
