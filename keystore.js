@@ -1,4 +1,4 @@
-var common = require('../common');
+var common = require('./common');
 var sqlite3 = require('sqlite3').verbose();
 
 function KeyStore( filePath ) {

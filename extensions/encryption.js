@@ -1,13 +1,13 @@
 // Service submodule
 // Includes functions for end-to-end encryption 
 
-var common = require('../common');
-var protocol = require('../protocol.js');
 var util = require('util');
 var path = require('path');
 var crypto = require('crypto');
 var axolotl = require('axolotl');
-var ks = require('./keystore');
+var common = require('../common');
+var protocol = require('../protocol');
+var ks = require('../keystore');
 
 var WhatsApi = module.exports = function() {};
 
