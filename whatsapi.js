@@ -409,15 +409,14 @@ function createAdapter(config, debug, reader, writer, processor, transport) {
 }
 
 /**
- * Not working, old implementation
  * @private
  * @return {WhatsApiRegistration}
  */
 function createRegistration(config) {
-	var wareg = require('./whatsapiregistration');
-	return new wareg.WhatsApiRegistration(config);
+	var WhatsApiRegistration = require('./registration/whatsapiregistration');
+	return new WhatsApiRegistration(config);
 }
 
 exports.createAdapter      = createAdapter;
-//exports.createRegistration = createRegistration;
+exports.createRegistration = createRegistration;
 exports.imageTools         = ImageTools;
