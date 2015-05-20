@@ -19,6 +19,14 @@ Buffer.prototype.readUInt24BE = function(position) {
   return this[position] << 16 | this[++position] << 8 | this[++position] << 0;
 };
 
+Buffer.prototype.writeUInt24BE = function(uint, position) {
+	position = position || 0;
+
+	this.writeUInt8((uint & 0xff0000) >> 16, position);
+	this.writeUInt8((uint & 0x00ff00) >> 8, ++position);
+	this.writeUInt8((uint & 0x0000ff) >> 0, ++position);
+};
+
 
 WhatsApi.prototype.initKeyStore = function() {
   console.log("Opening (or creating) SQLite DB in " + this.dbFilePath);
@@ -188,35 +196,99 @@ WhatsApi.prototype.processGetKeysResponse = function(getKeysResponseNode){
   console.log('keyBundles: ', keyBundles);
 };
 
+// <iq to="s.whatsapp.net" xmlns="encrypt" type="set" id="3">
+//   <list>
+//     <key>
+//       <id>HEX:4ac708</id>
+//       <value>HEX:9a5ca50f104ff84251fa4f13e95c00f4024305ce4dc0aa196abfc46fab051508</value>
+//     </key>
+//     <key>
+//       <id>HEX:4ac709</id>
+//       <value>HEX:7638bcc7d29b57d52919f186dc0a5e192db3d51c3e35e15a2e00121570dde27b</value>
+//     </key>
+// 
+//     ...
+// 
+//   </list>
+//   <identity>HEX:ba92b7d024da6410551773fd8b7a6e5ae55f885bbd6195a2f0ec7c380033534e</identity>
+//   <registration>HEX:dfbba5b3</registration>
+//   <type>HEX:05</type>
+//   <skey>
+//     <id>HEX:00a735</id>
+//     <value>HEX:7760894f9926fea017f8f8f0a95e4128feabf95c2dc9bab47434ff21eefaa53c</value>
+//     <signature>HEX:8e7db557c15caaf3002461f8a705eced17cabcfc6e784dd49f80a38d978aef601db3c0cf90db3127e984584e5954dc8d401f0926bd13793e3bc5383c8aafef84</signature>
+//   </skey>
+// </iq>
+
 WhatsApi.prototype.sendKeys = function(fresh, countPreKeys) {
   return new Promise( function(resolve, reject ){
-    Promise.all([axolotl.generateIdentityKeyPair(),
-                axolotl.generateRegistrationId(),
+    Promise.all([ (fresh?axolotl.generateIdentityKeyPair():this.keystore.getLocalIdentityKeyPair()),
+                (fresh?axolotl.generateRegistrationId():this.keystore.getLocalRegistrationId()),
                 axolotl.generatePreKeys(crypto.randomBytes(4).readUInt32LE(0), countPreKeys)] //4 bytes -> max 4294967295
               )
       .then( function(results){
         var identityKeyPair     = results[0];
         var registrationId      = results[1];
         var preKeys             = results[2];
-        axolotl.generateSignedPreKey(identityKeyPair, crypto.randomBytes(2).readUInt16LE(0)).then( function(result){ //2 bytes -> max 65535
-          var signedPreKey = result;
-          console.log(signedPreKey);
-          
-          
-          //ToDo: actually send the keys to the server
-          
-          this.persistKeys(registrationId, identityKeyPair, preKeys, signedPreKey, fresh)
-            .then( function(result){
-              resolve();
-            });
-          
-          
-        }.bind(this))
-        .catch( function(error){ console.log('sendKeys error: %s', error);});
+        axolotl.generateSignedPreKey(identityKeyPair, crypto.randomBytes(2).readUInt16LE(0)) //2 bytes -> max 65535
+          .then( function(result){ 
+            var signedPreKey = result;
+            
+            this.sendNode( this.createSendKeysNode(registrationId, identityKeyPair, preKeys, signedPreKey) );
+            
+            this.persistKeys(registrationId, identityKeyPair, preKeys, signedPreKey, fresh)
+              .then( function(result){
+                resolve();
+              });
+            
+          }.bind(this))
+          .catch( function(error){ console.log('sendKeys error: %s', error);});
       }.bind(this))
       .catch( function(error){ console.log('sendKeys error: %s', error);});
   }.bind(this));
 };
+
+WhatsApi.prototype.createSendKeysNode = function(registrationId, identityKeyPair, preKeys, signedPreKey) {
+  var tmpBuffer32 = new Buffer(4);
+  var tmpBuffer24 = new Buffer(3);
+  var tmpBuffer8 = new Buffer(1);
+  var keyNodes = preKeys.map(function(preKey) {
+    tmpBuffer24.writeUInt24BE(preKey.id,0);
+    return new protocol.Node(
+      'key',
+      null,
+      [ new protocol.Node('id',null,null, new Buffer(tmpBuffer24) ), //new protocol.Node('id',null,null, tmpBuffer24.writeUInt24BE(preKey.id) ),
+        new protocol.Node('value',null,null, common.toBuffer(preKey.keyPair.public.slice(1))) //strip the first byte
+      ]
+    );
+  }, this);
+  var listNode = new protocol.Node('list', null, keyNodes);
+  
+  var identityNode = new protocol.Node('identity', null, null, common.toBuffer(identityKeyPair.public.slice(1)) ); //strip the first byte
+  tmpBuffer32.writeUInt32BE(registrationId,0);
+  var registrationNode = new protocol.Node('registration', null, null, new Buffer(tmpBuffer32) );
+  tmpBuffer8.writeUInt8(5,0);
+  var typeNode = new protocol.Node('type', null, null, new Buffer(tmpBuffer8) ); //DJB_TYPE / curve25519 keys
+  
+  tmpBuffer24.writeUInt24BE(signedPreKey.id,0);
+  var sKeyNode = new protocol.Node(
+    'skey',
+    null,
+    [ new protocol.Node('id',null,null, new Buffer(tmpBuffer24) ),
+      new protocol.Node('value',null,null, common.toBuffer(signedPreKey.keyPair.public.slice(1))), //strip the first byte
+      new protocol.Node('signature',null,null, common.toBuffer(signedPreKey.signature)) //strip the first byte
+    ]
+  );
+  
+  var attributes = {
+    to   : this.config.server,
+    xmlns: 'encrypt',
+    type   : 'set',
+    id : this.nextMessageId()            
+  };
+  return new protocol.Node('iq', attributes, [listNode, identityNode, registrationNode, typeNode, sKeyNode]);
+
+}
 
 WhatsApi.prototype.persistKeys = function(registrationId, identityKeyPair, preKeys, signedPreKey, fresh) {
   return new Promise( function(resolve, reject ){
@@ -237,6 +309,24 @@ WhatsApi.prototype.persistKeys = function(registrationId, identityKeyPair, preKe
   }.bind(this));
 };
 
+WhatsApi.prototype.getSession = function(jid) {
+  
+  this.keystore.loadSession(jid, 1)
+    .then( function(result){
+      if(result){
+        this.sessions[jid] = result;
+        this.processPendingMessages(jid);
+      }else{
+        this.getKeys(jid);
+      }
+    }.bind(this))
+    .catch( function(error){
+      console.log("getSession error: ", error.stack);
+    })
+  
+};
+
+
 // <message to="xxxxxxxxxx@s.whatsapp.net" type="text" id="1429301769-1">
 // <enc v="1" type="pkmsg" av="Android/2.11.471">
 // ?Ĉ!?ܙ??~^l?ð????7?&Q?V7#![?&??M?!?b?D??L???Xs???(??݈k"B3
@@ -250,6 +340,8 @@ WhatsApi.prototype.sendEncryptedMessage = function(jid, message, msgid, callback
   axolotl.encryptMessage(this.sessions[jid], common.toArrayBuffer(new Buffer(message,'utf8')))
     .then(function(ciphertext) {
       this.sessions[jid] = ciphertext.session; //Mqke sure to use the new session for the next message
+      this.keystore.storeSession( jid.split('@')[0], 1, this.sessions[jid]);
+      
       console.log('sending: %s',common.toBuffer(ciphertext.body).toString('hex'));
       var encNode = new protocol.Node( 'enc', {v:1, type: 'pkmsg', av: [this.config.device_type,this.config.app_version].join('/')} , null , common.toBuffer(ciphertext.body) );
       

@@ -1,0 +1,121 @@
+package textsecure;
+
+option java_package = "org.whispersystems.libaxolotl.state";
+option java_outer_classname = "SessionProtos";
+
+message SessionStructure {
+    message Chain {
+        optional uint32 index = 1;
+        optional bytes  key   = 2;
+
+        message MessageKey {
+            optional uint32 index     = 1;
+            optional bytes  cipherKey = 2;
+            optional bytes  macKey    = 3;
+            optional bytes  iv        = 4;
+        }
+
+        repeated MessageKey messageKeys = 3;
+    }
+    
+    message RChain {
+        optional bytes theirEphemeralKey           = 1;
+        optional SessionStructure.Chain chain      = 2;
+    }
+    
+    message KeyPair {
+        optional bytes public = 1;
+        optional bytes private = 2;
+    }
+
+    message PendingKeyExchange {
+        optional uint32 sequence                 = 1;
+        optional bytes  localBaseKey             = 2;
+        optional bytes  localBaseKeyPrivate      = 3;
+        optional bytes  localRatchetKey          = 4;
+        optional bytes  localRatchetKeyPrivate   = 5;
+        optional bytes  localIdentityKey         = 7;
+        optional bytes  localIdentityKeyPrivate  = 8;
+    }
+
+    message PendingPreKey {
+        optional uint32 preKeyId       = 1;
+        optional int32  signedPreKeyId = 3;
+        optional bytes  baseKey        = 2;
+    }
+
+    optional uint32 sessionVersion      = 1;
+    optional bytes localIdentityKey     = 2;
+    optional bytes remoteIdentityKey    = 3;
+
+    optional bytes rootKey              = 4;
+    optional uint32 previousCounter     = 5;
+
+    optional Chain sendingChain           = 6;
+    optional KeyPair senderRatchetKeyPair = 7;
+    repeated RChain receivingChains       = 8;
+
+    optional PendingKeyExchange pendingKeyExchange = 9;
+    optional PendingPreKey      pendingPreKey      = 10;
+    
+    optional uint32 remoteRegistrationId = 11;
+    optional uint32 localRegistrationId  = 12;
+    optional bytes theirBaseKey          = 13;
+
+    optional bool needsRefresh = 14;
+    optional bytes aliceBaseKey = 15;
+}
+
+message RecordStructure {
+    optional SessionStructure currentSession   = 1;
+    repeated SessionStructure previousSessions = 2;
+}
+
+message PreKeyRecordStructure {
+    optional uint32 id        = 1;
+    optional bytes  publicKey = 2;
+    optional bytes  privateKey = 3;
+}
+
+message SignedPreKeyRecordStructure {
+    optional uint32  id         = 1;
+    optional bytes   publicKey  = 2;
+    optional bytes   privateKey = 3;
+    optional bytes   signature  = 4;
+    optional fixed64 timestamp  = 5;
+}
+
+message IdentityKeyPairStructure {
+    optional bytes publicKey  = 1;
+    optional bytes privateKey = 2;
+}
+
+message SenderKeyStateStructure {
+    message SenderChainKey {
+        optional uint32 iteration = 1;
+        optional bytes  seed      = 2;
+    }
+
+    message SenderMessageKey {
+        optional uint32 iteration = 1;
+        optional bytes  seed      = 2;
+    }
+
+    message SenderSigningKey {
+        optional bytes public  = 1;
+        optional bytes private = 2;
+    }
+
+    optional uint32           senderKeyId       = 1;
+    optional SenderChainKey   senderChainKey    = 2;
+    optional SenderSigningKey senderSigningKey  = 3;
+    repeated SenderMessageKey senderMessageKeys = 4;
+}
+
+message SenderKeyRecordStructure {
+    repeated SenderKeyStateStructure senderKeyStates = 1;
+}
+
+message Session {
+    repeated SessionStructure states = 1;
+}

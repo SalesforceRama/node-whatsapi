@@ -85,12 +85,12 @@ WhatsApi.prototype.processPendingMessages = function( jid ) {
 				var bodyNode = new protocol.Node('body', null, null, pendingMessage.message);
 				this.sendMessageNode(jid, bodyNode, pendingMessage.msgid, pendingMessage.callback);		
 			}else if( this.sessions[jid] !== undefined ){
-				this.sendEncryptedMessage(jid, pendingMessage.message, pendingMessage.msgid, pendingMessage.callback)
+				this.sendEncryptedMessage(jid, pendingMessage.message, pendingMessage.msgid, pendingMessage.callback);
 			}
 		}.bind(this));
 		delete this.pendingMessages[jid];
 	}else{
-		this.getKeys(jid);
+		this.getSession(jid);
 	}
  
 };

@@ -1,5 +1,8 @@
 var common = require('./common');
 var sqlite3 = require('sqlite3').verbose();
+var traverse = require('traverse');
+var ProtoBuf = require('protobufjs');
+var SessionProtos = require('./protobuf/SessionProtos');
 
 function KeyStore( filePath ) {
   var _db = null;
@@ -160,6 +163,31 @@ KeyStore.prototype.storePreKey = function(preKeyId, preKeyRecord){
   }.bind(this));
 };
 
+KeyStore.prototype.storeSession = function(recipientId, deviceId, sessionRecord){
+  console.log('storeSession for recipientId: %d', recipientId);
+  
+  var serializedSession = new SessionProtos.Session(sessionRecord).encode();
+    
+
+  
+  return new Promise( function(resolve, reject) {
+    _db.run( "INSERT OR REPLACE INTO sessions (recipient_id, device_id, record) VALUES(?,?,?)",
+                  [ recipientId,
+                    deviceId,
+                    serializedSession.buffer
+                  ],
+                  function(err){
+                    if(err===null){
+                      console.log('DB: storeSession done');
+                      resolve();
+                    }  else {
+                      console.log('DB: error storeSession: %s', err);
+                      reject( Error(err) );
+                    }
+                  });
+  }.bind(this));
+};
+
 KeyStore.prototype.getLocalIdentityKeyPair = function(){
   return new Promise( function(resolve, reject) {
     _db.get( "SELECT public_key, private_key FROM identities WHERE recipient_id = ?",
@@ -240,6 +268,33 @@ KeyStore.prototype.getLocalRegistrationId = function(){
                       }
                     }  else {
                       console.log('DB: error fetching local registration_id keypair: %s', err);
+                      reject( Error(err) );
+                    }
+                  });
+  }.bind(this));
+};
+
+KeyStore.prototype.loadSession = function(jid, deviceId){
+  var registraiondId = jid.split('@')[0];
+  return new Promise( function(resolve, reject) {
+    _db.get( "SELECT record FROM sessions WHERE recipient_id = ? AND device_id = ?",
+                  [registraiondId, deviceId],
+                  function(err, row){
+                    if(err===null){
+                      if (!row){
+                        resolve( null );
+                      }else{
+                        var session = SessionProtos.Session.decode(common.toArrayBuffer(row.record));
+                        //Fixup bytes -> ArrayBuffer
+                        traverse(session).forEach( function(element){
+                          if (element && typeof element === 'object' && element.buffer ){
+                            return this.update(common.toArrayBuffer(element.buffer.slice(element.offset, element.limit)));
+                          }
+                        });
+                        resolve( session );
+                      }
+                    }  else {
+                      console.log('DB: error fetching session: %s', err);
                       reject( Error(err) );
                     }
                   });

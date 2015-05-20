@@ -311,7 +311,7 @@ Node.prototype.toXml = function(prefix) {
 	xml += '>';
 
 	if(this.contents.data) {
-		xml += this.contents.data;
+		xml += 'HEX:' + this.contents.data.toString('hex');//this.contents.data;
 	}
 
 	if(this.contents.children.length) {
