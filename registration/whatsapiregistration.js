@@ -46,10 +46,14 @@ WhatsApiRegistration.prototype.countries = require(__dirname + '/countries');
  */
 WhatsApiRegistration.prototype.codeRequest = function(method, callback) {
 	var cc = null;
-	for (var i = 1; i <= 4; i++) {
+	var found = false;
+	for (var i = 1; i <= 4 && !found; i++) {
 		cc = this.config.msisdn.slice(0, i);
+		
 		if (this.countries[cc])
-			break;
+		{
+			found = true;
+		}
 	}
 
 	if (!cc)
@@ -62,15 +66,16 @@ WhatsApiRegistration.prototype.codeRequest = function(method, callback) {
 	this.config.country = settings.ISO3166;
 
 	var token = this.generateToken(settings.country, this.config.msisdn.substr(cc.length));
-	var params = { in : this.config.msisdn.substr(cc.length),
-			cc: this.config.cc,
-			lg: this.config.language,
-			lc: this.config.country,
-			method: method,
-			sim_mcc: this.config.ccode,
-			sim_mnc: settings.mnc,
-			id: this.config.device_id,
-			token: token
+	var params = {
+		in: this.config.msisdn.substr(cc.length),
+		cc: this.config.cc,
+		lg: this.config.language,
+		lc: this.config.country,
+		method: method,
+		sim_mcc: this.config.ccode,
+		sim_mnc: settings.mnc,
+		id: this.config.device_id,
+		token: token
 	};
 
 	this.request('code', params, callback);
