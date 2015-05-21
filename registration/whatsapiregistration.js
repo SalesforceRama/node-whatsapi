@@ -5,20 +5,20 @@ var querystring = require('querystring');
 var common = require('../common');
 
 var INVALID_PHONE = {
-  code: '1',
-  message: 'The provided phone number is not valid'
+	code: '1',
+	message: 'The provided phone number is not valid'
 };
 var REQUEST_ERROR = {
-  code: '2',
-  message: 'Request failed'
+	code: '2',
+	message: 'Request failed'
 };
 var WRONG_RESPONSE = {
-  code: '3',
-  message: 'Response is non-json'
+	code: '3',
+	message: 'Response is non-json'
 };
 var NETWORK_ERROR = {
-  code: '4',
-  message: 'Network error'
+	code: '4',
+	message: 'Network error'
 };
 
 /**
@@ -26,16 +26,16 @@ var NETWORK_ERROR = {
  * @param {WhatsApiRegistationConfig} config
  */
 var WhatsApiRegistration = module.exports =
-  function WhatsApiRegistration(config) {
-    this.config = common.extend({}, this.defaultConfig, config);
-  };
+	function WhatsApiRegistration(config) {
+		this.config = common.extend({}, this.defaultConfig, config);
+	};
 
 WhatsApiRegistration.prototype.defaultConfig = {
-  msisdn: '',
-  device_id: '',
-  device_type: 'S40',
-  app_version: '2.12.81',
-  ua: 'WhatsApp/2.12.81 S40Version/14.26 Device/Nokia302'
+	msisdn: '',
+	device_id: '',
+	device_type: 'S40',
+	app_version: '2.12.81',
+	ua: 'WhatsApp/2.12.81 S40Version/14.26 Device/Nokia302'
 };
 
 WhatsApiRegistration.prototype.countries = require(__dirname + '/countries');
@@ -45,35 +45,35 @@ WhatsApiRegistration.prototype.countries = require(__dirname + '/countries');
  * @param  {String}   method   One of two methods: 'sms' or 'voice'
  */
 WhatsApiRegistration.prototype.codeRequest = function(method, callback) {
-  var cc = null;
-  for (var i = 1; i <= 4; i++) {
-    cc = this.config.msisdn.slice(0, i);
-    if (this.countries[cc])
-      break;
-  }
+	var cc = null;
+	for (var i = 1; i <= 4; i++) {
+		cc = this.config.msisdn.slice(0, i);
+		if (this.countries[cc])
+			break;
+	}
 
-  if (!cc)
-    return callback(INVALID_PHONE);
+	if (!cc)
+		return callback(INVALID_PHONE);
 
-  var settings = this.countries[cc];
-  this.config.cc = cc;
-  this.config.ccode = settings.mcc[0];
-  this.config.language = settings.ISO639;
-  this.config.country = settings.ISO3166;
+	var settings = this.countries[cc];
+	this.config.cc = cc;
+	this.config.ccode = settings.mcc[0];
+	this.config.language = settings.ISO639;
+	this.config.country = settings.ISO3166;
 
-  var token = this.generateToken(settings.country, this.config.msisdn.substr(cc.length));
-  var params = { in : this.config.msisdn.substr(cc.length),
-      cc: this.config.cc,
-      lg: this.config.language,
-      lc: this.config.country,
-      method: method,
-      sim_mcc: this.config.ccode,
-      sim_mnc: settings.mnc,
-      id: this.config.device_id,
-      token: token
-  };
+	var token = this.generateToken(settings.country, this.config.msisdn.substr(cc.length));
+	var params = { in : this.config.msisdn.substr(cc.length),
+			cc: this.config.cc,
+			lg: this.config.language,
+			lc: this.config.country,
+			method: method,
+			sim_mcc: this.config.ccode,
+			sim_mnc: settings.mnc,
+			id: this.config.device_id,
+			token: token
+	};
 
-  this.request('code', params, callback);
+	this.request('code', params, callback);
 };
 
 /**
@@ -82,68 +82,68 @@ WhatsApiRegistration.prototype.codeRequest = function(method, callback) {
  * @param  {Function} callback Callback on finish request
  */
 WhatsApiRegistration.prototype.codeRegister = function(code, callback) {
-  var params = {
-    cc: this.config.cc,
-    in : this.config.msisdn.substr(this.config.cc.length),
-    id: this.config.device_id,
-    code: code
-  };
+	var params = {
+		cc: this.config.cc,
+		in : this.config.msisdn.substr(this.config.cc.length),
+		id: this.config.device_id,
+		code: code
+	};
 
-  this.request('register', params, callback);
+	this.request('register', params, callback);
 };
 
 WhatsApiRegistration.prototype.request = function(method, query, callback) {
 
-  var raw = {
-    hostname: 'v.whatsapp.net',
-    path: '/v2/' + method + '?' + querystring.stringify(query),
-    headers: {
-      'User-Agent': this.config.ua,
-      'Accept': 'text/json'
-    }
-  };
+	var raw = {
+		hostname: 'v.whatsapp.net',
+		path: '/v2/' + method + '?' + querystring.stringify(query),
+		headers: {
+			'User-Agent': this.config.ua,
+			'Accept': 'text/json'
+		}
+	};
 
-  var req = https.get(raw, function(res) {
-    var buffers = [];
+	var req = https.get(raw, function(res) {
+		var buffers = [];
 
-    res.on('data', function(buf) {
-      buffers.push(buf);
-    });
+		res.on('data', function(buf) {
+			buffers.push(buf);
+		});
 
-    res.on('end', function() {
-      var jsonbody = Buffer.concat(buffers).toString();
-      var response = null;
+		res.on('end', function() {
+			var jsonbody = Buffer.concat(buffers).toString();
+			var response = null;
 
-      try {
-        response = JSON.parse(jsonbody);
-      } catch (err) {
-        WRONG_RESPONSE.response = JSON.stringify(jsonbody);
-        return callback(WRONG_RESPONSE);
-      }
+			try {
+				response = JSON.parse(jsonbody);
+			} catch (err) {
+				WRONG_RESPONSE.response = JSON.stringify(jsonbody);
+				return callback(WRONG_RESPONSE);
+			}
 
-      if (response.status !== 'sent' && response.status !== 'ok') {
-        REQUEST_ERROR.response = response;
-        return callback(REQUEST_ERROR);
-      }
+			if (response.status !== 'sent' && response.status !== 'ok') {
+				REQUEST_ERROR.response = response;
+				return callback(REQUEST_ERROR);
+			}
 
-      callback(null, response);
-    });
-  });
+			callback(null, response);
+		});
+	});
 
-  req.on('error', function(err) {
-    NETWORK_ERROR.info = err;
-    return callback(NETWORK_ERROR);
-  });
+	req.on('error', function(err) {
+		NETWORK_ERROR.info = err;
+		return callback(NETWORK_ERROR);
+	});
 };
 
 WhatsApiRegistration.prototype.generateToken = function(country, phone) {
-  function md5(str) {
-    var hash = crypto.createHash('md5');
-    hash.update(str);
-    return hash.digest('hex');
-  }
-  var part = 'PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk';
-  var releaseTime = '1430860548912';
-  var token = md5(part + releaseTime + phone);
-  return token;
+	function md5(str) {
+		var hash = crypto.createHash('md5');
+		hash.update(str);
+		return hash.digest('hex');
+	}
+	var part = 'PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk';
+	var releaseTime = '1430860548912';
+	var token = md5(part + releaseTime + phone);
+	return token;
 };
