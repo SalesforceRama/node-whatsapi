@@ -8,7 +8,7 @@ var common      = require('./common');
 var dictionary  = require('./dictionary');
 var protocol    = require('./protocol');
 var transports  = require('./transport');
-var encryption  = require('./encryption');
+var keystream   = require('./keystream');
 var processors  = require('./processors');
 var MediaType   = require('./MediaType.js');
 var ImageTools  = require('./ImageTools.js');
@@ -261,9 +261,9 @@ WhatsApi.prototype.createAuthData = function() {
 	}
 
 	//this.initKeys(challenge);
-	var key = encryption.pbkdf2(new Buffer(this.config.password, 'base64'), challenge, 16, 20);
-	this.readerKey = new encryption.KeyStream(new Buffer([key[2]]), new Buffer([key[3]]));
-	this.writerKey = new encryption.KeyStream(new Buffer([key[0]]), new Buffer([key[1]]));
+	var key = keystream.pbkdf2(new Buffer(this.config.password, 'base64'), challenge, 16, 20);
+	this.readerKey = new keystream.KeyStream(new Buffer([key[2]]), new Buffer([key[3]]));
+	this.writerKey = new keystream.KeyStream(new Buffer([key[0]]), new Buffer([key[1]]));
 
 
 	this.reader.setKey(this.readerKey);
@@ -298,7 +298,7 @@ WhatsApi.prototype.generateKeys = function(password, nonce) {
 	var keys = [];
 	for(var j=1;j<5;j++){
 		var currNonce = Buffer.concat( [nonce, new Buffer([j])] );
-		keys.push( encryption.pbkdf2(new Buffer(password, 'base64'), currNonce, 2, 20) );		
+		keys.push( keystream.pbkdf2(new Buffer(password, 'base64'), currNonce, 2, 20) );		
 	}
 	return keys;
 };
@@ -306,8 +306,8 @@ WhatsApi.prototype.generateKeys = function(password, nonce) {
 WhatsApi.prototype.initKeys = function(nonce) {
 	var keys = this.generateKeys(this.config.password, nonce);
 
-	this.readerKey = new encryption.KeyStream(keys[2], keys[3]);
-	this.writerKey = new encryption.KeyStream(keys[0], keys[1]);
+	this.readerKey = new keystream.KeyStream(keys[2], keys[3]);
+	this.writerKey = new keystream.KeyStream(keys[0], keys[1]);
 };
 
 /**
