@@ -41,13 +41,14 @@ Text.prototype.match = function(node) {
 
 Text.prototype.process = function(node) {
 	var message = {
-		body    : node.child('body').data().toString('utf8'),
-		from    : node.attribute('from'),
-		author  : node.attribute('participant') || '',
-		id      : node.attribute('id'),
-		date    : new Date(+node.attribute('t') * 1000),
-		notify  : node.attribute('notify'),
-		isGroup : node.attribute('from').indexOf('g.us') != -1 ? true : false
+		body      : node.child('body').data().toString('utf8'),
+		from      : node.attribute('from'),
+		author    : node.attribute('participant') || '',
+		id        : node.attribute('id'),
+		date      : new Date(+node.attribute('t') * 1000),
+		notify    : node.attribute('notify'),
+		isGroup   : node.attribute('from').indexOf('g.us') != -1 ? true : false,
+		encrypted : false
 	};
 	
 	/**
@@ -63,13 +64,14 @@ Text.prototype.process = function(node) {
 /**
  * @typedef Message
  * @type {Object}
- * @property {String} body      UTF-8 decoded body text message
- * @property {String} from      Sender JID
- * @property {String} author    If `from` is a group ID, this is the real sender JID
- * @property {String} id        Message ID
- * @property {Date}   date      Message date/time
- * @property {String} notify
- * @property {Boolean} isGroup  Whether the message comes from a group or not
+ * @property {String}  body       UTF-8 decoded body text message
+ * @property {String}  from       Sender JID
+ * @property {String}  author     If `from` is a group ID, this is the real sender JID
+ * @property {String}  id         Message ID
+ * @property {Date}    date       Message date/time
+ * @property {String}  notify
+ * @property {Boolean} isGroup    Whether the message comes from a group or not
+ * @property {Boolean} encrypted  Whether the message was encrypted
  */
 
 function Location() {}

@@ -123,6 +123,23 @@ KeyStore.prototype.storeLocalData = function(registrationId, identityKeyPair){
   }.bind(this));
 };
 
+KeyStore.prototype.storeIdentity = function(recipientId, registrationId, identityKey){
+  return new Promise( function(resolve, reject) {
+    console.log('registrationId: %o', registrationId);
+    _db.run( "INSERT OR REPLACE INTO identities(recipient_id, registration_id, public_key) VALUES(?,?,?)",
+                  [recipientId, registrationId, common.toBuffer(identityKey)],
+                  function(err){
+                    if(err===null){
+                      console.log('DB: storeIdentity done');
+                      resolve();
+                    }  else {
+                      console.log('DB: error storeIdentity: %s', err);
+                      reject( Error(err) );
+                    }
+                  });
+  }.bind(this));
+};
+
 KeyStore.prototype.storeSignedPreKey = function(signedPreKeyId, signedPreKeyRecord){
   return new Promise( function(resolve, reject) {
     _db.run( "INSERT INTO signed_prekeys (prekey_id, record) VALUES(?,?)",
@@ -165,11 +182,7 @@ KeyStore.prototype.storePreKey = function(preKeyId, preKeyRecord){
 
 KeyStore.prototype.storeSession = function(recipientId, deviceId, sessionRecord){
   console.log('storeSession for recipientId: %d', recipientId);
-  
   var serializedSession = new SessionProtos.Session(sessionRecord).encode();
-    
-
-  
   return new Promise( function(resolve, reject) {
     _db.run( "INSERT OR REPLACE INTO sessions (recipient_id, device_id, record) VALUES(?,?,?)",
                   [ recipientId,
@@ -218,11 +231,13 @@ KeyStore.prototype.getLocalSignedPreKeyPair = function(prekey_id){
                         reject( Error('DB: local signed prekey for id '+prekey_id+' not found') );
                       }else{
                         var record = common.toArrayBuffer(row.record);
-                        var keyPair = { public: record.slice(0,33),
-                                        private: record.slice(33, 65)};
-                        var signature = record.slice(65);
                         console.log('DB: local signed prekey record: %s', record);
-                        resolve( {id: prekey_id, keyPair: keyPair, signature: signature} );
+                        resolve({
+                          id:        prekey_id,
+                          public:    record.slice(0,33),
+                          private:   record.slice(33, 65),
+                          signature: record.slice(65)
+                        });
                       }
                     }  else {
                       console.log('DB: error fetching local signed prekey: %s', err);
@@ -242,10 +257,12 @@ KeyStore.prototype.getLocalPreKeyPair = function(prekey_id){
                         reject( Error('DB: local prekey not found') );
                       }else{
                         var record = common.toArrayBuffer(row.record);
-                        var keyPair = { public: record.slice(0,33),
-                                        private: record.slice(33) };
                         console.log('DB: local prekey record: %s', record);
-                        resolve( { id: prekey_id, keyPair: keyPair } );
+                        resolve({
+                          id:      prekey_id,
+                          public:  record.slice(0,33),
+                          private: record.slice(33)
+                        });
                       }
                     }  else {
                       console.log('DB: error fetching local prekey: %s', err);
@@ -265,6 +282,25 @@ KeyStore.prototype.getLocalRegistrationId = function(){
                         reject( Error('DB: local registration_id not found') );
                       }else{
                         resolve( row.registration_id );
+                      }
+                    }  else {
+                      console.log('DB: error fetching local registration_id keypair: %s', err);
+                      reject( Error(err) );
+                    }
+                  });
+  }.bind(this));
+};
+
+KeyStore.prototype.isTrustedIdentity = function(recipientId, identityKey){
+  return new Promise( function(resolve, reject) {
+    _db.get( "SELECT recipient_id, public_key FROM identities WHERE recipient_id = ?",
+                  [recipientId],
+                  function(err, row){
+                    if(err===null){
+                      if (!row){
+                        resolve( true ); //no result, so we can't verify
+                      }else{
+                        resolve( row.public_key.toString('hex') == identityKey.toString('hex') );
                       }
                     }  else {
                       console.log('DB: error fetching local registration_id keypair: %s', err);

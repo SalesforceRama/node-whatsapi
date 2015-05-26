@@ -358,17 +358,55 @@ WhatsApi.prototype.sendEncryptedMessage = function(jid, message, msgid, callback
 // rx </message>
 
 WhatsApi.prototype.processEncryptedMessage = function(node) {
-  var message = node.child('enc').data();
+  var message = common.toArrayBuffer( new Buffer(node.child('enc').data()) );
+  var recipientId = node.attribute('from').split('@')[0];
   
-  //this.sendNode(this.createReceiptNode(node));
+  var onMessageDecrypted = function(decrypted){
+    this.keystore.storeSession(recipientId, 1, decrypted.session);
+    
+    var message = {
+      body      : common.toBuffer(decrypted.message).toString('utf8'),
+      from      : node.attribute('from'),
+      author    : node.attribute('participant') || '',
+      id        : node.attribute('id'),
+      date      : new Date(+node.attribute('t') * 1000),
+      notify    : node.attribute('notify'),
+      isGroup   : node.attribute('from').indexOf('g.us') != -1 ? true : false,
+      encrypted : true
+    };
+    
+    /**
+     * 
+     * receivedMessage - emitted when a new text message is received
+     * 
+     * @event receivedMessage
+     * @property {Message} message     Message object
+     */
+    this.emit('receivedMessage', message);
+    
+  }.bind(this);
   
-  // axolotl.decryptPreKeyWhisperMessage(null, common.toArrayBuffer( new Buffer(message)))
-  //   .then(function(plaintext) {
-  //     console.log('@@@@ received and decrypted encrypted message: ', plaintext);
-  //   }.bind(this))
-  //   .catch( function(error){
-  //     console.log('error processing encrypted message: ', error, error.stack);
-  //   });
+
+  
+  this.sendNode(this.createReceiptNode(node));
+  
+  if( node.child('enc').attribute('type') == 'msg' ){
+    axolotl.decryptWhisperMessage(null, message)
+      .then( onMessageDecrypted )
+      .catch( function(error){
+        console.log('error processing encrypted message: ', error, error.stack);
+      });    
+  }else if(node.child('enc').attribute('type') == 'pkmsg'){
+    axolotl.decryptPreKeyWhisperMessage(null, message)
+      .then( onMessageDecrypted )
+      .catch( function(error){
+        console.log('error processing encrypted message: ', error, error.stack);
+      });
+  }else{
+    //error... unknown encryption...
+  }
+  
+
   
 };
 

@@ -290,7 +290,7 @@ Node.prototype.isGetKeysResponse = function() {
 };
 
 Node.prototype.isEncryptedMessage = function() {
-	return this.tag() === 'message' && this.attribute('notify') && this.child('enc') && this.child('enc').attribute('type') && this.child('enc').attribute('type') === 'pkmsg';
+	return this.tag() === 'message' && this.attribute('notify') && this.child('enc') && this.child('enc').attribute('type') && (this.child('enc').attribute('type') === 'msg' || this.child('enc').attribute('type') == 'pkmsg');
 };
 
 Node.prototype.toXml = function(prefix) {
