@@ -21,7 +21,8 @@
   "dependencies": {
     "gm": "^1.17.0",
     "jimp": "^0.2.1",
-    "mime": ">= 1.2.11"
+    "mime": ">= 1.2.11",
+    "tmp": ">= 0.0.26"
   },
   "devDependencies": {
     "jsdoc-to-markdown": "^0.6.4"

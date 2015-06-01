@@ -14,6 +14,7 @@ var gm = require('gm');
 var url = require('url');
 var mime = require('mime');
 var fs = require('fs');
+var tmp = require('tmp');
 
 var WhatsApi = module.exports = function() {};
 
@@ -194,15 +195,21 @@ WhatsApi.prototype.downloadMediaFile = function(destUrl, callback) {
 		});
 
 		res.on('end', function() {
-			var filePath = path.join(__dirname, '../media', 'media-');
-			filePath += crypto.randomBytes(4).readUInt32LE(0) + ext;
-
-			fs.writeFile(filePath, Buffer.concat(buffers), function(err) {
+			if (ext) {
+				ext = '.' + ext;
+			}
+			tmp.file({ prefix: 'media-', postfix: ext }, function(err, filePath, fd) {
 				if (err) {
-					callback('Error saving downloaded file: ' + err);
-				} else {
-					callback(null, filePath);
+					return callback('Error creating temporary file: ' + err);
 				}
+
+				fs.writeFile(filePath, Buffer.concat(buffers), function(err) {
+					if (err) {
+						callback('Error saving downloaded file: ' + err);
+					} else {
+						callback(null, filePath);
+					}
+				});
 			});
 		});
 	}.bind(this)).on('error', function(e) {
