@@ -33,23 +33,23 @@ function toArray(iterable) {
 	return arr;
 }
 
-var toBuffer = function(arrayBuffer) {
+function toBuffer(arrayBuffer) {
     var buffer = new Buffer(arrayBuffer.byteLength);
     var view = new Uint8Array(arrayBuffer);
     for (var i = 0; i < buffer.length; ++i) {
         buffer[i] = view[i];
     }
     return buffer;
-};
+}
 
-var toArrayBuffer = function(buffer) {
+function toArrayBuffer(buffer) {
     var ab = new ArrayBuffer(buffer.length);
     var view = new Uint8Array(ab);
     for (var i = 0; i < buffer.length; ++i) {
         view[i] = buffer[i];
     }
     return ab;
-};
+}
 
 function extend(dest) {
 	var args   = toArray(arguments),
