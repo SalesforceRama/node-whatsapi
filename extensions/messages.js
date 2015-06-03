@@ -79,9 +79,9 @@ WhatsApi.prototype.processPendingMessages = function( jid ) {
 		return;
 	}
 	
-	if( this.skipEncJids[jid] || this.sessions[jid] !== undefined){
+	if( !this.config.useEncryption || this.skipEncJids[jid] || this.sessions[jid] !== undefined){
 		this.pendingMessages[jid].forEach( function(pendingMessage){
-			if( this.skipEncJids[jid] ){
+			if( !this.config.useEncryption || this.skipEncJids[jid] ){
 				var bodyNode = new protocol.Node('body', null, null, pendingMessage.message);
 				this.sendMessageNode(jid, bodyNode, pendingMessage.msgid, pendingMessage.callback);		
 			}else if( this.sessions[jid] !== undefined ){

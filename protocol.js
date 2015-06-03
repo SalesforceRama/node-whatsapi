@@ -66,16 +66,6 @@ Buffer.prototype.readUInt24BE = function(position) {
 	return this[position] << 16 | this[++position] << 8 | this[++position] << 0;
 };
 
-Buffer.prototype.toByteArray = function() {
-	var byteArray = [];
-
-	for(var i = 0, len = this.length; i < len; i++) {
-		byteArray.push(this[i]);
-	}
-
-	return byteArray;
-};
-
 Buffer.prototype.toBuffer = function() {
 	var nodebuffer = new buffer.Buffer(this.length);
 	this.copy(nodebuffer);
@@ -283,6 +273,10 @@ Node.prototype.isSendPrivacySettings = function() {
 
 Node.prototype.isOfflineCount = function() {
 	return this.tag() == 'ib' && this.child('offline') && this.child('offline').attribute('count');
+};
+
+Node.prototype.isSendPrekeys = function() {
+	return this.tag() == 'iq' && this.attribute('id').indexOf('send_keys') != -1;
 };
 
 Node.prototype.isGetKeysResponse = function() {

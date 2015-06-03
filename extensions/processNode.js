@@ -164,8 +164,13 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		this.loggedIn = true;
 		this.flushQueue();
-		this.emit('login');
-		this.loginCallback && this.loginCallback();
+		if(this.passiveAuth){
+			this.sendKeys(true);
+		}else{
+			this.emit('login');
+			this.loginCallback && this.loginCallback();
+		}
+		
 		return;
 	}
 	
@@ -639,6 +644,14 @@ WhatsApi.prototype.processNode = function(node) {
 		
 		return;
 	}
+
+	if(node.isSendPrekeys()){
+		this.disconnect();
+		this.connect( function(){
+			this.login();
+		});
+		return;
+	}
 	
 	if(node.isGetKeysResponse()){
 		this.processGetKeysResponse(node);
@@ -648,7 +661,6 @@ WhatsApi.prototype.processNode = function(node) {
 	if(node.isEncryptedMessage()){
 		this.processEncryptedMessage(node);
 	}
-	
 };
 
 WhatsApi.prototype.processNotification = function(node) {
@@ -731,6 +743,9 @@ WhatsApi.prototype.processNotification = function(node) {
 			 */
 			this.emit('notificationGroupSubjectChanged', args, nodeId);
 		}
+	}else if (node.attribute('type') == 'encrypt'){
+		this.processEncryptNotification(node);
+		
 	}
 };
 

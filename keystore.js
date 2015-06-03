@@ -5,7 +5,9 @@ var ProtoBuf = require('protobufjs');
 var SessionProtos = require('./protobuf/SessionProtos');
 
 function KeyStore( filePath ) {
-  var _db = null;
+  this._db = null;
+  this._hasKeys = false;
+  this._inited = false;
   this.filePath = filePath;
 }
 
@@ -13,7 +15,7 @@ KeyStore.prototype.openDatabase = function(){
 
   return new Promise( function(resolve, reject ){
     //initialize DB connection
-    _db = new sqlite3.Database(this.filePath,
+    this._db = new sqlite3.Database(this.filePath,
       sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE,
       function(err){
           if(err === null) resolve('DB: opened succesfuly');
@@ -36,8 +38,13 @@ KeyStore.prototype.init = function(){
                     this.initSessionStore()]
                    ).then( function(results){
                       results.forEach( function(result) { console.log(result); });
-                      resolve('KeyStore: inited');
-                     }
+                      this.getLocalRegistrationId()
+                        .then( function(result){
+                          this._hasKeys = (result !== null);
+                          this._inited = true;
+                          resolve('KeyStore: inited');
+                        }.bind(this));
+                     }.bind(this)
                    ).catch( function(error){console.log(error);});
         console.log(response);
         
@@ -55,7 +62,7 @@ KeyStore.prototype.init = function(){
 KeyStore.prototype.initIdentityKeyStore = function(){
    return new Promise( function(resolve, reject) {
     //SQL statement copied from Yowsup
-    _db.exec( "CREATE TABLE IF NOT EXISTS identities (_id INTEGER PRIMARY KEY AUTOINCREMENT, \
+    this._db.exec( "CREATE TABLE IF NOT EXISTS identities (_id INTEGER PRIMARY KEY AUTOINCREMENT, \
                          recipient_id INTEGER UNIQUE, \
                          registration_id INTEGER, public_key BLOB, private_key BLOB \
                          next_prekey_id INTEGER, timestamp INTEGER);", 
@@ -70,7 +77,7 @@ KeyStore.prototype.initIdentityKeyStore = function(){
 KeyStore.prototype.initPreKeyStore = function(){
     return new Promise( function(resolve, reject) {
     //SQL statement copied from Yowsup
-    _db.exec( "CREATE TABLE IF NOT EXISTS prekeys (_id INTEGER PRIMARY KEY AUTOINCREMENT, \
+    this._db.exec( "CREATE TABLE IF NOT EXISTS prekeys (_id INTEGER PRIMARY KEY AUTOINCREMENT, \
                          prekey_id INTEGER UNIQUE, sent_to_server BOOLEAN, record BLOB);",
                   function(err){
                            if(err===null) resolve('DB: prekeys table inited');
@@ -83,7 +90,7 @@ KeyStore.prototype.initPreKeyStore = function(){
 KeyStore.prototype.initSignedPreKeyStore = function(){
    return new Promise( function(resolve, reject) {
     //SQL statement copied from Yowsup
-    _db.exec( "CREATE TABLE IF NOT EXISTS signed_prekeys (_id INTEGER PRIMARY KEY AUTOINCREMENT, \
+    this._db.exec( "CREATE TABLE IF NOT EXISTS signed_prekeys (_id INTEGER PRIMARY KEY AUTOINCREMENT, \
                          prekey_id INTEGER UNIQUE, timestamp INTEGER, record BLOB);",
                   function(err){
                            if(err===null) resolve('DB: signed_prekeys table inited');
@@ -96,7 +103,7 @@ KeyStore.prototype.initSignedPreKeyStore = function(){
 KeyStore.prototype.initSessionStore = function(){
    return new Promise( function(resolve, reject) {
     //SQL statement copied from Yowsup
-    _db.exec( "CREATE TABLE IF NOT EXISTS sessions (_id INTEGER PRIMARY KEY AUTOINCREMENT, \
+    this._db.exec( "CREATE TABLE IF NOT EXISTS sessions (_id INTEGER PRIMARY KEY AUTOINCREMENT, \
                          recipient_id INTEGER UNIQUE, device_id INTEGER, record BLOB, timestamp INTEGER);",
                   function(err){
                            if(err===null) resolve('DB: sessions table inited');
@@ -106,10 +113,18 @@ KeyStore.prototype.initSessionStore = function(){
   }.bind(this));
 };
 
+KeyStore.prototype.hasKeys = function(){
+  return this._hasKeys;
+};
+
+KeyStore.prototype.isInitialized = function(){
+   return this._inited;
+};
+
 KeyStore.prototype.storeLocalData = function(registrationId, identityKeyPair){
   return new Promise( function(resolve, reject) {
     console.log('registrationId: %o', registrationId);
-    _db.run( "INSERT OR REPLACE INTO identities(recipient_id, registration_id, public_key, private_key) VALUES(-1,?,?,?)",
+    this._db.run( "INSERT OR REPLACE INTO identities(recipient_id, registration_id, public_key, private_key) VALUES(-1,?,?,?)",
                   [registrationId, common.toBuffer(identityKeyPair.public), common.toBuffer(identityKeyPair.private)],
                   function(err){
                     if(err===null){
@@ -126,7 +141,7 @@ KeyStore.prototype.storeLocalData = function(registrationId, identityKeyPair){
 KeyStore.prototype.storeIdentity = function(recipientId, registrationId, identityKey){
   return new Promise( function(resolve, reject) {
     console.log('registrationId: %o', registrationId);
-    _db.run( "INSERT OR REPLACE INTO identities(recipient_id, registration_id, public_key) VALUES(?,?,?)",
+    this._db.run( "INSERT OR REPLACE INTO identities(recipient_id, registration_id, public_key) VALUES(?,?,?)",
                   [recipientId, registrationId, common.toBuffer(identityKey)],
                   function(err){
                     if(err===null){
@@ -142,7 +157,7 @@ KeyStore.prototype.storeIdentity = function(recipientId, registrationId, identit
 
 KeyStore.prototype.storeSignedPreKey = function(signedPreKeyId, signedPreKeyRecord){
   return new Promise( function(resolve, reject) {
-    _db.run( "INSERT INTO signed_prekeys (prekey_id, record) VALUES(?,?)",
+    this._db.run( "INSERT INTO signed_prekeys (prekey_id, record) VALUES(?,?)",
                   [ signedPreKeyId, 
                     Buffer.concat([common.toBuffer(signedPreKeyRecord.keyPair.public),
                       common.toBuffer(signedPreKeyRecord.keyPair.private),
@@ -163,7 +178,7 @@ KeyStore.prototype.storeSignedPreKey = function(signedPreKeyId, signedPreKeyReco
 KeyStore.prototype.storePreKey = function(preKeyId, preKeyRecord){
   console.log('storePreKey id: %d', preKeyId);
   return new Promise( function(resolve, reject) {
-    _db.run( "INSERT INTO prekeys (prekey_id, record) VALUES(?,?)",
+    this._db.run( "INSERT INTO prekeys (prekey_id, record) VALUES(?,?)",
                   [ preKeyId, 
                     Buffer.concat([common.toBuffer(preKeyRecord.keyPair.public),
                       common.toBuffer(preKeyRecord.keyPair.private)])
@@ -184,7 +199,7 @@ KeyStore.prototype.storeSession = function(recipientId, deviceId, sessionRecord)
   console.log('storeSession for recipientId: %d', recipientId);
   var serializedSession = new SessionProtos.Session(sessionRecord).encode();
   return new Promise( function(resolve, reject) {
-    _db.run( "INSERT OR REPLACE INTO sessions (recipient_id, device_id, record) VALUES(?,?,?)",
+    this._db.run( "INSERT OR REPLACE INTO sessions (recipient_id, device_id, record) VALUES(?,?,?)",
                   [ recipientId,
                     deviceId,
                     serializedSession.buffer
@@ -203,7 +218,7 @@ KeyStore.prototype.storeSession = function(recipientId, deviceId, sessionRecord)
 
 KeyStore.prototype.getLocalIdentityKeyPair = function(){
   return new Promise( function(resolve, reject) {
-    _db.get( "SELECT public_key, private_key FROM identities WHERE recipient_id = ?",
+    this._db.get( "SELECT public_key, private_key FROM identities WHERE recipient_id = ?",
                   [-1],
                   function(err, row){
                     if(err===null){
@@ -223,7 +238,7 @@ KeyStore.prototype.getLocalIdentityKeyPair = function(){
 
 KeyStore.prototype.getLocalSignedPreKeyPair = function(prekey_id){
   return new Promise( function(resolve, reject) {
-    _db.get( "SELECT record FROM signed_prekeys WHERE prekey_id = ?",
+    this._db.get( "SELECT record FROM signed_prekeys WHERE prekey_id = ?",
                   [prekey_id],
                   function(err, row){
                     if(err===null){
@@ -249,7 +264,7 @@ KeyStore.prototype.getLocalSignedPreKeyPair = function(prekey_id){
 
 KeyStore.prototype.getLocalPreKeyPair = function(prekey_id){
   return new Promise( function(resolve, reject) {
-    _db.get( "SELECT record FROM prekeys WHERE prekey_id = ?",
+    this._db.get( "SELECT record FROM prekeys WHERE prekey_id = ?",
                   [prekey_id],
                   function(err, row){
                     if(err===null){
@@ -274,12 +289,12 @@ KeyStore.prototype.getLocalPreKeyPair = function(prekey_id){
 
 KeyStore.prototype.getLocalRegistrationId = function(){
   return new Promise( function(resolve, reject) {
-    _db.get( "SELECT registration_id FROM identities WHERE recipient_id = ?",
+    this._db.get( "SELECT registration_id FROM identities WHERE recipient_id = ?",
                   [-1],
                   function(err, row){
                     if(err===null){
                       if (!row){
-                        reject( Error('DB: local registration_id not found') );
+                        resolve( null );
                       }else{
                         resolve( row.registration_id );
                       }
@@ -293,7 +308,7 @@ KeyStore.prototype.getLocalRegistrationId = function(){
 
 KeyStore.prototype.isTrustedIdentity = function(recipientId, identityKey){
   return new Promise( function(resolve, reject) {
-    _db.get( "SELECT recipient_id, public_key FROM identities WHERE recipient_id = ?",
+    this._db.get( "SELECT recipient_id, public_key FROM identities WHERE recipient_id = ?",
                   [recipientId],
                   function(err, row){
                     if(err===null){
@@ -313,7 +328,7 @@ KeyStore.prototype.isTrustedIdentity = function(recipientId, identityKey){
 KeyStore.prototype.loadSession = function(jid, deviceId){
   var registraiondId = jid.split('@')[0];
   return new Promise( function(resolve, reject) {
-    _db.get( "SELECT record FROM sessions WHERE recipient_id = ? AND device_id = ?",
+    this._db.get( "SELECT record FROM sessions WHERE recipient_id = ? AND device_id = ?",
                   [registraiondId, deviceId],
                   function(err, row){
                     if(err===null){

@@ -11,7 +11,6 @@ var ks = require('../keystore');
 
 var WhatsApi = module.exports = function() {};
 
-
 //extend buffer to be able to read 3 bytes
 Buffer.prototype.readUInt24BE = function(position) {
   position = position || 0;
@@ -28,24 +27,24 @@ Buffer.prototype.writeUInt24BE = function(uint, position) {
 };
 
 
-WhatsApi.prototype.initKeyStore = function() {
-  console.log("Opening (or creating) SQLite DB in " + this.dbFilePath);
-  this.keystore = new ks.KeyStore(this.dbFilePath);
+WhatsApi._COUNT_PREKEYS = 200;
+
+WhatsApi.prototype.initKeyStore = function(callback) {
+  console.log("Opening (or creating) SQLite DB in " + this.keystoreFilePath);
+  this.keystore = new ks.KeyStore(this.keystoreFilePath);
   
-  return new Promise( function(resolve, reject){
-    this.keystore.init().then( function(result){
+  this.keystore.init().then( function(result){
         console.log(result);
         axolotl = axolotl(this.keystore);
         
-        resolve('Enc: inited');
+        this.emit('keystoreInitialized');
+        callback && callback();
+        
       }.bind(this))
       .catch( function (error){
         console.log(error);
-        reject(Error('Enc: not inited'));
-      });
-  }.bind(this));  
-  
-  
+        callback && callback(Error('Keystore not inited: '), error.stack);
+      });  
 };
 
 /*
@@ -224,7 +223,7 @@ WhatsApi.prototype.sendKeys = function(fresh, countPreKeys) {
   return new Promise( function(resolve, reject ){
     Promise.all([ (fresh?axolotl.generateIdentityKeyPair():this.keystore.getLocalIdentityKeyPair()),
                 (fresh?axolotl.generateRegistrationId():this.keystore.getLocalRegistrationId()),
-                axolotl.generatePreKeys(crypto.randomBytes(4).readUInt32LE(0), countPreKeys)] //4 bytes -> max 4294967295
+                axolotl.generatePreKeys(crypto.randomBytes(4).readUInt32LE(0), countPreKeys || WhatsApi._COUNT_PREKEYS)] //4 bytes -> max 4294967295
               )
       .then( function(results){
         var identityKeyPair     = results[0];
@@ -249,6 +248,7 @@ WhatsApi.prototype.sendKeys = function(fresh, countPreKeys) {
 };
 
 WhatsApi.prototype.createSendKeysNode = function(registrationId, identityKeyPair, preKeys, signedPreKey) {
+  var messageId = this.nextMessageId('send_keys');
   var tmpBuffer32 = new Buffer(4);
   var tmpBuffer24 = new Buffer(3);
   var tmpBuffer8 = new Buffer(1);
@@ -257,7 +257,7 @@ WhatsApi.prototype.createSendKeysNode = function(registrationId, identityKeyPair
     return new protocol.Node(
       'key',
       null,
-      [ new protocol.Node('id',null,null, new Buffer(tmpBuffer24) ), //new protocol.Node('id',null,null, tmpBuffer24.writeUInt24BE(preKey.id) ),
+      [ new protocol.Node('id',null,null, new Buffer(tmpBuffer24) ), 
         new protocol.Node('value',null,null, common.toBuffer(preKey.keyPair.public.slice(1))) //strip the first byte
       ]
     );
@@ -284,7 +284,7 @@ WhatsApi.prototype.createSendKeysNode = function(registrationId, identityKeyPair
     to   : this.config.server,
     xmlns: 'encrypt',
     type   : 'set',
-    id : this.nextMessageId()            
+    id : messageId
   };
   return new protocol.Node('iq', attributes, [listNode, identityNode, registrationNode, typeNode, sKeyNode]);
 
@@ -343,7 +343,8 @@ WhatsApi.prototype.sendEncryptedMessage = function(jid, message, msgid, callback
       this.keystore.storeSession( jid.split('@')[0], 1, this.sessions[jid]);
       
       console.log('sending: %s',common.toBuffer(ciphertext.body).toString('hex'));
-      var encNode = new protocol.Node( 'enc', {v:1, type: 'pkmsg', av: [this.config.device_type,this.config.app_version].join('/')} , null , common.toBuffer(ciphertext.body) );
+      var type = ciphertext.isPreKeyWhisperMessage? 'pkmsg':'msg';
+      var encNode = new protocol.Node( 'enc', {v:1, type: type, av: [this.config.device_type,this.config.app_version].join('/')} , null , common.toBuffer(ciphertext.body) );
       
       this.sendMessageNode(jid, encNode, msgid, callback);
     }.bind(this))
@@ -359,7 +360,8 @@ WhatsApi.prototype.sendEncryptedMessage = function(jid, message, msgid, callback
 
 WhatsApi.prototype.processEncryptedMessage = function(node) {
   var message = common.toArrayBuffer( new Buffer(node.child('enc').data()) );
-  var recipientId = node.attribute('from').split('@')[0];
+  var jid = node.attribute('from');
+  var recipientId = jid.split('@')[0];
   
   var onMessageDecrypted = function(decrypted){
     this.keystore.storeSession(recipientId, 1, decrypted.session);
@@ -391,11 +393,14 @@ WhatsApi.prototype.processEncryptedMessage = function(node) {
   this.sendNode(this.createReceiptNode(node));
   
   if( node.child('enc').attribute('type') == 'msg' ){
-    axolotl.decryptWhisperMessage(null, message)
-      .then( onMessageDecrypted )
-      .catch( function(error){
-        console.log('error processing encrypted message: ', error, error.stack);
-      });    
+    this.keystore.loadSession(jid, 1).then( function(session){
+      axolotl.decryptWhisperMessage(session, message)
+        .then( onMessageDecrypted )
+        .catch( function(error){
+          console.log('error processing encrypted message: ', error, error.stack);
+        });
+    }.bind(this));
+    
   }else if(node.child('enc').attribute('type') == 'pkmsg'){
     axolotl.decryptPreKeyWhisperMessage(null, message)
       .then( onMessageDecrypted )
@@ -405,8 +410,13 @@ WhatsApi.prototype.processEncryptedMessage = function(node) {
   }else{
     //error... unknown encryption...
   }
-  
-
-  
 };
+
+WhatsApi.prototype.processEncryptNotification = function(node) {
+    var count = node.child('count').attribute('value');
+    console.log('server has %d prekey(s) to hand out', count);
+    
+    
+    this.sendKeys(false, WhatsApi._COUNT_PREKEYS - count);      
+}
 

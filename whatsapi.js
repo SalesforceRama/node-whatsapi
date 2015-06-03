@@ -73,6 +73,7 @@ for (var i = 0; i < files.length; i++) {
 * @property {String} challenge_file - path to challenge file
 * @property {ImageTools} imageTool - image tool to be used when generating thumbnails
 * @property {Number} sendReceipt - 0 for none, 1 for standard receipts, 2 for read receipts
+* @property {Boolean} useEncryption - Set to true to use end-to-end encryption for supported destinations
 */
 
 /** @type {WhatsApiConfig} */
@@ -92,7 +93,8 @@ WhatsApi.prototype.defaultConfig = {
 	ua             : 'WhatsApp/2.11.473 Android/4.3 Device/GalaxyS3',
 	challenge_file : path.join(__dirname, 'challenge'),
 	imageTool      : ImageTools.JIMP,
-	sendReceipt    : 2
+	sendReceipt    : 2,
+	useEncryption  : false
 };
 
 /**
@@ -117,6 +119,7 @@ WhatsApi.prototype.init = function() {
 	this.loginCallback = null;
 	this.callbacksCollection = [];
 	
+	this.passiveAuth = false;
 	this.sessions = [];
 	this.pendingGetKeyRequests = {};
 	this.skipEncJids = []; //contains a list of jids that don't support encoding
@@ -124,8 +127,9 @@ WhatsApi.prototype.init = function() {
 	this.nodeWhatsApiDir = path.join(osenv.home(), '.node-whatsapi');
 	try {
     fs.mkdirSync(this.nodeWhatsApiDir);
+		fs.mkdirSync( path.join(this.nodeWhatsApiDir, this.config.msisdn) );
   } catch(e) {}
-	this.dbFilePath = path.join(this.nodeWhatsApiDir , this.config.msisdn + '.db');
+	this.keystoreFilePath = path.join(this.nodeWhatsApiDir , this.config.msisdn, 'keystore.db');
 
 	this.processor.setAdapter(this);
 };
@@ -199,6 +203,14 @@ WhatsApi.prototype.login = function(callback) {
 		callback('Already logged in');
 		return;
 	}
+	if(this.config.useEncryption){
+		if(!this.keystore || !this.keystore.isInitialized()){
+			callback('First initialize keystore when using encryption');
+			return;			
+		}
+		this.passiveAuth = !this.keystore.hasKeys();
+	}
+	
 	this.loginCallback = callback ? callback : null;
 	
 	this.reader.setKey(null);
@@ -247,7 +259,8 @@ WhatsApi.prototype.createAuthNode = function() {
 	var attributes = {
 		//xmlns     : 'urn:ietf:params:xml:ns:xmpp-sasl',
 		mechanism : 'WAUTH-2',
-		user      : this.config.msisdn
+		user      : this.config.msisdn,
+		passive   : this.passiveAuth ? 'true':'false'
 	};
 
 	return new protocol.Node('auth', attributes, null, this.createAuthData());
@@ -336,7 +349,9 @@ WhatsApi.prototype.createJID = function(msisdn) {
 };
 
 WhatsApi.prototype.onTransportConnect = function() {
-	this.emit('connect');
+	if( !this.passiveAuth )
+		this.emit('connect');
+		
 	this.connectCallback && this.connectCallback();
 	this.connected = true;
 };
