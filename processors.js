@@ -43,10 +43,10 @@ Text.prototype.process = function(node) {
 	var message = {
 		body    : node.child('body').data().toString('utf8'),
 		from    : node.attribute('from'),
-		author  : node.attribute('participant') || '',
 		id      : node.attribute('id'),
 		date    : new Date(+node.attribute('t') * 1000),
 		notify  : node.attribute('notify'),
+		author  : node.attribute('participant') || '',
 		isGroup : node.attribute('from').indexOf('g.us') != -1 ? true : false
 	};
 	
@@ -110,7 +110,9 @@ Location.prototype.process = function(node) {
 			longitude  : +location.attribute('longitude'),
 			name       : location.attribute('name'),
 			url        : location.attribute('url'),
-			thumbData  : location.data()
+			thumbData  : location.data(),
+			author     : node.attribute('participant') || '',
+			isGroup    : node.attribute('from').indexOf('g.us') != -1 ? true : false
 		}
 	);
 };
@@ -126,6 +128,8 @@ Location.prototype.process = function(node) {
  * @property {String} name       Name of the place
  * @property {String} url        URL of the place
  * @property {Buffer} thumbData  Raw body (thumbnail of the map)
+ * @property {String} author     If the message comes from a group, the real sender jid
+ * @property {Boolean} isGroup   Whether the message comes from a group or not
  */
 
 function Media() {}
@@ -184,7 +188,9 @@ Image.prototype.process = function(node) {
 			filehash   : image.attribute('filehash'),
 			width      : +image.attribute('width'),
 			height     : +image.attribute('height'),
-			thumbData  : image.data()
+			thumbData  : image.data(),
+			author     : node.attribute('participant') || '',
+			isGroup    : node.attribute('from').indexOf('g.us') != -1 ? true : false
 		}
 	);
 };
@@ -206,6 +212,8 @@ Image.prototype.process = function(node) {
  * @property {Number} width
  * @property {Number} height
  * @property {Buffer} thumbData
+ * @property {String} author     If the message comes from a group, the real sender jid
+ * @property {Boolean} isGroup   Whether the message comes from a group or not
  */
 
 function Video() {
@@ -264,7 +272,9 @@ Video.prototype.process = function(node) {
 			asampfreq  : +video.attribute('asampfreq'),
 			asampfmt   : video.attribute('asampfmt'),
 			abitrate   : +video.attribute('abitrate'),
-			thumbData  : video.data()
+			thumbData  : video.data(),
+			author     : node.attribute('participant') || '',
+			isGroup    : node.attribute('from').indexOf('g.us') != -1 ? true : false
 		}
 	);
 };
@@ -296,6 +306,8 @@ Video.prototype.process = function(node) {
  * @property {String} asampfmt
  * @property {Number} abitrate
  * @property {Buffer} thumbData
+ * @property {String} author     If the message comes from a group, the real sender jid
+ * @property {Boolean} isGroup   Whether the message comes from a group or not
  */
 
 function Audio() {
@@ -344,7 +356,9 @@ Audio.prototype.process = function(node) {
 			duration   : +audio.attribute('duration'),
 			acodec     : audio.attribute('acodec'),
 			asampfreq  : +audio.attribute('asampfreq'),
-			abitrate   : +audio.attribute('abitrate')
+			abitrate   : +audio.attribute('abitrate'),
+			author     : node.attribute('participant') || '',
+			isGroup    : node.attribute('from').indexOf('g.us') != -1 ? true : false
 		}
 	);
 };
@@ -367,6 +381,8 @@ Audio.prototype.process = function(node) {
  * @property {String} acodec
  * @property {Number} asampfreq
  * @property {Number} abitrate
+ * @property {String} author     If the message comes from a group, the real sender jid
+ * @property {Boolean} isGroup   Whether the message comes from a group or not
  */
 
 
@@ -400,7 +416,9 @@ Vcard.prototype.process = function(node) {
 			date       : new Date(+node.attribute('t') * 1000),
 			notify     : node.attribute('notify'),
 			name       : vcard.attribute('name'),
-			vcardData  : vcard.data()
+			vcardData  : vcard.data(),
+			author     : node.attribute('participant') || '',
+			isGroup    : node.attribute('from').indexOf('g.us') != -1 ? true : false
 		}
 	);
 };
@@ -413,6 +431,8 @@ Vcard.prototype.process = function(node) {
  * @property {String} notify
  * @property {String} name
  * @property {Buffer} vcardData
+ * @property {String} author     If the message comes from a group, the real sender jid
+ * @property {Boolean} isGroup   Whether the message comes from a group or not
  */
 
 function createProcessor() {
