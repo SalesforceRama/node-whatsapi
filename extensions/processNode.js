@@ -641,86 +641,150 @@ WhatsApi.prototype.processNode = function(node) {
 	}
 };
 
+/**
+ * Process an incoming notification node
+ * @param  {Node} node - Incoming node
+ * @private
+ */
 WhatsApi.prototype.processNotification = function(node) {
 	var nodeId = node.attribute('id');
 	
+	var type = node.attribute('type');
+	
 	// Group related notification
-	if (node.attribute('type') == 'w:gp2') {
-		var childNode = node.child(0);
+	if (type == 'w:gp2') {
+		processGroupNotification(node, nodeId);	
+	}
+	// Status update
+	else if (type == 'status') {
+		var not = {
+			from: node.attribute('from'),
+			value: node.child(0).data().toString()
+		};
 		
-		var time = new Date(+node.attribute('t') * 1000);
+		/**
+		 * Fired when a contact's status has changed
+		 * @event notificationStatusUpdated
+		 * @type {Object}
+		 * @param {StatusUpdated} notification
+		 * @param {String} nodeId
+		 */
 		
-		var tag = childNode.tag();
+		/**
+		 * @typedef StatusUpdated
+		 * @type {Object}
+		 * @property {String} from - Involved user jid
+		 * @property {String} value - New status value (string)
+		 */
 		
-		// New group created
-		if (tag == 'create') {
-			var groupNode = childNode.child(0);
-			
-			var group = {
-				id : groupNode.attribute('id'),
-				creator : groupNode.attribute('creator'),
-				creation : new Date(+groupNode.attribute('creation') * 1000),
-				subject : groupNode.attribute('subject'),
-				participants : groupNode.children().map(function(p) {
-					return {
-						admin : p.attribute('type') == 'admin' ? true : false,
-						jid   : p.attribute('jid')
-					}
-				})
-			};
-			
-			/**
-			 * Fired when a new group has been created
-			 * @event notificationGroupCreated
-			 * @type {Object}
-			 * @param {Group} group      Information about the group
-			 * @param {String} id        Notification message ID
-			 */
-			this.emit('notificationGroupCreated', group, nodeId);
-		}
-		// Actions on participants
-		else if (tag == 'add' || tag == 'remove' || tag == 'promote' || tag == 'demote') {
-			var args = {
-				groupId: this.JIDtoId(node.attribute('from')),
-				action: tag,
-				by: node.attribute('participant'),
-				time: time,
-				participants: childNode.children().map(function(p) {
-					return {
-						admin : undefined,
-						jid   : p.attribute('jid')
-					}
-				})
-			};
-			
-			/**
-			 * Fired when a notification about participants is received
-			 * @event notificationGroupParticipantsChanged
-			 * @type {Object}
-			 * @param {ParticipantsChanged} args
-			 * @param {String} id Notification message ID
-			 */
-			this.emit('notificationGroupParticipantsChanged', args, nodeId);
-		}
-		// Subject changed
-		else if (tag == 'subject') {
-			var args = {
-				groupId : this.JIDtoId(node.attribute('from')),
-				action: 'subject',
-				by: node.attribute('participant'),
-				time: time,
-				subject: childNode.attribute('subject')
-			};
-			
-			/**
-			 * Fired when group subject has changed
-			 * @event notificationGroupSubjectChanged
-			 * @type {Object}
-			 * @param {SubjectChanged} args
-			 * @param {String} id Notification message ID
-			 */
-			this.emit('notificationGroupSubjectChanged', args, nodeId);
-		}
+		this.emit('notificationStatusUpdated', not, nodeId);
+	}
+	else if (type == 'picture') {
+		var not = {
+			from: note.attribute('from'),
+			action: node.child(0).tag()
+		};
+		
+		/**
+		 * Fired when a contact's profile picture has changed
+		 * @event notificationPictureUpdated
+		 * @type {Object}
+		 * @param {PictureUpdated} notification
+		 * @param {String} nodeId
+		 */
+		
+		/**
+		 * @typedef PictureUpdated
+		 * @type {Object}
+		 * @property {String} from - Involved user jid
+		 * @property {String} action - `set` or `delete`
+		 */
+		
+		this.emit('notificationPictureUpdated', not, nodeId);
+	}
+};
+
+/**
+ * Process a group notification node
+ * @param  {Node} node
+ * @param  {String} nodeId
+ * @private
+ */
+WhatsApi.prototype.processGroupNotification = function(node, nodeId) {
+	var childNode = node.child(0);
+	
+	var time = new Date(+node.attribute('t') * 1000);
+	
+	var tag = childNode.tag();
+	
+	// New group created
+	if (tag == 'create') {
+		var groupNode = childNode.child(0);
+		
+		var group = {
+			id : groupNode.attribute('id'),
+			creator : groupNode.attribute('creator'),
+			creation : new Date(+groupNode.attribute('creation') * 1000),
+			subject : groupNode.attribute('subject'),
+			participants : groupNode.children().map(function(p) {
+				return {
+					admin : p.attribute('type') == 'admin' ? true : false,
+					jid   : p.attribute('jid')
+				}
+			})
+		};
+		
+		/**
+		 * Fired when a new group has been created
+		 * @event notificationGroupCreated
+		 * @type {Object}
+		 * @param {Group} group      Information about the group
+		 * @param {String} id        Notification message ID
+		 */
+		this.emit('notificationGroupCreated', group, nodeId);
+	}
+	// Actions on participants
+	else if (tag == 'add' || tag == 'remove' || tag == 'promote' || tag == 'demote') {
+		var args = {
+			groupId: this.JIDtoId(node.attribute('from')),
+			action: tag,
+			by: node.attribute('participant'),
+			time: time,
+			participants: childNode.children().map(function(p) {
+				return {
+					admin : undefined,
+					jid   : p.attribute('jid')
+				}
+			})
+		};
+		
+		/**
+		 * Fired when a notification about participants is received
+		 * @event notificationGroupParticipantsChanged
+		 * @type {Object}
+		 * @param {ParticipantsChanged} args
+		 * @param {String} id Notification message ID
+		 */
+		this.emit('notificationGroupParticipantsChanged', args, nodeId);
+	}
+	// Subject changed
+	else if (tag == 'subject') {
+		var args = {
+			groupId : this.JIDtoId(node.attribute('from')),
+			action: 'subject',
+			by: node.attribute('participant'),
+			time: time,
+			subject: childNode.attribute('subject')
+		};
+		
+		/**
+		 * Fired when group subject has changed
+		 * @event notificationGroupSubjectChanged
+		 * @type {Object}
+		 * @param {SubjectChanged} args
+		 * @param {String} id Notification message ID
+		 */
+		this.emit('notificationGroupSubjectChanged', args, nodeId);
 	}
 };
 

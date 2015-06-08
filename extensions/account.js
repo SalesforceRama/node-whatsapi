@@ -272,7 +272,7 @@ WhatsApi.prototype.setProfilePicture = function(filepath, callback) {
  * @param {ProfilePictureCallback} callback
  * @example
  * // Request full size profile picture from 49xxxxxxxx
- * wa.requestProfilePicture('49xxxxxxxx', false, function(res) {
+ * wa.getProfilePicture('49xxxxxxxx', false, function(res) {
  *   fs.writeFile('whatsapi/media/profilepic-'+res.from+(res.isPreview?'-preview':'-full')+'.jpg', res.pictureData); 
  * });
  */
