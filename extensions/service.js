@@ -38,6 +38,7 @@ WhatsApi.prototype.createPongNode = function(messageId) {
 /**
  * Create a 'receipt' node, to be sent when a new message is received/read
  * @param  {Node} node    The received message node
+ * @private
  * @return {Node}         Created node
  */
 WhatsApi.prototype.createReceiptNode = function(node, type) {
@@ -59,8 +60,32 @@ WhatsApi.prototype.createReceiptNode = function(node, type) {
 };
 
 /**
+ * Send the receipt for a message
+ * @param  {Object} message
+ * @param  {String} type - `read` or null for standard receipts
+ */
+WhatsApi.prototype.sendMessageReceipt = function(message, type) {
+	var attributes = {
+		to   : message['from'],
+		id   : message['id'],
+		t    : common.tstamp().toString()
+	};
+	
+	if (type) {
+		attributes['type'] = type;
+	}
+	
+	if (message['author']) {
+		attributes['participant'] = message['author'];
+	}
+
+	return new protocol.Node('receipt', attributes);
+};
+
+/**
  * Create a 'ack' node, to be sent when a new notification is received
  * @param  {Node} node    The notification node
+ * @private
  * @return {Node}         Created node
  */
 WhatsApi.prototype.createNotificationAckNode = function(node) {
