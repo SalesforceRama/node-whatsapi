@@ -653,7 +653,7 @@ WhatsApi.prototype.processNotification = function(node) {
 	
 	// Group related notification
 	if (type == 'w:gp2') {
-		processGroupNotification(node, nodeId);	
+		this.processGroupNotification(node, nodeId);	
 	}
 	// Status update
 	else if (type == 'status') {
