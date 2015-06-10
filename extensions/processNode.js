@@ -681,7 +681,7 @@ WhatsApi.prototype.processNotification = function(node) {
 	}
 	else if (type == 'picture') {
 		var not = {
-			from: note.attribute('from'),
+			from: node.attribute('from'),
 			action: node.child(0).tag()
 		};
 		
