@@ -128,6 +128,9 @@ WhatsApi.prototype.addCallback = function(id, cb) {
 	if (!id || !cb) {
 		return;
 	}
+	if (typeof cb !== "function")
+		throw new Error("cb is not a callback");
+		
 	this.callbacksCollection.push({ id: id, callback: cb });
 };
 
