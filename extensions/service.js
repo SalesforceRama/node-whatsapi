@@ -79,7 +79,7 @@ WhatsApi.prototype.sendMessageReceipt = function(message, type) {
 		attributes['participant'] = message['author'];
 	}
 
-	return new protocol.Node('receipt', attributes);
+	this.sendNode(protocol.Node('receipt', attributes));
 };
 
 /**
