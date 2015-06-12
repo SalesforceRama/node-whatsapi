@@ -19,6 +19,10 @@ WhatsApi.prototype.processNode = function(node) {
 			message: errorNode.attribute('text')
 		};
 		
+		if (errorNode.attribute('backoff')) {
+			error.backoff = +errorNode.attribute('backoff');
+		}
+		
 		this.executeCallback(nodeId, error, true);
 		
 		return;
