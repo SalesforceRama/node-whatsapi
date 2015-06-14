@@ -899,6 +899,7 @@ Writer.prototype.getRawBufferLength = function(raw) {
 		size += raw.length;
 	}
 	
+	size = (raw.length >= 0x100) ? (size + 2) : size;
 
 	return size;
 };
