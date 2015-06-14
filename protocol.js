@@ -891,22 +891,25 @@ Writer.prototype.getAttributesBufferLength = function(attributes) {
 };
 
 Writer.prototype.getRawBufferLength = function(raw) {
-	var size = raw.length + 2;
+	var size = 2;
+	
+	if (typeof raw == 'string'){
+		size += buffer.Buffer.byteLength(raw,'utf8');
+	} else {
+		size += raw.length;
+	}
+	
 
-	return raw.length >= 0x100 ? size + 2 : size;
+	return size;
 };
 
+/*
+* @deprecated
+*/
 Writer.prototype.getBodyRawBufferLength = function(raw) {
-	if (typeof raw == 'string')
-	{
-		var size = buffer.Buffer.byteLength(raw,'utf8') + 2;
-	}
-	else
-	{
-		var size = raw.length + 2;
-	}
-	return raw.length >= 0x100 ? size + 2 : size;
-	};
+	return this.getRawBufferLength(raw);
+};
+
 exports.Buffer = Buffer;
 exports.Node   = Node;
 exports.Reader = Reader;
