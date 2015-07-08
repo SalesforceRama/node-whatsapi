@@ -27,9 +27,9 @@ function toArray(iterable) {
 }
 
 function extend(dest) {
-	var args = toArray(arguments)
-	,   target = args.shift()
-	,   source;
+	var args = toArray(arguments);
+	var target = args.shift();
+	var source;
 
 	for(var i = 0; i < args.length; i++) {
 		source = args[i];
