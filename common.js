@@ -12,21 +12,14 @@ function winTimestamp() {
 }
 
 function objSize(obj) {
-	var size = 0;
-
-	for(var key in obj) {
-		if(obj.hasOwnProperty(key)) {
-			++size;
-		}
-	}
-
-	return size;
+	
+	return Object.keys(obj).length;
 }
 
 function toArray(iterable) {
 	var arr = [];
 
-	for(var i = 0, len = iterable.length; i < len; i++) {
+	for(var i = 0; i < iterable.length; i++) {
 		arr.push(iterable[i]);
 	}
 
@@ -34,10 +27,11 @@ function toArray(iterable) {
 }
 
 function extend(dest) {
-	var args   = toArray(arguments),
-		target = args.shift();
+	var args = toArray(arguments)
+	,   target = args.shift()
+	,   source;
 
-	for(var i = 0, len = args.length, source; i < len; i++) {
+	for(var i = 0; i < args.length; i++) {
 		source = args[i];
 
 		for(var key in source) {
