@@ -29,14 +29,11 @@ function toArray(iterable) {
 function extend(dest) {
 	var args = toArray(arguments);
 	var target = args.shift();
-	var source;
 
 	for(var i = 0; i < args.length; i++) {
-		source = args[i];
-
-		for(var key in source) {
-			if(source.hasOwnProperty(key)) {
-				target[key] = source[key];
+		for(var key in args[i]) {
+			if(args[i].hasOwnProperty(key)) {
+				target[key] = args[i][key];
 			}
 		}
 	}
