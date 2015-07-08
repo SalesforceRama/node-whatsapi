@@ -31,9 +31,12 @@ function extend(dest) {
 	var target = args.shift();
 
 	for(var i = 0; i < args.length; i++) {
-		for(var key in args[i]) {
-			if(args[i].hasOwnProperty(key)) {
-				target[key] = args[i][key];
+		var source = args[i];
+		
+		for(var key in source) {
+			
+			if(source.hasOwnProperty(key)) {
+				target[key] = source[key];
 			}
 		}
 	}
