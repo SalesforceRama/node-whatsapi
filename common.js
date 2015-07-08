@@ -19,9 +19,9 @@ function objSize(obj) {
 function toArray(iterable) {
 	var arr = [];
 
-	for(var i = 0; i < iterable.length; i++) {
-		arr.push(iterable[i]);
-	}
+	Object.keys(iterable).forEach(function(k){
+		arr.push(iterable[k]);
+	});
 
 	return arr;
 }
