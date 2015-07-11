@@ -73,6 +73,7 @@ function getRandomInt(min, max) {
 exports.tstamp = tstamp;
 exports.winTimestamp = winTimestamp;
 exports.objSize = objSize;
+exports.toArray = toArray;
 exports.extend = extend;
 exports.fetch = fetch;
 exports.isWindows = isWindows;
