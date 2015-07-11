@@ -26,6 +26,10 @@ function toArray(iterable) {
 	return arr;
 }
 
+function convertMBToBytes(mb) {
+	return (mb * (1024 * 1024));
+}
+
 function extend(dest) {
 	var args = toArray(arguments);
 	var target = args.shift();
@@ -77,3 +81,4 @@ exports.extend = extend;
 exports.fetch = fetch;
 exports.isWindows = isWindows;
 exports.getRandomInt = getRandomInt;
+exports.convertMBToBytes = convertMBToBytes;
