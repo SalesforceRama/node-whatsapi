@@ -42,10 +42,7 @@ WhatsApi.prototype.sendMessageNode = function(to, node, msgid, callback) {
  */
 WhatsApi.prototype.sendMessage = function(to, message, msgid, callback) {
 	// Convert arguments to array
-	var args = [];
-	for (var i = 0; i < arguments.length; i++) {
-		args.push(arguments[i]);
-	}
+	var args = common.toArray(arguments);
 	
 	// Remove first 2 required arguments
 	args.splice(0, 2);
@@ -78,10 +75,7 @@ WhatsApi.prototype.sendMessage = function(to, message, msgid, callback) {
  */
 WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid, callback) {
 	// Convert arguments to array
-	var args = [];
-	for (var i = 0; i < arguments.length; i++) {
-		args.push(arguments[i]);
-	}
+	var args = common.toArray(arguments);
 	
 	// Remove first 3 required arguments
 	args.splice(0, 3);
@@ -126,10 +120,7 @@ WhatsApi.prototype.sendLocation = function(to, lat, lng, name, url, msgid, callb
  */
 WhatsApi.prototype.sendImage = function(to, filepath, caption, msgid, callback) {
 	// Convert arguments to array
-	var args = [];
-	for (var i = 0; i < arguments.length; i++) {
-		args.push(arguments[i]);
-	}
+	var args = common.toArray(arguments);
 	
 	// Remove first 2 required arguments
 	args.splice(0, 2);
@@ -158,10 +149,7 @@ WhatsApi.prototype.sendImage = function(to, filepath, caption, msgid, callback) 
 */
 WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid, callback) {
 	// Convert arguments to array
-	var args = [];
-	for (var i = 0; i < arguments.length; i++) {
-		args.push(arguments[i]);
-	}
+	var args = common.toArray(arguments);
 	
 	// Remove first 2 required arguments
 	args.splice(0, 2);
@@ -189,10 +177,7 @@ WhatsApi.prototype.sendVideo = function(to, filepath, caption, msgid, callback) 
  */
 WhatsApi.prototype.sendAudio = function(to, filepath, msgid, callback) {
 	// Convert arguments to array
-	var args = [];
-	for (var i = 0; i < arguments.length; i++) {
-		args.push(arguments[i]);
-	}
+	var args = common.toArray(arguments);
 	
 	// Remove first 2 required arguments
 	args.splice(0, 2);
@@ -243,10 +228,7 @@ WhatsApi.prototype.sendMedia = function(to, filepath, type, caption, msgid, call
  */
 WhatsApi.prototype.sendVcard = function(to, filepath, name, msgid, callback) {
 	// Convert arguments to array
-	var args = [];
-	for (var i = 0; i < arguments.length; i++) {
-		args.push(arguments[i]);
-	}
+	var args = common.toArray(arguments);
 	
 	// Remove first 3 required arguments
 	args.splice(0, 3);
