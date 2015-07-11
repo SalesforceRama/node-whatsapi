@@ -18,7 +18,7 @@ WhatsApi.prototype.mediaMimeTypes[MediaType.VIDEO] = {
 };
 
 WhatsApi.prototype.mediaMimeTypes[MediaType.AUDIO] = {
-	size : convertMBToBytes(10),
+	size : common.convertMBToBytes(10),
 	mime : [
 		'video/3gpp',
 		'audio/x-caf',
