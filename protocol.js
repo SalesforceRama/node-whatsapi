@@ -1,5 +1,6 @@
 var util   = require('util');
 var buffer = require('buffer');
+var zlib = require('zlib');
 var common = require('./common');
 
 /**
@@ -351,6 +352,7 @@ Reader.prototype.nextNode = function() {
 	//console.log("processing in nextNode: %s", this.input.toString('hex'));
 	var firstByte = this.peekInt8();
 	var encrypted = ((firstByte & 0xF0) >> 4) & 8;
+	var compressed = ((firstByte & 0xF0) >> 4) & 4;
 	var dataSize  = this.peekInt16(1) | ((firstByte & 0x0F) << 16);
 
 	if(dataSize > this.input.length) {
@@ -374,7 +376,13 @@ Reader.prototype.nextNode = function() {
 		var decoded   = this.key.decodeMessage(encoded, dataSize-4, 0, dataSize-4);
 		//console.log("decoded: %s",decoded.toString('hex'));
 		//console.log("sizes: decoded: %d data: %d",decoded.length, dataSize);
-		this.input = Buffer.concat([decoded, remaining]);
+
+		if (compressed) {
+			var data = zlib.inflateSync(decoded);
+			this.input = Buffer.concat([data, remaining]);
+		} else {
+			this.input = Buffer.concat([decoded, remaining]);
+		}
 	}
 
 	return dataSize ? this.readNode() : null;
